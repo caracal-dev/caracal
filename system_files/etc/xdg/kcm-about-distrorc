@@ -1,0 +1,5 @@
+[General]
+LogoPath=/usr/share/icons/hicolor/scalable/places/distributor-logo.svg
+Name=Caracal OS
+Website=https://github.com/caracal-os/caracal-os
+Variant=Desktop Edition

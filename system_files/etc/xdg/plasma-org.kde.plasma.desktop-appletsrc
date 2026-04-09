@@ -1,0 +1,8 @@
+[SerializationSettings]
+Free=1,2
+
+[ItemGeometries-1]
+Container=1
+
+[Applets][1][Configuration][General]
+Image=file:///usr/share/wallpapers/caracal/caracal-lake.png
