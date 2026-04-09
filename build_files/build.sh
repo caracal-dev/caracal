@@ -211,12 +211,12 @@ dnf5 -y install \
 # ── System configuration ──────────────────────────────────────────────────────
 
 # CPU governor: default to performance mode for low-latency audio
-mkdir -p /etc/sysconfig
-echo 'START_OPTS="--governor performance"' > /etc/sysconfig/cpupower
+mkdir -p /usr/etc/sysconfig
+echo 'START_OPTS="--governor performance"' > /usr/etc/sysconfig/cpupower
 
 # Realtime/memlock permissions for audio production groups
-mkdir -p /etc/security/limits.d
-cat > /etc/security/limits.d/audio.conf << 'EOF'
+mkdir -p /usr/etc/security/limits.d
+cat > /usr/etc/security/limits.d/audio.conf << 'EOF'
 @audio    -  rtprio     95
 @audio    -  memlock    unlimited
 @realtime -  rtprio     95
@@ -250,8 +250,3 @@ rm -rf \
     /var/lib/alternatives \
     /var/log/dnf* \
     /var/log/hawkey*
-
-# Some packages (e.g. cachyos-settings) install config to /usr/etc, which
-# conflicts with /etc in a bootc image. Our config lives in /etc, so remove
-# /usr/etc entirely.
-rm -rf /usr/etc

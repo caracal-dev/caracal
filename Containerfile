@@ -8,9 +8,9 @@ FROM quay.io/fedora-ostree-desktops/kinoite:43
 
 ### Pre-install system configuration files
 ## Copied directly into the image before the build script runs.
-## /etc: KDE/XDG config, hostname, skel
+## /usr/etc: KDE/XDG config, hostname, skel (bootc convention: distro configs go in /usr/etc)
 ## /usr: Plasma themes, Plymouth config, ujust recipes, runtime install scripts
-COPY system_files/etc /etc
+COPY system_files/etc /usr/etc
 COPY system_files/usr /usr
 
 ### Build
