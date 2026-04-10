@@ -229,6 +229,13 @@ getent group audio || groupadd -r audio
 systemctl enable cpupower.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
+systemctl enable usr-share-sddm-themes.mount
+
+# User-level service: applies branding (wallpaper, lock screen) on first login
+# and after any bootc rebase, ensuring branding is consistent regardless of
+# whether the user installed fresh or switched from another image.
+chmod +x /usr/libexec/caracal-user-setup
+systemctl --global enable caracal-user-setup.service
 
 # ── Plugins / instruments installed system-wide ───────────────────────────────
 # Surge XT and Decent Sampler are installed for all users at build time.
