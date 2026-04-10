@@ -87,12 +87,6 @@ dnf5 -y install \
     dragonfly-reverb-lv2 \
     eza
 
-# ── sched-ext schedulers ──────────────────────────────────────────────────────
-# The Bazzite kernel includes sched-ext (SCX) support.
-# scx_lavd is ideal for low-latency realtime audio workloads.
-dnf5 -y install \
-    scx-scheds \
-    scx-tools
 
 # ── General tooling ───────────────────────────────────────────────────────────
 dnf5 -y install \
