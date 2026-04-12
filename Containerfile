@@ -18,8 +18,9 @@ FROM quay.io/fedora-ostree-desktops/kinoite:43
 
 ### Pre-install system configuration files
 ## Copied directly into the image before the build script runs.
-## /usr/etc: KDE/XDG config, hostname, skel (vendor defaults, merged into /etc at deploy)
+## /etc: KDE/XDG config, hostname, skel (vendor defaults)
 ## /usr: Plasma themes, Plymouth config, ujust recipes, runtime install scripts
+COPY system_files/etc /etc
 COPY system_files/usr /usr
 
 # Copy Homebrew archive and setup service from the brew stage

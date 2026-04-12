@@ -20,7 +20,7 @@ cp /ctx/assets/logos/caracal.svg /usr/share/icons/hicolor/scalable/places/distri
 # Caracal branding regardless of which path KDE searches first.
 KDE_PROFILE_XDG="/usr/share/kde-settings/kde-profile/default/xdg"
 mkdir -p "$KDE_PROFILE_XDG"
-cp /usr/etc/xdg/kcm-about-distrorc "$KDE_PROFILE_XDG/kcm-about-distrorc"
+cp /etc/xdg/kcm-about-distrorc "$KDE_PROFILE_XDG/kcm-about-distrorc"
 
 # Install wallpapers to the system wallpaper directory
 mkdir -p /usr/share/wallpapers/caracal
