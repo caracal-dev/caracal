@@ -131,6 +131,142 @@ EOF
         Exiting
     fi
 
+# ── Audio ─────────────────────────────────────────────────────────────────────
+
+# Restart PipeWire (useful after config changes or audio glitches)
+[group("audio")]
+restart-pipewire:
+    echo "Restarting PipeWire..."
+    systemctl --user restart pipewire.service
+
+# Toggle Bluetooth headset profile mitigation. When enabled, prevents automatic
+# switch to low-quality HFP/HSP profile — keeps A2DP (high quality) at all times.
+# Disable to restore headset mic functionality.
+[group("audio")]
+toggle-bt-mic:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    source /usr/lib/ujust/ujust.sh
+    CONFIG_FILE="/etc/wireplumber/wireplumber.conf.d/51-mitigate-annoying-profile-switch.conf"
+    CURRENT_STATE="Disabled"
+    if [ -f "$CONFIG_FILE" ]; then
+        CURRENT_STATE="Enabled"
+    fi
+    echo "Bluetooth headset profile mitigation is currently: ${bold}${CURRENT_STATE}${normal}"
+    OPTION=$(Choose Enable Disable)
+    if [[ "${OPTION,,}" == "enable" ]]; then
+        sudo mkdir -p "$(dirname "$CONFIG_FILE")"
+        sudo tee "$CONFIG_FILE" > /dev/null <<'EOF'
+wireplumber.settings = {
+  bluetooth.autoswitch-to-headset-profile = false
+}
+
+monitor.bluez.properties = {
+  bluez5.roles = [ a2dp_sink a2dp_source ]
+}
+EOF
+        systemctl --user restart wireplumber
+        echo "Mitigation ${green}${bold}enabled${normal} — BT device will stay on A2DP. Headset mic disabled."
+    elif [[ "${OPTION,,}" == "disable" ]]; then
+        if sudo rm -f "$CONFIG_FILE"; then
+            systemctl --user restart wireplumber
+            echo "Mitigation ${red}${bold}disabled${normal} — BT headset profile switching restored."
+        else
+            echo "Failed to remove config. Check sudo permissions."
+        fi
+    fi
+
+# Set up named PipeWire loopback sinks for flexible audio routing in your DAW,
+# patchbay (qpwgraph / Helvum / Carla), or for separating streams to different outputs.
+# Creates four sinks: DAW, Monitoring, Recording, System
+[group("audio")]
+setup-virtual-channels ACTION="":
+    #!/usr/bin/env bash
+    source /usr/lib/ujust/ujust.sh
+    mkdir -p ~/.config/pipewire/pipewire.conf.d
+    OPTION="{{ ACTION }}"
+    if [ "$OPTION" == "help" ]; then
+        echo "Usage: ujust setup-virtual-channels <option>"
+        echo "  Use 'create' to create virtual audio channels"
+        echo "  Use 'remove' to remove virtual audio channels"
+        exit 0
+    elif [ "$OPTION" == "" ]; then
+        echo "${bold}Virtual Audio Channels${normal}"
+        OPTION=$(Choose "Create virtual channels" "Remove virtual channels")
+    fi
+    if [[ "${OPTION,,}" =~ ^create ]]; then
+        cat > ~/.config/pipewire/pipewire.conf.d/virtual-channels.conf << 'EOF'
+context.modules = [
+    { name = libpipewire-module-loopback
+        args = {
+            node.description = "DAW"
+            capture.props = {
+                node.name      = "sink.daw"
+                media.class    = "Audio/Sink"
+                audio.position = [ FL FR ]
+            }
+            playback.props = {
+                node.name    = "playback.daw"
+                node.passive = true
+                audio.position = [ FL FR ]
+            }
+        }
+    }
+    { name = libpipewire-module-loopback
+        args = {
+            node.description = "Monitoring"
+            capture.props = {
+                node.name      = "sink.monitoring"
+                media.class    = "Audio/Sink"
+                audio.position = [ FL FR ]
+            }
+            playback.props = {
+                node.name    = "playback.monitoring"
+                node.passive = true
+                audio.position = [ FL FR ]
+            }
+        }
+    }
+    { name = libpipewire-module-loopback
+        args = {
+            node.description = "Recording"
+            capture.props = {
+                node.name      = "sink.recording"
+                media.class    = "Audio/Sink"
+                audio.position = [ FL FR ]
+            }
+            playback.props = {
+                node.name    = "playback.recording"
+                node.passive = true
+                audio.position = [ FL FR ]
+            }
+        }
+    }
+    { name = libpipewire-module-loopback
+        args = {
+            node.description = "System"
+            capture.props = {
+                node.name      = "sink.system"
+                media.class    = "Audio/Sink"
+                audio.position = [ FL FR ]
+            }
+            playback.props = {
+                node.name    = "playback.system"
+                node.passive = true
+                audio.position = [ FL FR ]
+            }
+        }
+    }
+]
+EOF
+        echo "Virtual channels created: DAW, Monitoring, Recording, System"
+        echo "Log out and back in (or run ujust restart-pipewire) for them to appear."
+        echo "Route them in qpwgraph, Helvum, or Carla."
+    elif [[ "${OPTION,,}" =~ ^remove ]]; then
+        rm -f ~/.config/pipewire/pipewire.conf.d/virtual-channels.conf
+        echo "Virtual channels removed. Log out or run ujust restart-pipewire to apply."
+    fi
+
 # ── First-run & setup ─────────────────────────────────────────────────────────
 
 # First-run setup: join audio group, install Oh-My-Zsh + plugins, configure Reaper paths
