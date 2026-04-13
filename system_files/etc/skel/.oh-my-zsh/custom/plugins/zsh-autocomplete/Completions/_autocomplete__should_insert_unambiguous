@@ -1,9 +1,0 @@
-#autoload
-
-local -a match=() mbegin=() mend=()  # `zstyle` for some reason assigns these.
-
-[[ $_completer == _expand ]] &&
-  return 1
-
-[[ $WIDGET == *insert-unambiguous* ]] ||
-  builtin zstyle -t ":autocomplete:$curcontext" insert-unambiguous

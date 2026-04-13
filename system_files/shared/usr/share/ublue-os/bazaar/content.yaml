@@ -1,0 +1,191 @@
+css: |
+  .caracal-section banner {
+    margin-top: 30px;
+    margin-left: 30px;
+    margin-right: 30px;
+    border-radius: 10px;
+  }
+  .caracal-section banner-text-overlay {
+    margin: 30px;
+    padding: 20px;
+  }
+  .caracal-section banner-text {
+    padding: 50px;
+    color: #ffffff;
+  }
+  .caracal-section title {
+    color: #ffffff;
+  }
+  .caracal-section subtitle {
+    color: #ffffff;
+    font-weight: 400;
+  }
+  .caracal-section {
+    margin: 15px;
+    border-radius: 25px;
+  }
+  .caracal-light-section app-tile > button {
+    background-color: alpha(lightgray, 0.4);
+  }
+  .daw-section {
+    background: linear-gradient(45deg, #1a0a2e, #3d1a6e);
+  }
+  .music-section {
+    background: linear-gradient(135deg, #0d2b1a, #1a5c35);
+  }
+  .communication-section {
+    background: linear-gradient(45deg, #0a1a35, #1a3a6e);
+  }
+  .creative-section {
+    background: linear-gradient(135deg, #2b1a0a, #6e3d1a);
+  }
+  .utilities-section {
+    background: linear-gradient(45deg, #1a1a1a, #3d3d3d);
+  }
+
+rows:
+  - sections:
+    - expand-horizontally: true
+      classes:
+        - caracal-section
+        - daw-section
+      light-classes:
+        - caracal-light-section
+      category:
+        title:
+          en: "DAWs & Recording"
+        subtitle:
+          en: "Optional DAWs to complement your studio"
+        banner: file:///usr/share/wallpapers/caracal/caracal-lake.png
+        banner-fit: cover
+        banner-height: 300
+        banner-text-halign: start
+        banner-text-valign: center
+        banner-text-label-xalign: 0.0
+        appids:
+          - com.bitwig.BitwigStudio
+          - com.presonus.StudioOne
+          - io.github.jliljebl.Flowblade
+          - org.audacityteam.Audacity
+          - com.reaper.Reaper
+          - org.musescore.MuseScore
+
+  - sections:
+    - expand-horizontally: true
+      classes:
+        - caracal-section
+        - music-section
+      light-classes:
+        - caracal-light-section
+      category:
+        title:
+          en: "Music & Media"
+        subtitle:
+          en: "Streaming, playback, and listening"
+        banner: file:///usr/share/wallpapers/caracal/caracal-sunset.png
+        banner-fit: cover
+        banner-height: 300
+        banner-text-halign: end
+        banner-text-valign: center
+        banner-text-label-xalign: 1.0
+        appids:
+          - com.spotify.Client
+          - com.mastermindzh.tidal-hifi
+          - com.plexamp.Plexamp
+          - io.bassi.Amberol
+          - com.github.neithern.g4music
+          - org.strawberrymusicplayer.strawberry
+          - org.atheme.audacious
+          - org.videolan.VLC
+          - com.github.iwalton3.jellyfin-media-player
+          - tv.plex.PlexDesktop
+          - rocks.shy.VacuumTube
+
+  - sections:
+    - expand-horizontally: true
+      classes:
+        - caracal-section
+        - communication-section
+      light-classes:
+        - caracal-light-section
+      category:
+        title:
+          en: "Communication"
+        subtitle:
+          en: "Stay connected with your collaborators"
+        banner: file:///usr/share/wallpapers/caracal/caracal-overlook.png
+        banner-fit: cover
+        banner-height: 300
+        banner-text-halign: start
+        banner-text-valign: center
+        banner-text-label-xalign: 0.0
+        appids:
+          - com.discordapp.Discord
+          - dev.vencord.Vesktop
+          - com.slack.Slack
+          - org.mozilla.Thunderbird
+          - im.riot.Riot
+          - org.gnome.Fractal
+          - org.squidowl.halloy
+          - info.mumble.Mumble
+          - com.teamspeak.TeamSpeak
+
+  - sections:
+    - expand-horizontally: true
+      classes:
+        - caracal-section
+        - creative-section
+      light-classes:
+        - caracal-light-section
+      category:
+        title:
+          en: "Creative Tools"
+        subtitle:
+          en: "Visual arts, video, and design"
+        banner: file:///usr/share/wallpapers/caracal/caracal-stalking.png
+        banner-fit: cover
+        banner-height: 300
+        banner-text-halign: end
+        banner-text-valign: center
+        banner-text-label-xalign: 1.0
+        appids:
+          - org.blender.Blender
+          - org.gimp.GIMP
+          - org.kde.krita
+          - org.inkscape.Inkscape
+          - com.obsproject.Studio
+          - io.github.jliljebl.Flowblade
+          - md.obsidian.Obsidian
+          - org.libreoffice.LibreOffice
+
+  - sections:
+    - expand-horizontally: true
+      classes:
+        - caracal-section
+        - utilities-section
+      light-classes:
+        - caracal-light-section
+      category:
+        title:
+          en: "Utilities"
+        subtitle:
+          en: "Tools to keep your system running smoothly"
+        banner: file:///usr/share/wallpapers/caracal/caracal-close.png
+        banner-fit: cover
+        banner-height: 300
+        banner-text-halign: start
+        banner-text-valign: center
+        banner-text-label-xalign: 0.0
+        appids:
+          - com.github.wwmm.easyeffects
+          - me.timschneeberger.jdsp4linux
+          - org.keepassxc.KeePassXC
+          - com.bitwarden.desktop
+          - org.qbittorrent.qBittorrent
+          - app.drey.Warp
+          - com.rustdesk.RustDesk
+          - it.mijorus.gearlever
+          - org.fedoraproject.MediaWriter
+          - io.github.flattool.Ignition
+          - com.github.zocker_160.SyncThingy
+          - dev.deedles.Trayscale

@@ -1,0 +1,76 @@
+yaml-blocklist-paths:
+  - /usr/share/ublue-os/bazaar/blocklist.yaml
+
+hooks:
+  - id: jetbrains-toolbox
+    when: before-transaction
+    dialogs:
+      - id: jetbrains-warning
+        title:
+          en: >-
+            JetBrains IDEs are not supported in this format
+        body-use-markup: true
+        body:
+          en: >-
+            This is a <a href="https://www.jetbrains.com/">JetBrains</a>
+            application and is not officially supported on Flatpak. Caracal OS
+            recommends using the Toolbox app to manage JetBrains IDEs.
+        default-response-id: cancel
+        options:
+          - id: cancel
+            string:
+              en: "Cancel"
+          - id: run-ujust
+            string:
+              en: "Download JetBrains Toolbox"
+            style: suggested
+    shell: exec python3 /usr/share/ublue-os/bazaar/hooks.py
+
+  - id: vscode
+    when: before-transaction
+    dialogs:
+      - id: vscode-warning
+        title:
+          en: >-
+            Visual Studio Code is not supported in this format
+        body-use-markup: true
+        body:
+          en: >-
+            This is a <a href="https://www.microsoft.com/">Microsoft</a>
+            application and is not officially supported on Flatpak. Caracal OS
+            recommends getting Visual Studio Code from Universal Blue's Brew tap.
+        default-response-id: cancel
+        options:
+          - id: cancel
+            string:
+              en: "Cancel"
+          - id: run-brew
+            string:
+              en: "Download from Brew"
+            style: suggested
+    shell: exec python3 /usr/share/ublue-os/bazaar/hooks.py
+
+  - id: vscodium
+    when: before-transaction
+    dialogs:
+      - id: vscodium-warning
+        title:
+          en: >-
+            VSCodium is not supported in this format
+        body-use-markup: true
+        body:
+          en: >-
+            Although VSCodium is verified on Flathub, this is a repackaged
+            <a href="https://www.microsoft.com/">Microsoft</a> application and
+            is not officially supported on Flatpak. Caracal OS recommends
+            getting VSCodium from Universal Blue's Brew tap.
+        default-response-id: cancel
+        options:
+          - id: cancel
+            string:
+              en: "Cancel"
+          - id: run-brew
+            string:
+              en: "Download from Brew"
+            style: suggested
+    shell: exec python3 /usr/share/ublue-os/bazaar/hooks.py

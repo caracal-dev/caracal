@@ -7,17 +7,29 @@ set -oue pipefail
 # Update OS identity in /usr/lib/os-release
 sed -i 's|^PRETTY_NAME=.*|PRETTY_NAME="Caracal OS"|' /usr/lib/os-release
 sed -i 's|^NAME=.*|NAME="Caracal OS"|' /usr/lib/os-release
-sed -i 's|^ID=.*|ID=caracal-os|' /usr/lib/os-release
-sed -i 's|^ID_LIKE=.*|ID_LIKE=fedora|' /usr/lib/os-release
+# Replace ID=fedora with ID=caracal-os + add ID_LIKE=fedora on the next line
+# (Kinoite's os-release has ID=fedora with no ID_LIKE, so we can't just replace ID_LIKE=)
+sed -i 's|^ID=fedora|ID=caracal-os\nID_LIKE=fedora|' /usr/lib/os-release
 sed -i 's|^LOGO=.*|LOGO=distributor-logo|' /usr/lib/os-release
 
 # Install distributor logo (for KDE About This System, etc.)
 mkdir -p /usr/share/icons/hicolor/scalable/places
 cp /ctx/assets/logos/caracal.svg /usr/share/icons/hicolor/scalable/places/distributor-logo.svg
 
+# Overwrite the kde-settings RPM's kcm-about-distrorc so "About This System" shows
+# Caracal branding regardless of which path KDE searches first.
+KDE_PROFILE_XDG="/usr/share/kde-settings/kde-profile/default/xdg"
+mkdir -p "$KDE_PROFILE_XDG"
+cp /etc/xdg/kcm-about-distrorc "$KDE_PROFILE_XDG/kcm-about-distrorc"
+
 # Install wallpapers to the system wallpaper directory
 mkdir -p /usr/share/wallpapers/caracal
 cp /ctx/assets/wallpapers/* /usr/share/wallpapers/caracal/
+
+# Install splash screen logo into Plasma look-and-feel packages
+SPLASH_LOGO="/ctx/assets/logos/caracal-splash.svg"
+cp "$SPLASH_LOGO" /usr/share/plasma/look-and-feel/com.valve.vapor.desktop/contents/splash/images/caracal-logo.svg
+cp "$SPLASH_LOGO" /usr/share/plasma/look-and-feel/com.valve.vgui.desktop/contents/splash/images/caracal-logo.svg
 
 # Plymouth boot splash: replace watermark with Caracal logo
 # Remove Bazzite/Kinoite animation frames so only our watermark shows

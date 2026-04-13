@@ -1,0 +1,73 @@
+#!/usr/bin/bash
+# Replaces the stock Fedora kernel with the Bazzite kernel.
+# RPMs are provided by the bazzite-org/kernel-bazzite OCI image, mounted at
+# /rpms/kernel during the container build step.
+#
+# Adapted from https://github.com/ublue-os/bazzite (Apache 2.0)
+
+set -eoux pipefail
+
+# Disable kernel-install hooks to prevent dracut/rpm-ostree from triggering
+# inside the container build environment.
+pushd /usr/lib/kernel/install.d
+mv 05-rpmostree.install 05-rpmostree.install.bak
+mv 50-dracut.install 50-dracut.install.bak
+printf '%s\n' '#!/bin/sh' 'exit 0' > 05-rpmostree.install
+printf '%s\n' '#!/bin/sh' 'exit 0' > 50-dracut.install
+chmod +x 05-rpmostree.install 50-dracut.install
+popd
+
+# Remove the stock Fedora kernel RPMs
+for pkg in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-tools-libs kernel-tools; do
+    rpm --erase "${pkg}" --nodeps || true
+done
+
+# Remove all kernel module directories so no orphaned versions remain
+rm -rf /usr/lib/modules
+
+# Install bazzite kernel RPMs from the mounted OCI image.
+# The glob pattern matches the versioned RPM filenames (all bazzite kernels start with 6.x).
+pkgs=(
+    kernel
+    kernel-core
+    kernel-modules
+    kernel-modules-core
+    kernel-modules-extra
+    kernel-devel
+    kernel-devel-matched
+    kernel-tools
+    kernel-tools-libs
+)
+
+PKG_PAT=()
+for pkg in "${pkgs[@]}"; do
+    PKG_PAT+=("/rpms/kernel/${pkg}-6"*)
+done
+
+dnf5 -y install "${PKG_PAT[@]}"
+dnf5 versionlock add "${pkgs[@]}"
+
+# Restore the original kernel-install hooks
+pushd /usr/lib/kernel/install.d
+mv -f 05-rpmostree.install.bak 05-rpmostree.install
+mv -f 50-dracut.install.bak 50-dracut.install
+popd
+
+# Build initramfs inside the container so bootc can deploy it directly.
+#   --no-hostonly : include all drivers, not just the CI build host's hardware
+#   --add ostree  : include the ostree dracut module for atomic deployments
+KVER=$(ls /usr/lib/modules | head -n1)
+dracut \
+    --reproducible \
+    --no-hostonly \
+    --add "ostree" \
+    --zstd \
+    --force \
+    "/usr/lib/modules/${KVER}/initramfs.img" \
+    "${KVER}"
+
+chmod 0600 "/usr/lib/modules/${KVER}/initramfs.img"
+
+# Clear any kernel files the RPM dropped in /boot — atomic images manage
+# /boot via the bootloader layer.
+rm -rf /boot/*

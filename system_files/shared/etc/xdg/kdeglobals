@@ -1,0 +1,9 @@
+[KDE]
+LookAndFeelPackage=com.valve.vapor.desktop
+widgetStyle=Breeze
+
+[General]
+ColorScheme=Vapor
+
+[Icons]
+Theme=breeze-dark

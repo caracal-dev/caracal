@@ -1,9 +1,0 @@
-#!/bin/zsh
-
-if [[ $LBUFFER == *$'\n'* ]]; then
-  builtin zle up-line
-  return
-fi
-
-builtin zle history-search-backward -w
-(( $_lastcomp[nmatches] ))  # WORKAROUND: Widget always beeps otherwise.

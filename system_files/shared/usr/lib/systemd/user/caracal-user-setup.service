@@ -1,0 +1,12 @@
+[Unit]
+Description=Configure Caracal OS for current user
+ConditionUser=!@system
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/caracal-user-setup
+
+[Install]
+WantedBy=graphical-session.target

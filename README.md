@@ -1,4 +1,8 @@
-# caracal-os
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/images/caracal-banner-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="assets/images/caracal-banner-light.png">
+  <img src="assets/images/caracal-banner-light.png" alt="Caracal OS">
+</picture>
 
 A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoite (KDE Plasma), tuned from the ground up for audio production. Caracal-OS delivers a fast, immutable Linux desktop with everything a producer or sound engineer needs — baked into the image, ready on first boot.
 
@@ -8,9 +12,7 @@ A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoi
 
 ### Performance
 
-- **CachyOS LTO kernel** — replaces the stock Fedora kernel; built with link-time optimisation and low-latency patches
-- **sched-ext schedulers** (`scx_lavd`) — ideal for real-time audio workloads
-- **CachyOS settings** — kernel tunables, sysctl optimisations, and Kernel Samepage Merging for reduced RAM usage
+- **Bazzite kernel** — replaces the stock Fedora kernel with Bazzite's pre-built OCI kernel image
 - **CPU governor** — defaults to `performance` mode
 - **Realtime/memlock limits** — `@audio` and `@realtime` groups preconfigured with `rtprio 95` and unlimited memlock
 
@@ -124,4 +126,4 @@ cosign verify --key cosign.pub ghcr.io/caracal-dev/caracal:latest
 
 - [Fedora Kinoite](https://fedoraproject.org/kinoite/) — KDE Plasma on Fedora Atomic
 - [Universal Blue image-template](https://github.com/ublue-os/image-template)
-- [CachyOS kernel](https://github.com/CachyOS/linux-cachyos)
+- [Bazzite kernel](https://github.com/bazzite-org/kernel-bazzite)

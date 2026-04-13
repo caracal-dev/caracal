@@ -7,12 +7,16 @@ set -ouex pipefail
 
 SCRIPTS_DIR="/ctx/scripts"
 
-# ── Repositories ──────────────────────────────────────────────────────────────
+# ── System files ──────────────────────────────────────────────────────────────
+# Deploy /etc and /usr content (our system_files/shared + brew) in the same
+# RUN layer as package installs. Aurora uses this exact pattern to avoid having
+# a dedicated COPY-to-/etc layer in the Containerfile, which would create an
+# OCI layer structure with /etc and /usr/etc content in separate layers and
+# cause bootc switch to fail with "Tree contains both /etc and /usr/etc".
+rsync -rvKlO --exclude='/etc/hostname' /ctx/system_files/shared/ /
+echo "caracal" > /etc/hostname
 
-# CachyOS kernel + addons (provides: kernel-cachyos-lto, cachyos-settings,
-# cachyos-ksm-settings, scx-manager, scx-scheds-git, scx-tools-git)
-dnf5 -y copr enable bieszczaders/kernel-cachyos-lto
-dnf5 -y copr enable bieszczaders/kernel-cachyos-addons
+# ── Repositories ──────────────────────────────────────────────────────────────
 
 # Wine TKG (provides: wine, yabridge)
 dnf5 -y copr enable patrickl/wine-tkg
@@ -23,10 +27,8 @@ dnf5 -y copr enable timlau/audio
 # eza (modern ls replacement)
 dnf5 -y copr enable alternateved/eza
 
-# ── Kernel swap ───────────────────────────────────────────────────────────────
-# Replace the stock Fedora kernel with the CachyOS LTO kernel.
-# Must happen before other package installs so the correct kernel headers are present.
-bash "${SCRIPTS_DIR}/cachyos-kernel.sh"
+# Universal Blue packages (provides: krunner-bazaar)
+dnf5 -y copr enable ublue-os/packages
 
 # ── Realtime support ──────────────────────────────────────────────────────────
 dnf5 -y install realtime-setup
@@ -39,6 +41,12 @@ dnf5 -y remove \
     zram-generator-defaults \
     nano \
     vim-minimal || true
+
+# Remove Fedora logos so no Fedora branding leaks through (GRUB, icon cache, etc.)
+# Swap to generic-logos first (satisfies virtual 'system-logos' provides), then erase it.
+# Branding.sh installs our own distributor logo afterwards.
+dnf5 -y swap fedora-logos generic-logos
+rpm --erase --nodeps --nodb generic-logos
 
 # ── COPR audio packages ───────────────────────────────────────────────────────
 dnf5 -y install \
@@ -97,16 +105,9 @@ dnf5 -y install \
     dragonfly-reverb-lv2 \
     eza
 
-# ── CachyOS performance packages ──────────────────────────────────────────────
-# cachyos-settings: kernel tunables and sysctl optimisations
-# cachyos-ksm-settings: Kernel Samepage Merging tuning (reduces RAM usage)
-# scx-*: sched-ext schedulers; scx_lavd is ideal for low-latency realtime audio
-dnf5 -y install \
-    cachyos-settings \
-    cachyos-ksm-settings \
-    scx-manager \
-    scx-scheds-git \
-    scx-tools-git
+
+# ── Bazaar store ──────────────────────────────────────────────────────────────
+dnf5 -y install krunner-bazaar
 
 # ── General tooling ───────────────────────────────────────────────────────────
 dnf5 -y install \
@@ -210,6 +211,12 @@ dnf5 -y install \
 
 # ── System configuration ──────────────────────────────────────────────────────
 
+# Add Homebrew (linuxbrew) to the sudo secure_path so brew-installed tools
+# are accessible under sudo. Not done via sudoers.d so upstream changes
+# to the base sudoers file are still picked up on image updates.
+# Adapted from https://github.com/ublue-os/aurora (Aurora contributors)
+sed -Ei "s/secure_path = (.*)/secure_path = \1:\/home\/linuxbrew\/.linuxbrew\/bin/" /etc/sudoers
+
 # CPU governor: default to performance mode for low-latency audio
 mkdir -p /etc/sysconfig
 echo 'START_OPTS="--governor performance"' > /etc/sysconfig/cpupower
@@ -230,6 +237,14 @@ getent group audio || groupadd -r audio
 # ── Services ──────────────────────────────────────────────────────────────────
 systemctl enable cpupower.service
 systemctl enable podman.socket
+systemctl enable brew-setup.service
+systemctl enable usr-share-sddm-themes.mount
+
+# User-level service: applies branding (wallpaper, lock screen) on first login
+# and after any bootc rebase, ensuring branding is consistent regardless of
+# whether the user installed fresh or switched from another image.
+chmod +x /usr/libexec/caracal-user-setup
+systemctl --global enable caracal-user-setup.service
 
 # ── Plugins / instruments installed system-wide ───────────────────────────────
 # Surge XT and Decent Sampler are installed for all users at build time.
@@ -251,7 +266,11 @@ rm -rf \
     /var/log/dnf* \
     /var/log/hawkey*
 
-# Some packages (e.g. cachyos-settings) install config to /usr/etc, which
-# conflicts with /etc in a bootc image. Our config lives in /etc, so remove
-# /usr/etc entirely.
+# Some packages (ublue realtime packages, cachyos-settings, etc.) install
+# files into /usr/etc during the build. The kinoite base image ships with
+# /etc content, so having both /etc and /usr/etc in the same image causes
+# ostree/bootc to fail with "Tree contains both /etc and /usr/etc" at
+# deployment time. Remove /usr/etc entirely so the deployed image only has
+# /etc, which bootc handles correctly via its 3-way merge on first boot.
 rm -rf /usr/etc
+

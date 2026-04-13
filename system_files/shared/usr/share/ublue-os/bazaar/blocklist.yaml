@@ -1,0 +1,29 @@
+blocklists:
+  - priority: 0
+    block:
+      - io.github.kolunmi.Bazaar
+      - io.neovim.nvim
+      - org.vim.Vim
+      - io.github.zyedidia.micro
+      - com.helix_editor.Helix
+      - app.devsuite.Ptyxis
+      # Bundled as RPMs — hide Flatpak duplicates
+      - org.ardour.Ardour
+      - org.qtractor.Qtractor
+      - org.jackaudio.JackControl
+      - org.surge_synthesizer.surge_xt
+
+  - priority: 0
+    conditions:
+      - match-envvar:
+          var: XDG_CURRENT_DESKTOP
+          regex: KDE
+    block:
+      - org.kde.dolphin
+      - org.kde.kate
+      - org.kde.kwrite
+      - org.kde.kwalletmanager5
+      - org.kde.kwalletmanager
+      - org.kde.ark
+      - org.kde.kfind
+      - org.kde.konsole
