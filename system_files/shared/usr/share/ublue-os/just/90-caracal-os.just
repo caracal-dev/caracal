@@ -351,7 +351,8 @@ install-flatpaks:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "Installing Caracal OS recommended flatpaks..."
-    sudo flatpak install -y flathub \
+    flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+    flatpak install --user -y flathub \
         org.tenacityaudio.Tenacity \
         io.github.zen_browser.zen \
         com.ranfdev.DistroShelf \
@@ -359,7 +360,8 @@ install-flatpaks:
         org.gnome.Decibels \
         "io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf" \
         org.gnome.Loupe
-    # Remove Firefox (replaced by Zen Browser); installed system-wide on Kinoite
+    # Remove Firefox (replaced by Zen Browser); try user scope then system scope
+    flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true
     sudo flatpak uninstall -y org.mozilla.firefox 2>/dev/null || true
     echo "Flatpaks installed."
 

@@ -1,8 +1,8 @@
 #!/usr/bin/bash
-# Applies Caracal OS branding to the current user's config.
+# Applies Caracal OS branding and default apps to the current user's config.
 # Runs after the graphical session starts so plasma-apply-wallpaperimage works.
 # Uses version tracking so it re-runs whenever the number below is bumped,
-# which ensures branding survives a bootc rebase from another image.
+# which ensures branding and app defaults survive a bootc rebase from another image.
 
 set -oue pipefail
 
@@ -14,8 +14,8 @@ fi
 CARACAL_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
 mkdir -p "$CARACAL_CONFIG_DIR"
 
-# Bump this when branding changes that need re-application across rebases.
-USER_SETUP_VER=1
+# Bump this when branding or default app changes need re-application across rebases.
+USER_SETUP_VER=2
 USER_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/version"
 
 if [[ -f "$USER_SETUP_VER_FILE" ]]; then
@@ -47,6 +47,25 @@ kwriteconfig6 \
 if command -v plasma-apply-wallpaperimage &>/dev/null; then
   plasma-apply-wallpaperimage "$WALLPAPER" || true
 fi
+
+# -- Default flatpaks --
+# Installed at user scope so no sudo is needed and they survive bootc rebases.
+# Flathub user remote is added first in case it isn't configured yet.
+flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || true
+
+flatpak install --user -y flathub \
+  io.github.zen_browser.zen \
+  org.tenacityaudio.Tenacity \
+  com.ranfdev.DistroShelf \
+  org.kde.haruna \
+  org.gnome.Decibels \
+  "io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf" \
+  org.gnome.Loupe \
+  || true
+
+# Remove Firefox (replaced by Zen Browser).
+# Try user scope first (default on most systems), then system scope.
+flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true
 
 echo "$USER_SETUP_VER" > "$USER_SETUP_VER_FILE"
 echo "caracal-user-setup v$USER_SETUP_VER complete."
