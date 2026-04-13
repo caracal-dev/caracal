@@ -257,3 +257,11 @@ rm -rf \
     /var/log/dnf* \
     /var/log/hawkey*
 
+# Some packages (ublue realtime packages, cachyos-settings, etc.) install
+# files into /usr/etc during the build. The kinoite base image ships with
+# /etc content, so having both /etc and /usr/etc in the same image causes
+# ostree/bootc to fail with "Tree contains both /etc and /usr/etc" at
+# deployment time. Remove /usr/etc entirely so the deployed image only has
+# /etc, which bootc handles correctly via its 3-way merge on first boot.
+rm -rf /usr/etc
+
