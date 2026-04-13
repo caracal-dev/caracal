@@ -19,8 +19,7 @@ COPY system_files/shared /system_files/shared
 COPY --from=brew /system_files /system_files/shared
 
 # Base Image — Fedora Kinoite (KDE) with Universal Blue additions
-# FROM quay.io/fedora-ostree-desktops/kinoite:43
-FROM ghcr.io/ublue-os/aurora:latest
+FROM quay.io/fedora-ostree-desktops/kinoite:43
 
 ### Kernel swap
 ## Replace the stock Fedora kernel with the Bazzite kernel.
