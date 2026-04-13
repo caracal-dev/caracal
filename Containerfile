@@ -14,14 +14,15 @@ COPY system_files/assets /assets
 FROM ghcr.io/ublue-os/brew:latest AS brew
 
 # Base Image — Fedora Kinoite (KDE) with Universal Blue additions
-FROM quay.io/fedora-ostree-desktops/kinoite:43
+# FROM quay.io/fedora-ostree-desktops/kinoite:43
+FROM ghcr.io/ublue-os/aurora:latest
 
 ### Pre-install system configuration files
 ## Copied directly into the image before the build script runs.
 ## /etc: KDE/XDG config, hostname, skel (vendor defaults)
 ## /usr: Plasma themes, Plymouth config, ujust recipes, runtime install scripts
-COPY system_files/etc /etc
-COPY system_files/usr /usr
+COPY system_files/shared/etc /etc
+COPY system_files/shared/usr /usr
 
 # Copy Homebrew archive and setup service from the brew stage
 # Credit: https://github.com/ublue-os/brew contributors
