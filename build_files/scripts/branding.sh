@@ -13,8 +13,16 @@ sed -i 's|^ID=fedora|ID=caracal-os\nID_LIKE=fedora|' /usr/lib/os-release
 sed -i 's|^LOGO=.*|LOGO=distributor-logo|' /usr/lib/os-release
 
 # Install distributor logo (for KDE About This System, etc.)
-mkdir -p /usr/share/icons/hicolor/scalable/places
+mkdir -p /usr/share/icons/hicolor/scalable/apps /usr/share/icons/hicolor/scalable/places
 cp /ctx/assets/logos/caracal.svg /usr/share/icons/hicolor/scalable/places/distributor-logo.svg
+cp /ctx/assets/logos/caracal.svg /usr/share/icons/hicolor/scalable/apps/distributor-logo.svg
+
+# KDE's application launcher commonly falls back to these icon names on existing
+# user profiles, so provide aliases in addition to the explicit distributor logo.
+cp /ctx/assets/logos/caracal.svg /usr/share/icons/hicolor/scalable/apps/start-here-kde.svg
+cp /ctx/assets/logos/caracal.svg /usr/share/icons/hicolor/scalable/apps/start-here.svg
+
+gtk-update-icon-cache -f /usr/share/icons/hicolor || true
 
 # Overwrite the kde-settings RPM's kcm-about-distrorc so "About This System" shows
 # Caracal branding regardless of which path KDE searches first.
@@ -25,6 +33,16 @@ cp /etc/xdg/kcm-about-distrorc "$KDE_PROFILE_XDG/kcm-about-distrorc"
 # Install wallpapers to the system wallpaper directory
 mkdir -p /usr/share/wallpapers/caracal
 cp /ctx/assets/wallpapers/* /usr/share/wallpapers/caracal/
+
+# Brand the default SDDM login screen background. The Kinoite/Bazzite KDE stack
+# uses the Breeze SDDM theme by default, and theme.conf.user overrides its stock
+# background without replacing the theme wholesale.
+mkdir -p /usr/share/sddm/themes/breeze
+cat > /usr/share/sddm/themes/breeze/theme.conf.user << 'EOF'
+[General]
+type=image
+background=/usr/share/wallpapers/caracal/caracal-lake.png
+EOF
 
 # Install splash screen logo into Plasma look-and-feel packages
 SPLASH_LOGO="/ctx/assets/logos/caracal-splash.svg"

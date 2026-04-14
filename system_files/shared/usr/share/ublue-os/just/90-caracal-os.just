@@ -1,6 +1,5 @@
 # Caracal OS ujust recipes
 # Run with: ujust <recipe-name>
-
 # ── Helper ────────────────────────────────────────────────────────────────────
 
 [private]
@@ -68,23 +67,23 @@ caracal-cli:
         echo 'Wiring bling into your shell config...'
         if [[ "${shell}" == "fish" ]]; then
             mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/fish"
-            cat <<-'EOF' >> "${XDG_CONFIG_HOME:-$HOME/.config}/fish/config.fish"
-	### caracal bling source start
-	test -f /usr/share/caracal-cli/bling.fish && source /usr/share/caracal-cli/bling.fish
-	### caracal bling source end
-EOF
+            printf '%s\n' \
+                '### caracal bling source start' \
+                'test -f /usr/share/caracal-cli/bling.fish && source /usr/share/caracal-cli/bling.fish' \
+                '### caracal bling source end' \
+                >> "${XDG_CONFIG_HOME:-$HOME/.config}/fish/config.fish"
         elif [[ "${shell}" == "zsh" ]]; then
-            cat <<-'EOF' >> "${ZDOTDIR:-$HOME}/.zshrc"
-	### caracal bling source start
-	test -f /usr/share/caracal-cli/bling.sh && source /usr/share/caracal-cli/bling.sh
-	### caracal bling source end
-EOF
+            printf '%s\n' \
+                '### caracal bling source start' \
+                'test -f /usr/share/caracal-cli/bling.sh && source /usr/share/caracal-cli/bling.sh' \
+                '### caracal bling source end' \
+                >> "${ZDOTDIR:-$HOME}/.zshrc"
         elif [[ "${shell}" == "bash" ]]; then
-            cat <<-'EOF' >> "${HOME}/.bashrc"
-	### caracal bling source start
-	test -f /usr/share/caracal-cli/bling.sh && source /usr/share/caracal-cli/bling.sh
-	### caracal bling source end
-EOF
+            printf '%s\n' \
+                '### caracal bling source start' \
+                'test -f /usr/share/caracal-cli/bling.sh && source /usr/share/caracal-cli/bling.sh' \
+                '### caracal bling source end' \
+                >> "${HOME}/.bashrc"
         fi
     }
 
@@ -141,6 +140,7 @@ restart-pipewire:
 
 # Toggle Bluetooth headset profile mitigation. When enabled, prevents automatic
 # switch to low-quality HFP/HSP profile — keeps A2DP (high quality) at all times.
+
 # Disable to restore headset mic functionality.
 [group("audio")]
 toggle-bt-mic:
@@ -156,15 +156,15 @@ toggle-bt-mic:
     OPTION=$(Choose Enable Disable)
     if [[ "${OPTION,,}" == "enable" ]]; then
         sudo mkdir -p "$(dirname "$CONFIG_FILE")"
-        sudo tee "$CONFIG_FILE" > /dev/null <<'EOF'
-wireplumber.settings = {
-  bluetooth.autoswitch-to-headset-profile = false
-}
-
-monitor.bluez.properties = {
-  bluez5.roles = [ a2dp_sink a2dp_source ]
-}
-EOF
+        printf '%s\n' \
+            'wireplumber.settings = {' \
+            '  bluetooth.autoswitch-to-headset-profile = false' \
+            '}' \
+            '' \
+            'monitor.bluez.properties = {' \
+            '  bluez5.roles = [ a2dp_sink a2dp_source ]' \
+            '}' \
+            | sudo tee "$CONFIG_FILE" > /dev/null
         systemctl --user restart wireplumber
         echo "Mitigation ${green}${bold}enabled${normal} — BT device will stay on A2DP. Headset mic disabled."
     elif [[ "${OPTION,,}" == "disable" ]]; then
@@ -178,6 +178,7 @@ EOF
 
 # Set up named PipeWire loopback sinks for flexible audio routing in your DAW,
 # patchbay (qpwgraph / Helvum / Carla), or for separating streams to different outputs.
+
 # Creates four sinks: DAW, Monitoring, Recording, System
 [group("audio")]
 setup-virtual-channels ACTION="":
@@ -195,70 +196,70 @@ setup-virtual-channels ACTION="":
         OPTION=$(Choose "Create virtual channels" "Remove virtual channels")
     fi
     if [[ "${OPTION,,}" =~ ^create ]]; then
-        cat > ~/.config/pipewire/pipewire.conf.d/virtual-channels.conf << 'EOF'
-context.modules = [
-    { name = libpipewire-module-loopback
-        args = {
-            node.description = "DAW"
-            capture.props = {
-                node.name      = "sink.daw"
-                media.class    = "Audio/Sink"
-                audio.position = [ FL FR ]
-            }
-            playback.props = {
-                node.name    = "playback.daw"
-                node.passive = true
-                audio.position = [ FL FR ]
-            }
-        }
-    }
-    { name = libpipewire-module-loopback
-        args = {
-            node.description = "Monitoring"
-            capture.props = {
-                node.name      = "sink.monitoring"
-                media.class    = "Audio/Sink"
-                audio.position = [ FL FR ]
-            }
-            playback.props = {
-                node.name    = "playback.monitoring"
-                node.passive = true
-                audio.position = [ FL FR ]
-            }
-        }
-    }
-    { name = libpipewire-module-loopback
-        args = {
-            node.description = "Recording"
-            capture.props = {
-                node.name      = "sink.recording"
-                media.class    = "Audio/Sink"
-                audio.position = [ FL FR ]
-            }
-            playback.props = {
-                node.name    = "playback.recording"
-                node.passive = true
-                audio.position = [ FL FR ]
-            }
-        }
-    }
-    { name = libpipewire-module-loopback
-        args = {
-            node.description = "System"
-            capture.props = {
-                node.name      = "sink.system"
-                media.class    = "Audio/Sink"
-                audio.position = [ FL FR ]
-            }
-            playback.props = {
-                node.name    = "playback.system"
-                node.passive = true
-                audio.position = [ FL FR ]
-            }
-        }
-    }
-]
-EOF
+        printf '%s\n' \
+            'context.modules = [' \
+            '    { name = libpipewire-module-loopback' \
+            '        args = {' \
+            '            node.description = "DAW"' \
+            '            capture.props = {' \
+            '                node.name      = "sink.daw"' \
+            '                media.class    = "Audio/Sink"' \
+            '                audio.position = [ FL FR ]' \
+            '            }' \
+            '            playback.props = {' \
+            '                node.name    = "playback.daw"' \
+            '                node.passive = true' \
+            '                audio.position = [ FL FR ]' \
+            '            }' \
+            '        }' \
+            '    }' \
+            '    { name = libpipewire-module-loopback' \
+            '        args = {' \
+            '            node.description = "Monitoring"' \
+            '            capture.props = {' \
+            '                node.name      = "sink.monitoring"' \
+            '                media.class    = "Audio/Sink"' \
+            '                audio.position = [ FL FR ]' \
+            '            }' \
+            '            playback.props = {' \
+            '                node.name    = "playback.monitoring"' \
+            '                node.passive = true' \
+            '                audio.position = [ FL FR ]' \
+            '            }' \
+            '        }' \
+            '    }' \
+            '    { name = libpipewire-module-loopback' \
+            '        args = {' \
+            '            node.description = "Recording"' \
+            '            capture.props = {' \
+            '                node.name      = "sink.recording"' \
+            '                media.class    = "Audio/Sink"' \
+            '                audio.position = [ FL FR ]' \
+            '            }' \
+            '            playback.props = {' \
+            '                node.name    = "playback.recording"' \
+            '                node.passive = true' \
+            '                audio.position = [ FL FR ]' \
+            '            }' \
+            '        }' \
+            '    }' \
+            '    { name = libpipewire-module-loopback' \
+            '        args = {' \
+            '            node.description = "System"' \
+            '            capture.props = {' \
+            '                node.name      = "sink.system"' \
+            '                media.class    = "Audio/Sink"' \
+            '                audio.position = [ FL FR ]' \
+            '            }' \
+            '            playback.props = {' \
+            '                node.name    = "playback.system"' \
+            '                node.passive = true' \
+            '                audio.position = [ FL FR ]' \
+            '            }' \
+            '        }' \
+            '    }' \
+            ']' \
+            > ~/.config/pipewire/pipewire.conf.d/virtual-channels.conf
         echo "Virtual channels created: DAW, Monitoring, Recording, System"
         echo "Log out and back in (or run ujust restart-pipewire) for them to appear."
         echo "Route them in qpwgraph, Helvum, or Carla."
@@ -354,7 +355,7 @@ install-flatpaks:
     flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
     flatpak install --user -y flathub \
         org.tenacityaudio.Tenacity \
-        io.github.zen_browser.zen \
+        app.zen_browser.zen \
         com.ranfdev.DistroShelf \
         org.kde.haruna \
         org.gnome.Decibels \
