@@ -40,7 +40,17 @@ systemctl enable realtime-entsk.service
 dnf5 -y remove \
     zram-generator-defaults \
     nano \
-    vim-minimal || true
+    vim-minimal \
+    firefox \
+    firefox-langpacks \
+    konsole \
+    konsole-part \
+    plasma-discover \
+    plasma-discover-flatpak \
+    plasma-discover-kns \
+    plasma-discover-libs \
+    plasma-discover-notifier \
+    plasma-discover-rpm-ostree || true
 
 # Remove Fedora logos so no Fedora branding leaks through (GRUB, icon cache, etc.)
 # Swap to generic-logos first (satisfies virtual 'system-logos' provides), then erase it.
@@ -239,7 +249,6 @@ getent group audio || groupadd -r audio
 systemctl enable cpupower.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
-systemctl enable usr-share-sddm-themes.mount
 
 # User-level service: applies branding (wallpaper, lock screen) on first login
 # and after any bootc rebase, ensuring branding is consistent regardless of
@@ -274,4 +283,3 @@ rm -rf \
 # deployment time. Remove /usr/etc entirely so the deployed image only has
 # /etc, which bootc handles correctly via its 3-way merge on first boot.
 rm -rf /usr/etc
-

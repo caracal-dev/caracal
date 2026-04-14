@@ -366,7 +366,7 @@ install-flatpaks:
         org.gnome.Decibels \
         "io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf" \
         org.gnome.Loupe
-    # Remove Firefox (replaced by Zen Browser); try user scope then system scope
+    # Remove any legacy Firefox flatpak; Zen Browser is the default browser.
     flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true
     sudo flatpak uninstall -y org.mozilla.firefox 2>/dev/null || true
     echo "Flatpaks installed."
