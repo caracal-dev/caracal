@@ -15,7 +15,7 @@ CARACAL_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
 mkdir -p "$CARACAL_CONFIG_DIR"
 
 # Bump this when branding or default app changes need re-application across rebases.
-USER_SETUP_VER=3
+USER_SETUP_VER=4
 USER_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/version"
 
 if [[ -f "$USER_SETUP_VER_FILE" ]]; then
@@ -27,6 +27,8 @@ if [[ -f "$USER_SETUP_VER_FILE" ]]; then
 fi
 
 WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
+USER_SHELL="$(getent passwd "$(id -un)" | cut -d: -f7)"
+ALACRITTY_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/alacritty/alacritty.toml"
 
 # -- Lock screen wallpaper --
 # Written directly into the user config so it takes precedence over any stale
@@ -46,6 +48,14 @@ kwriteconfig6 \
 # After=graphical-session.target so Plasma is already up at this point.
 if command -v plasma-apply-wallpaperimage &>/dev/null; then
   plasma-apply-wallpaperimage "$WALLPAPER" || true
+fi
+
+# -- Alacritty migration --
+# Systems rebased from Zena can carry a stale shell override that points at
+# /usr/libexec/zena-shell, which is not shipped here and prevents Alacritty
+# from opening at all.
+if [[ -n "$USER_SHELL" ]] && [[ -f "$ALACRITTY_CONFIG" ]]; then
+  sed -i "s|program = \"/usr/libexec/zena-shell\"|program = \"$USER_SHELL\"|" "$ALACRITTY_CONFIG"
 fi
 
 # -- Default flatpaks --

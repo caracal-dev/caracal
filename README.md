@@ -77,13 +77,15 @@ Plugins are installed system-wide in LV2, VST3, and CLAP formats where available
 sudo bootc switch ghcr.io/caracal-dev/caracal:latest
 ```
 
-Reboot to apply. On first login, add yourself to the audio and realtime groups:
+Reboot to apply. On first login, run the guided setup:
 
 ```bash
 ujust first-run
 ```
 
-Or manually:
+That recipe adds you to the `audio` and `realtime` groups, installs the shell extras, and sets up yabridge.
+
+Or do the group step manually:
 
 ```bash
 sudo usermod -aG audio,realtime $USER

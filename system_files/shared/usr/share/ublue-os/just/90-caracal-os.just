@@ -270,11 +270,11 @@ setup-virtual-channels ACTION="":
 
 # ── First-run & setup ─────────────────────────────────────────────────────────
 
-# First-run setup: join audio group, install Oh-My-Zsh + plugins, configure Reaper paths
+# First-run setup: add audio/realtime groups, install shell extras, and set up yabridge
 first-run:
     #!/usr/bin/env bash
     set -euo pipefail
-    usermod -aG audio "$USER"
+    sudo usermod -aG audio,realtime "$USER"
 
     # Install Oh-My-Zsh
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -331,19 +331,19 @@ setup-zsh:
         echo ')'
     } >> ~/.zshrc
 
-# Add /usr/lib64 VST/LV2/CLAP directories to Reaper's plugin search paths
+# Legacy helper: expose system plugins in Reaper's default user scan directories
 route-plugins:
     #!/usr/bin/env bash
     set -euo pipefail
-    echo 'Configuring Reaper plugin paths...'
+    echo 'Copying system plugins into Reaper user scan directories...'
     mkdir -p ~/.config/REAPER
-    # Copy system plugins to user directories (default scan paths — no ini required)
+    # Copy into Reaper's default user scan paths without editing REAPER config files.
     mkdir -p ~/.vst3 ~/.lv2 ~/.clap ~/.vst
     cp -rn /usr/lib64/vst3/* ~/.vst3/ 2>/dev/null || true
     cp -rn /usr/lib64/vst/*  ~/.vst/  2>/dev/null || true
     cp -rn /usr/lib64/lv2/*  ~/.lv2/  2>/dev/null || true
     cp -rn /usr/lib64/clap/* ~/.clap/ 2>/dev/null || true
-    echo 'Plugins copied. Restart Reaper and rescan plugins.'
+    echo 'Plugins copied. Restart Reaper and rescan plugins if you choose to use this compatibility fallback.'
 
 # ── Flatpaks ──────────────────────────────────────────────────────────────────
 
@@ -375,7 +375,6 @@ install-reaper:
     #!/usr/bin/env bash
     set -euo pipefail
     sudo /usr/lib/caracal-os/scripts/install-reaper.sh
-    ujust route-plugins
     ujust _ask-remove-ardour
 
 # Install Renoise (commercial, free demo available)
