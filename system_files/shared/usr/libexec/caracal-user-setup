@@ -15,7 +15,7 @@ CARACAL_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
 mkdir -p "$CARACAL_CONFIG_DIR"
 
 # Bump this when branding or default app changes need re-application across rebases.
-USER_SETUP_VER=4
+USER_SETUP_VER=5
 USER_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/version"
 
 if [[ -f "$USER_SETUP_VER_FILE" ]]; then
@@ -60,19 +60,35 @@ fi
 
 # -- Default flatpaks --
 # Installed at user scope so no sudo is needed and they survive bootc rebases.
-# Flathub user remote is added first in case it isn't configured yet.
+# Retry any missing defaults on each run and only advance the setup version
+# after the install pass succeeds.
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || true
 
-flatpak install --user -y flathub \
-  io.github.kolunmi.Bazaar \
-  app.zen_browser.zen \
-  org.tenacityaudio.Tenacity \
-  com.ranfdev.DistroShelf \
-  org.kde.haruna \
-  org.gnome.Decibels \
-  "io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf" \
-  org.gnome.Loupe ||
-  true
+DEFAULT_FLATPAKS=(
+  io.github.kolunmi.Bazaar
+  app.zen_browser.zen
+  org.tenacityaudio.Tenacity
+  com.ranfdev.DistroShelf
+  org.kde.haruna
+  org.gnome.Decibels
+  io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf
+  org.gnome.Loupe
+)
+
+missing_flatpaks=()
+for app_id in "${DEFAULT_FLATPAKS[@]}"; do
+  if ! flatpak info --user "$app_id" >/dev/null 2>&1; then
+    missing_flatpaks+=("$app_id")
+  fi
+done
+
+flatpak_install_ok=1
+if (( ${#missing_flatpaks[@]} > 0 )); then
+  if ! flatpak install --user -y flathub "${missing_flatpaks[@]}"; then
+    echo "caracal-user-setup: failed to install one or more default flatpaks." >&2
+    flatpak_install_ok=0
+  fi
+fi
 
 # Remove Firefox (replaced by Zen Browser).
 # Try both user and system scope so rebases away from browser-heavy images
@@ -80,5 +96,10 @@ flatpak install --user -y flathub \
 flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true
 flatpak uninstall --system -y org.mozilla.firefox 2>/dev/null || true
 
-echo "$USER_SETUP_VER" >"$USER_SETUP_VER_FILE"
-echo "caracal-user-setup v$USER_SETUP_VER complete."
+if (( flatpak_install_ok )); then
+  echo "$USER_SETUP_VER" >"$USER_SETUP_VER_FILE"
+  echo "caracal-user-setup v$USER_SETUP_VER complete."
+else
+  echo "caracal-user-setup: leaving version at ${STORED_VER:-unset} so missing apps retry on next login." >&2
+  exit 1
+fi
