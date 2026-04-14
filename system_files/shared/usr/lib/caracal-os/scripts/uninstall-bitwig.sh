@@ -9,4 +9,12 @@ rm -rf /usr/local/share/bitwig-studio
 
 find /usr/local/share/icons -path '*/apps/bitwig-studio.*' -delete 2>/dev/null || true
 
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database /usr/local/share/applications
+fi
+
+if command -v update-mime-database >/dev/null 2>&1; then
+    update-mime-database /usr/local/share/mime
+fi
+
 echo "Bitwig Studio removed."

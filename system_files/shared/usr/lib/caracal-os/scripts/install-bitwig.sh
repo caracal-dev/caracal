@@ -8,6 +8,7 @@ BITWIG_DEB="/tmp/bitwig.deb"
 BITWIG_EXTRACT_DIR="/tmp/bitwig-extract"
 BITWIG_LIB_DIR="/usr/local/lib64"
 BITWIG_WRAPPER="/usr/local/bin/bitwig-studio"
+BITWIG_DESKTOP_FILE="/usr/local/share/applications/bitwig-studio.desktop"
 
 cleanup() {
     rm -rf "${BITWIG_EXTRACT_DIR}" "${BITWIG_DEB}"
@@ -43,11 +44,19 @@ EOF
 chmod 755 "${BITWIG_WRAPPER}"
 
 # Adjust desktop files for the relocated prefix when present.
-if [ -f /usr/local/share/applications/bitwig-studio.desktop ]; then
+if [ -f "${BITWIG_DESKTOP_FILE}" ]; then
     sed -i \
-        -e 's|Exec=/usr/bin/bitwig-studio|Exec=/usr/local/bin/bitwig-studio|g' \
+        -e 's|/usr/bin/bitwig-studio|/usr/local/bin/bitwig-studio|g' \
         -e 's|Icon=/usr/share/|Icon=/usr/local/share/|g' \
-        /usr/local/share/applications/bitwig-studio.desktop
+        "${BITWIG_DESKTOP_FILE}"
+fi
+
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database /usr/local/share/applications
+fi
+
+if command -v update-mime-database >/dev/null 2>&1; then
+    update-mime-database /usr/local/share/mime
 fi
 
 echo "Bitwig Studio installed to /opt/bitwig-studio"

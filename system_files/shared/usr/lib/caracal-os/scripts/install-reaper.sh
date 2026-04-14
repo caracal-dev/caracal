@@ -7,8 +7,11 @@ REAPER_VERSION="765"
 REAPER_ARCHIVE="/tmp/reaper.tar.xz"
 REAPER_EXTRACT_DIR="/tmp/reaper_linux_x86_64"
 DESKTOP_TARGET="/usr/local/share/applications/cockos-reaper.desktop"
+ICON_THEME_DIR="/usr/local/share/icons/hicolor/256x256/apps"
 ICON_TARGET_DIR="/usr/local/share/pixmaps"
-ICON_TARGET="${ICON_TARGET_DIR}/reaper.png"
+ICON_TARGET="${ICON_THEME_DIR}/cockos-reaper.png"
+ICON_COMPAT_TARGET="${ICON_THEME_DIR}/reaper.png"
+ICON_PIXMAP_TARGET="${ICON_TARGET_DIR}/reaper.png"
 
 cleanup() {
     rm -rf "${REAPER_ARCHIVE}" "${REAPER_EXTRACT_DIR}"
@@ -24,6 +27,7 @@ cd "${REAPER_EXTRACT_DIR}"
 ./install-reaper.sh --install /opt --integrate-desktop
 
 mkdir -p /usr/local/share/applications
+mkdir -p "${ICON_THEME_DIR}"
 mkdir -p "${ICON_TARGET_DIR}"
 
 # The upstream installer is inconsistent about where it writes the desktop file.
@@ -74,6 +78,8 @@ done
 
 if [ -n "${icon_source}" ]; then
     install -m644 "${icon_source}" "${ICON_TARGET}"
+    install -m644 "${icon_source}" "${ICON_COMPAT_TARGET}"
+    install -m644 "${icon_source}" "${ICON_PIXMAP_TARGET}"
 fi
 
 # Fix installer-generated paths when present.
@@ -84,10 +90,22 @@ sed -i \
 
 if [ -f "${ICON_TARGET}" ]; then
     if grep -q '^Icon=' "${DESKTOP_TARGET}"; then
-        sed -i "s|^Icon=.*|Icon=${ICON_TARGET}|" "${DESKTOP_TARGET}"
+        sed -i 's|^Icon=.*|Icon=cockos-reaper|' "${DESKTOP_TARGET}"
     else
-        printf 'Icon=%s\n' "${ICON_TARGET}" >> "${DESKTOP_TARGET}"
+        printf 'Icon=cockos-reaper\n' >> "${DESKTOP_TARGET}"
     fi
+fi
+
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database /usr/local/share/applications
+fi
+
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+    gtk-update-icon-cache -q -t -f /usr/local/share/icons/hicolor || true
+fi
+
+if command -v kbuildsycoca6 >/dev/null 2>&1; then
+    kbuildsycoca6 >/dev/null 2>&1 || true
 fi
 
 echo "REAPER installed to /opt/REAPER"
