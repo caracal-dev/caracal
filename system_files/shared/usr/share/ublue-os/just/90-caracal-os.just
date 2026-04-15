@@ -295,7 +295,11 @@ first-run:
     echo 'eval "$(oh-my-posh init zsh --config '"'"'https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/refs/heads/main/themes/json.omp.json'"'"')"' >> ~/.zshrc
 
     # Set up Wine-native VST bridge
-    export WINELOADER='/opt/wine-staging/bin/wine'
+    export WINELOADER="$(command -v wine)"
+    if [[ -z "${WINELOADER}" ]]; then
+        echo "Wine is not installed or not on PATH." >&2
+        exit 1
+    fi
     wineboot -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
     mkdir -p "$vst3_dir"
@@ -310,7 +314,11 @@ first-run:
 setup-audio:
     #!/usr/bin/env bash
     set -euo pipefail
-    export WINELOADER='/opt/wine-staging/bin/wine'
+    export WINELOADER="$(command -v wine)"
+    if [[ -z "${WINELOADER}" ]]; then
+        echo "Wine is not installed or not on PATH." >&2
+        exit 1
+    fi
     wineboot -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
     mkdir -p "$vst3_dir"

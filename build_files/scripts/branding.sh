@@ -34,15 +34,18 @@ cp /etc/xdg/kcm-about-distrorc "$KDE_PROFILE_XDG/kcm-about-distrorc"
 mkdir -p /usr/share/wallpapers/caracal
 cp /ctx/assets/wallpapers/* /usr/share/wallpapers/caracal/
 
-# Brand the default SDDM login screen background. The Kinoite/Bazzite KDE stack
-# uses the Breeze SDDM theme by default, and theme.conf.user overrides its stock
-# background without replacing the theme wholesale.
-mkdir -p /usr/share/sddm/themes/breeze
-cat > /usr/share/sddm/themes/breeze/theme.conf.user << 'EOF'
+# Brand the default SDDM login screen background. Fedora KDE currently ships
+# 01-breeze-fedora as the active greeter theme, while some rebases may still
+# resolve to plain breeze. Override both theme variants so the login wallpaper
+# converges regardless of which one SDDM selects.
+for sddm_theme in 01-breeze-fedora breeze; do
+  mkdir -p "/usr/share/sddm/themes/${sddm_theme}"
+  cat > "/usr/share/sddm/themes/${sddm_theme}/theme.conf.user" << 'EOF'
 [General]
 type=image
 background=/usr/share/wallpapers/caracal/caracal-lake.png
 EOF
+done
 
 # Install splash screen logo into Plasma look-and-feel packages
 SPLASH_LOGO="/ctx/assets/logos/caracal-splash.svg"
