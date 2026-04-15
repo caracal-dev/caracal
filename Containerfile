@@ -14,6 +14,7 @@ FROM ghcr.io/ublue-os/brew:latest AS brew
 # system files in system_files/shared/ (deployed via rsync in build.sh, same as Aurora)
 FROM scratch AS ctx
 COPY build_files /
+COPY vital-synth /vital-synth
 COPY system_files/assets /assets
 COPY system_files/shared /system_files/shared
 COPY --from=brew /system_files /system_files/shared

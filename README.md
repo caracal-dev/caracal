@@ -47,6 +47,7 @@ Plugins are installed system-wide in LV2, VST3, and CLAP formats where available
 - Guitarix, SooperLooper, Rakarrack
 - Bristol, Synthv1, Drumkv1
 - Surge XT, Decent Sampler (installed system-wide at build time)
+- Vital (installed system-wide at build time when `vital-synth/VitalInstaller.deb` is provided)
 - Full x42 and SWH LV2 plugin sets
 
 **Windows VST support:**
@@ -101,6 +102,8 @@ Then log out and back in for the group changes to take effect.
 ## Building Locally
 
 Requires [just](https://just.systems/) and Podman.
+
+If you want Vital baked into the image, download the Linux Debian installer from your Vital account and place it at `vital-synth/VitalInstaller.deb` before building. The build will skip Vital automatically when that file is absent.
 
 ```bash
 # Build the container image
