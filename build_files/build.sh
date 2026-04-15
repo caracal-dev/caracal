@@ -219,6 +219,14 @@ dnf5 -y install \
   dpkg \
   libbsd
 
+# ── WinBoat prerequisites ─────────────────────────────────────────────────────
+# Upstream WinBoat expects FreeRDP 3.x for RemoteApp/RDP integration and a
+# container runtime. We ship Podman system-wide already; podman-compose keeps
+# WinBoat's preflight checks and compose-based workflows functional.
+dnf5 -y install \
+  freerdp \
+  podman-compose
+
 # ── System configuration ──────────────────────────────────────────────────────
 
 # Add Homebrew (linuxbrew) to the sudo secure_path so brew-installed tools
