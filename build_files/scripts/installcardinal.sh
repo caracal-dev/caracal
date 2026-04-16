@@ -22,9 +22,9 @@ install_dir_bundle() {
 curl -fL --retry 3 --retry-delay 2 -o "${workdir}/${CARDINAL_ARCHIVE}" "${CARDINAL_URL}"
 tar xzf "${workdir}/${CARDINAL_ARCHIVE}" -C "${workdir}"
 
-extract_dir="${workdir}/Cardinal-linux-x86_64-${CARDINAL_VERSION}"
-if [[ ! -d "${extract_dir}" ]]; then
-    echo "Cardinal archive did not contain the expected directory layout" >&2
+extract_dir="$(find "${workdir}" -mindepth 1 -maxdepth 2 -type f -name 'CardinalNative' -printf '%h\n' | head -n 1)"
+if [[ -z "${extract_dir}" || ! -d "${extract_dir}" ]]; then
+    echo "Cardinal archive did not contain the expected Cardinal files" >&2
     exit 1
 fi
 

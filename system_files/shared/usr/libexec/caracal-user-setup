@@ -39,7 +39,10 @@ DESIRED_PANEL_LAUNCHERS=(
   "applications:app.zen_browser.zen.desktop"
   "applications:ardour9.desktop"
 )
-DESIRED_PANEL_LAUNCHERS_CSV="$(IFS=,; printf '%s' "${DESIRED_PANEL_LAUNCHERS[*]}")"
+DESIRED_PANEL_LAUNCHERS_CSV="$(
+  IFS=,
+  printf '%s' "${DESIRED_PANEL_LAUNCHERS[*]}"
+)"
 
 DESIRED_KICKOFF_FAVORITES=(
   "ardour9.desktop"
@@ -58,11 +61,12 @@ DESIRED_KICKOFF_FAVORITES=(
   "org.kde.dolphin.desktop"
   "systemsettings.desktop"
 )
-DESIRED_KICKOFF_FAVORITES_CSV="$(IFS=,; printf '%s' "${DESIRED_KICKOFF_FAVORITES[*]}")"
+DESIRED_KICKOFF_FAVORITES_CSV="$(
+  IFS=,
+  printf '%s' "${DESIRED_KICKOFF_FAVORITES[*]}"
+)"
 
 # -- Lock screen wallpaper --
-# Written directly into the user config so it takes precedence over any stale
-# ~/.config/kscreenlockerrc left over from a previous image (e.g. after rebase).
 kwriteconfig6 \
   --file "$HOME/.config/kscreenlockerrc" \
   --group Greeter --group Wallpaper --group org.kde.image --group General \
@@ -74,16 +78,11 @@ kwriteconfig6 \
   --key PreviewImage "$WALLPAPER"
 
 # -- Desktop wallpaper --
-# plasma-apply-wallpaperimage talks to plasmashell over D-Bus; the service runs
-# After=graphical-session.target so Plasma is already up at this point.
 if command -v plasma-apply-wallpaperimage &>/dev/null; then
   plasma-apply-wallpaperimage "$WALLPAPER" || true
 fi
 
 # -- Alacritty migration --
-# Systems rebased from Zena can carry a stale shell override that points at
-# /usr/libexec/zena-shell, which is not shipped here and prevents Alacritty
-# from opening at all.
 if [[ -n "$USER_SHELL" ]] && [[ -f "$ALACRITTY_CONFIG" ]]; then
   sed -i "s|program = \"/usr/libexec/zena-shell\"|program = \"$USER_SHELL\"|" "$ALACRITTY_CONFIG"
 fi
@@ -96,8 +95,6 @@ kwriteconfig6 \
 
 # -- Default flatpaks --
 # Installed at user scope so no sudo is needed and they survive bootc rebases.
-# Retry any missing defaults on each run and only advance the setup version
-# after the install pass succeeds.
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || true
 
 DEFAULT_FLATPAKS=(
@@ -119,7 +116,7 @@ for app_id in "${DEFAULT_FLATPAKS[@]}"; do
 done
 
 flatpak_install_ok=1
-if (( ${#missing_flatpaks[@]} > 0 )); then
+if ((${#missing_flatpaks[@]} > 0)); then
   if ! flatpak install --user -y flathub "${missing_flatpaks[@]}"; then
     echo "caracal-user-setup: failed to install one or more default flatpaks." >&2
     flatpak_install_ok=0
@@ -206,8 +203,7 @@ for mime in \
   application/x-extension-html \
   application/x-extension-shtml \
   application/x-extension-xhtml \
-  application/x-extension-xht
-do
+  application/x-extension-xht; do
   xdg-mime default app.zen_browser.zen.desktop "$mime" 2>/dev/null || true
 done
 
@@ -245,7 +241,7 @@ fi
 # not surface as DAW plugins remain easy to discover.
 update_kickoff_favorites_file "$USER_CONFIG_DIR/kactivitymanagerd-statsrc"
 
-if (( flatpak_install_ok )); then
+if ((flatpak_install_ok)); then
   echo "$USER_SETUP_VER" >"$USER_SETUP_VER_FILE"
   echo "caracal-user-setup v$USER_SETUP_VER complete."
 else
