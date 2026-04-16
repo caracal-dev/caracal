@@ -13,7 +13,7 @@ echo "caracal" >/etc/hostname
 
 dnf5 -y copr enable patrickl/wine-tkg
 dnf5 -y copr enable timlau/audio
-dnf5 -y copr enable teervo/DISTRHO/
+dnf5 -y copr enable teervo/DISTRHO
 dnf5 -y copr enable alternateved/eza
 dnf5 -y copr enable ublue-os/packages
 
