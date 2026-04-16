@@ -418,3 +418,14 @@ uninstall-bitwig:
     #!/usr/bin/env bash
     set -euo pipefail
     sudo /usr/lib/caracal-os/scripts/uninstall-bitwig.sh
+
+# Install rtcqs into a user-local virtualenv, including the GUI launcher
+install-rtcqs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    /usr/lib/caracal-os/scripts/install-rtcqs.sh
+
+uninstall-rtcqs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    /usr/lib/caracal-os/scripts/uninstall-rtcqs.sh
