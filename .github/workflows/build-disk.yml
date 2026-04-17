@@ -51,14 +51,21 @@ jobs:
         run: |
           USER_UID=$(id -u)
           USER_GID=$(id -g)
+          IMAGE_REGISTRY_LOWER=${IMAGE_REGISTRY,,}
+          IMAGE_NAME_LOWER=${IMAGE_NAME,,}
           # Concatenate the types with a hyphen
           DISK_TYPE=$(echo "${{ matrix.disk-type }}" | tr ' ' '-')
           # Lowercase the image uri
-          echo "IMAGE_REGISTRY=${IMAGE_REGISTRY,,}" >> ${GITHUB_ENV}
-          echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
+          echo "IMAGE_REGISTRY=${IMAGE_REGISTRY_LOWER}" >> ${GITHUB_ENV}
+          echo "IMAGE_NAME=${IMAGE_NAME_LOWER}" >> ${GITHUB_ENV}
           echo "DISK_TYPE=${DISK_TYPE}" >> ${GITHUB_ENV}
           echo "USER_UID=${USER_UID}" >> ${GITHUB_ENV}
           echo "USER_GID=${USER_GID}" >> ${GITHUB_ENV}
+          if [ "${{ matrix.disk-type }}" = "bootc-installer" ]; then
+            echo "OUTPUT_DIR=${GITHUB_WORKSPACE}/output/bootc-installer" >> ${GITHUB_ENV}
+            echo "INSTALLER_IMAGE=localhost/${IMAGE_NAME_LOWER}-installer:latest" >> ${GITHUB_ENV}
+            echo "PAYLOAD_IMAGE=${IMAGE_REGISTRY_LOWER}/${IMAGE_NAME_LOWER}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
+          fi
 
       - name: Install dependencies
         if: inputs.platform == 'arm64'
@@ -79,6 +86,7 @@ jobs:
 
       - name: Build disk images
         id: build
+        if: matrix.disk-type != 'bootc-installer'
         uses: osbuild/bootc-image-builder-action@main
         with:
           builder-image: ${{ env.BIB_IMAGE }}
@@ -89,12 +97,65 @@ jobs:
           # Keep CI aligned with the local Justfile, which always builds Btrfs-backed images.
           additional-args: --use-librepo=True --rootfs=btrfs
 
+      - name: Build installer container
+        if: matrix.disk-type == 'bootc-installer'
+        shell: bash
+        run: |
+          set -euo pipefail
+          EFI_BOOT_PKG="grub2-efi-x64-cdboot"
+          if [ "${{ inputs.platform }}" = "arm64" ]; then
+            EFI_BOOT_PKG="grub2-efi-aa64-cdboot"
+          fi
+
+          podman build \
+            --pull=newer \
+            --build-arg BASE_IMAGE="${PAYLOAD_IMAGE}" \
+            --build-arg EFI_BOOT_PKG="${EFI_BOOT_PKG}" \
+            --tag "${INSTALLER_IMAGE}" \
+            --file ./Containerfile.installer \
+            .
+
+      - name: Build bootc installer ISO
+        if: matrix.disk-type == 'bootc-installer'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo rm -rf /var/lib/containers/storage
+          sudo mkdir -p /etc/containers
+          printf '%s\n' \
+            '[storage]' \
+            'driver = "overlay"' \
+            'runroot = "/run/containers/storage"' \
+            'graphroot = "/var/lib/containers/storage"' \
+            | sudo tee /etc/containers/storage.conf >/dev/null
+
+          sudo podman pull "${PAYLOAD_IMAGE}"
+          podman save "${INSTALLER_IMAGE}" | sudo podman load
+          sudo mkdir -p "${OUTPUT_DIR}"
+          sudo podman run \
+            --rm \
+            --privileged \
+            --pull=newer \
+            --security-opt label=type:unconfined_t \
+            --volume /var/lib/containers/storage:/var/lib/containers/storage \
+            --volume "${OUTPUT_DIR}:/output" \
+            --volume "${GITHUB_WORKSPACE}/disk_config/iso.toml:/config.toml:ro" \
+            "${BIB_IMAGE}" \
+            build \
+            --output /output \
+            --chown "${USER_UID}:${USER_GID}" \
+            --use-librepo=True \
+            --rootfs=btrfs \
+            --type bootc-installer \
+            --bootc-installer-payload-ref "${PAYLOAD_IMAGE}" \
+            "${INSTALLER_IMAGE}"
+
       - name: Upload disk images and Checksum to Job Artifacts
         if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ env.IMAGE_NAME }}-${{ inputs.platform || 'amd64' }}-${{ matrix.disk-type }}
-          path: ${{ steps.build.outputs.output-directory }}
+          path: ${{ matrix.disk-type == 'bootc-installer' && './output/bootc-installer' || steps.build.outputs.output-directory }}
           if-no-files-found: error
           retention-days: 0
           compression-level: 0
@@ -110,7 +171,7 @@ jobs:
           RCLONE_CONFIG_S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
           RCLONE_CONFIG_S3_REGION: ${{ secrets.S3_REGION }}
           RCLONE_CONFIG_S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
-          SOURCE_DIR: ${{ steps.build.outputs.output-directory }}
+          SOURCE_DIR: ${{ matrix.disk-type == 'bootc-installer' && './output/bootc-installer' || steps.build.outputs.output-directory }}
         run: |
           sudo apt-get update
           sudo apt-get install -y rclone

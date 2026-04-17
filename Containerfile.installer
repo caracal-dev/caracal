@@ -1,0 +1,25 @@
+ARG BASE_IMAGE=ghcr.io/caracal-dev/caracal:latest
+FROM ${BASE_IMAGE}
+
+ARG EFI_BOOT_PKG=grub2-efi-x64-cdboot
+
+RUN dnf install -y \
+    anaconda \
+    anaconda-install-env-deps \
+    anaconda-dracut \
+    biosdevname \
+    dracut-config-generic \
+    dracut-network \
+    ${EFI_BOOT_PKG} \
+    lorax-templates-* \
+    net-tools \
+    prefixdevname \
+    python3-mako \
+    squashfs-tools \
+    && dnf clean all
+
+# Fedora 43+ needs EFI artifacts copied into the path lorax expects.
+RUN mkdir -p /boot/efi && cp -ra /usr/lib/efi/*/*/EFI /boot/efi
+
+# Lorax expects /var/mnt to exist on the source image.
+RUN mkdir -p /var/mnt
