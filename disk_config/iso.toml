@@ -6,6 +6,7 @@ minsize = "40 GiB"
 enable = [
   "org.fedoraproject.Anaconda.Modules.Localization",
   "org.fedoraproject.Anaconda.Modules.Network",
+  "org.fedoraproject.Anaconda.Modules.Payloads",
   "org.fedoraproject.Anaconda.Modules.Runtime",
   "org.fedoraproject.Anaconda.Modules.Security",
   "org.fedoraproject.Anaconda.Modules.Services",
