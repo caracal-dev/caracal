@@ -15,7 +15,7 @@ CARACAL_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
 mkdir -p "$CARACAL_CONFIG_DIR"
 
 # Bump this when branding or default app changes need re-application across rebases.
-USER_SETUP_VER=8
+USER_SETUP_VER=9
 USER_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/version"
 
 if [[ -f "$USER_SETUP_VER_FILE" ]]; then
@@ -30,6 +30,7 @@ WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
 USER_SHELL="$(getent passwd "$(id -un)" | cut -d: -f7)"
 ALACRITTY_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/alacritty/alacritty.toml"
 USER_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+SOFTWARE_INSTALLER_DESKTOP_SOURCE="/usr/share/applications/caracal-software-installer.desktop"
 
 mkdir -p "$USER_CONFIG_DIR"
 
@@ -80,6 +81,18 @@ kwriteconfig6 \
 # -- Desktop wallpaper --
 if command -v plasma-apply-wallpaperimage &>/dev/null; then
   plasma-apply-wallpaperimage "$WALLPAPER" || true
+fi
+
+# -- Desktop shortcuts --
+DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || true)"
+if [[ -z "$DESKTOP_DIR" ]]; then
+  DESKTOP_DIR="$HOME/Desktop"
+fi
+
+if [[ -f "$SOFTWARE_INSTALLER_DESKTOP_SOURCE" ]]; then
+  install -d "$DESKTOP_DIR"
+  install -m755 "$SOFTWARE_INSTALLER_DESKTOP_SOURCE" \
+    "$DESKTOP_DIR/caracal-software-installer.desktop"
 fi
 
 # -- Alacritty migration --

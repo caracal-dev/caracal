@@ -10,13 +10,24 @@ FROM ${KERNEL_REF} AS kernel
 # avoiding the OCI layer-level /etc vs /usr/etc conflict (same pattern as Aurora).
 FROM ghcr.io/ublue-os/brew:latest AS brew
 
+FROM golang:1.25 AS caracal-software-installer-build
+WORKDIR /src
+COPY caracal-software-installer/go.mod caracal-software-installer/go.sum ./
+RUN go mod download
+COPY caracal-software-installer/ .
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/caracal-software-installer ./cmd/caracal-software-installer
+
 # Build context: scripts live in build_files/, branding assets in system_files/assets/,
 # system files in system_files/shared/ (deployed via rsync in build.sh, same as Aurora)
 FROM scratch AS ctx
-COPY build_files /
-COPY system_files/assets /assets
-COPY system_files/shared /system_files/shared
+COPY caracal/build_files /
+COPY caracal/system_files/assets /assets
+COPY caracal/system_files/shared /system_files/shared
 COPY --from=brew /system_files /system_files/shared
+COPY --from=caracal-software-installer-build /out/caracal-software-installer /system_files/shared/usr/bin/caracal-software-installer
+COPY caracal-software-installer/scripts /system_files/shared/usr/lib/caracal-software-installer/scripts
+COPY caracal-software-installer/assets /system_files/shared/usr/share/caracal-software-installer/assets
+COPY caracal-software-installer/logo.txt /system_files/shared/usr/share/caracal-software-installer/logo.txt
 
 # Base Image — Fedora Kinoite (KDE) with Universal Blue additions
 FROM quay.io/fedora-ostree-desktops/kinoite:43
