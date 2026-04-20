@@ -7,9 +7,22 @@ set -oue pipefail
 # Update OS identity in /usr/lib/os-release
 sed -i 's|^PRETTY_NAME=.*|PRETTY_NAME="Caracal OS"|' /usr/lib/os-release
 sed -i 's|^NAME=.*|NAME="Caracal OS"|' /usr/lib/os-release
-# Replace ID=fedora with ID=caracal-os + add ID_LIKE=fedora on the next line
-# (Kinoite's os-release has ID=fedora with no ID_LIKE, so we can't just replace ID_LIKE=)
-sed -i 's|^ID=fedora|ID=caracal-os\nID_LIKE=fedora|' /usr/lib/os-release
+# Keep Fedora's distro ID so bootc-image-builder can resolve the correct
+# manifest definitions (it keys off ID + VERSION_ID, e.g. fedora-43).
+# Put the custom branding in variant fields instead.
+if ! grep -q '^ID_LIKE=' /usr/lib/os-release; then
+  sed -i '/^ID=fedora$/a ID_LIKE=fedora' /usr/lib/os-release
+fi
+if grep -q '^VARIANT=' /usr/lib/os-release; then
+  sed -i 's|^VARIANT=.*|VARIANT="Caracal OS"|' /usr/lib/os-release
+else
+  printf '%s\n' 'VARIANT="Caracal OS"' >> /usr/lib/os-release
+fi
+if grep -q '^VARIANT_ID=' /usr/lib/os-release; then
+  sed -i 's|^VARIANT_ID=.*|VARIANT_ID=caracal-os|' /usr/lib/os-release
+else
+  printf '%s\n' 'VARIANT_ID=caracal-os' >> /usr/lib/os-release
+fi
 sed -i 's|^LOGO=.*|LOGO=distributor-logo|' /usr/lib/os-release
 
 # Install distributor logo (for KDE About This System, etc.)
@@ -34,15 +47,18 @@ cp /etc/xdg/kcm-about-distrorc "$KDE_PROFILE_XDG/kcm-about-distrorc"
 mkdir -p /usr/share/wallpapers/caracal
 cp /ctx/assets/wallpapers/* /usr/share/wallpapers/caracal/
 
-# Brand the default SDDM login screen background. The Kinoite/Bazzite KDE stack
-# uses the Breeze SDDM theme by default, and theme.conf.user overrides its stock
-# background without replacing the theme wholesale.
-mkdir -p /usr/share/sddm/themes/breeze
-cat > /usr/share/sddm/themes/breeze/theme.conf.user << 'EOF'
+# Brand the default SDDM login screen background. Fedora KDE currently ships
+# 01-breeze-fedora as the active greeter theme, while some rebases may still
+# resolve to plain breeze. Override both theme variants so the login wallpaper
+# converges regardless of which one SDDM selects.
+for sddm_theme in 01-breeze-fedora breeze; do
+  mkdir -p "/usr/share/sddm/themes/${sddm_theme}"
+  cat > "/usr/share/sddm/themes/${sddm_theme}/theme.conf.user" << 'EOF'
 [General]
 type=image
 background=/usr/share/wallpapers/caracal/caracal-lake.png
 EOF
+done
 
 # Install splash screen logo into Plasma look-and-feel packages
 SPLASH_LOGO="/ctx/assets/logos/caracal-splash.svg"

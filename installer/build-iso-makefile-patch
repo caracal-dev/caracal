@@ -1,0 +1,13 @@
+# Adapted from ublue-os/bazzite just_scripts/build-iso-makefile-patch.
+# Credit: Bazzite contributors.
+$(IMAGE_NAME)-$(IMAGE_TAG):
+	skopeo copy docker-daemon:$(IMAGE_REPO)/$(IMAGE_NAME):$(IMAGE_TAG) oci:$(IMAGE_NAME)-$(IMAGE_TAG)
+
+install-deps:
+	$(install_pkg) skopeo
+
+FILES=$(filter-out Makefile,$(wildcard *))
+clean:
+ifneq ($(FILES),)
+	rm -Rf $(FILES)
+endif

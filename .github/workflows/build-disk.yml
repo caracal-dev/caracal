@@ -20,14 +20,17 @@ on:
       - main
     paths:
       - './disk_config/disk.toml'
-      - './disk_config/iso.toml'
       - './.github/workflows/build-disk.yml'
+      - './installer/build-iso-makefile-patch'
 
 env:
   IMAGE_NAME: ${{ github.event.repository.name }} # output of build.yml, keep in sync
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
   DEFAULT_TAG: "latest"
+  FEDORA_VERSION: "43" # keep in sync with Containerfile
+  INSTALLER_VARIANT: "Kinoite"
   BIB_IMAGE: "quay.io/centos-bootc/bootc-image-builder:latest"
+  ISO_BUILDER_IMAGE: "ghcr.io/jasonn3/build-container-installer:latest"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -40,7 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        disk-type: ["qcow2", "anaconda-iso"]
+        disk-type: ["qcow2", "installer-iso"]
     permissions:
       contents: read
       packages: read
@@ -51,14 +54,26 @@ jobs:
         run: |
           USER_UID=$(id -u)
           USER_GID=$(id -g)
+          IMAGE_REGISTRY_LOWER=${IMAGE_REGISTRY,,}
+          IMAGE_NAME_LOWER=${IMAGE_NAME,,}
           # Concatenate the types with a hyphen
           DISK_TYPE=$(echo "${{ matrix.disk-type }}" | tr ' ' '-')
           # Lowercase the image uri
-          echo "IMAGE_REGISTRY=${IMAGE_REGISTRY,,}" >> ${GITHUB_ENV}
-          echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
+          echo "IMAGE_REGISTRY=${IMAGE_REGISTRY_LOWER}" >> ${GITHUB_ENV}
+          echo "IMAGE_NAME=${IMAGE_NAME_LOWER}" >> ${GITHUB_ENV}
           echo "DISK_TYPE=${DISK_TYPE}" >> ${GITHUB_ENV}
           echo "USER_UID=${USER_UID}" >> ${GITHUB_ENV}
           echo "USER_GID=${USER_GID}" >> ${GITHUB_ENV}
+          if [ "${{ matrix.disk-type }}" = "installer-iso" ]; then
+            echo "OUTPUT_DIR=${GITHUB_WORKSPACE}/output/installer" >> ${GITHUB_ENV}
+            echo "PAYLOAD_IMAGE=${IMAGE_REGISTRY_LOWER}/${IMAGE_NAME_LOWER}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
+            echo "LOCAL_PAYLOAD_IMAGE=localhost/${IMAGE_NAME_LOWER}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
+            if [ "${{ inputs.platform }}" = "arm64" ]; then
+              echo "ISO_ARCH=aarch64" >> ${GITHUB_ENV}
+            else
+              echo "ISO_ARCH=x86_64" >> ${GITHUB_ENV}
+            fi
+          fi
 
       - name: Install dependencies
         if: inputs.platform == 'arm64'
@@ -77,22 +92,59 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build disk images
         id: build
+        if: matrix.disk-type != 'installer-iso'
         uses: osbuild/bootc-image-builder-action@main
         with:
           builder-image: ${{ env.BIB_IMAGE }}
-          config-file: ${{ matrix.disk-type == 'anaconda-iso' && './disk_config/iso.toml' || './disk_config/disk.toml' }}
+          config-file: ./disk_config/disk.toml
           image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}
-          additional-args: --use-librepo=True
+          # Keep CI aligned with the local Justfile, which always builds Btrfs-backed images.
+          additional-args: --use-librepo=True --rootfs=btrfs
+
+      - name: Build installer ISO
+        if: matrix.disk-type == 'installer-iso'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${OUTPUT_DIR}"
+          docker pull "${PAYLOAD_IMAGE}"
+          docker tag "${PAYLOAD_IMAGE}" "${LOCAL_PAYLOAD_IMAGE}"
+
+          # Adapted from ublue-os/bazzite just_scripts/build-iso.sh.
+          docker run \
+            --rm \
+            --privileged \
+            --volume /var/run/docker.sock:/var/run/docker.sock \
+            --volume "${GITHUB_WORKSPACE}/installer/build-iso-makefile-patch:/build-container-installer/container/Makefile:ro" \
+            --volume "${OUTPUT_DIR}:/build-container-installer/build" \
+            "${ISO_BUILDER_IMAGE}" \
+            ARCH="${ISO_ARCH}" \
+            ENABLE_CACHE_DNF="false" \
+            ENABLE_CACHE_SKOPEO="false" \
+            IMAGE_NAME="${IMAGE_NAME}" \
+            IMAGE_REPO="localhost" \
+            IMAGE_TAG="${DEFAULT_TAG}" \
+            ISO_NAME="build/${IMAGE_NAME}-${DEFAULT_TAG}-${{ inputs.platform || 'amd64' }}.iso" \
+            VARIANT="${INSTALLER_VARIANT}" \
+            VERSION="${FEDORA_VERSION}"
 
       - name: Upload disk images and Checksum to Job Artifacts
         if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          path: ${{ steps.build.outputs.output-directory }}
+          name: ${{ env.IMAGE_NAME }}-${{ inputs.platform || 'amd64' }}-${{ matrix.disk-type }}
+          path: ${{ matrix.disk-type == 'installer-iso' && './output/installer' || steps.build.outputs.output-directory }}
           if-no-files-found: error
           retention-days: 0
           compression-level: 0
@@ -108,7 +160,7 @@ jobs:
           RCLONE_CONFIG_S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
           RCLONE_CONFIG_S3_REGION: ${{ secrets.S3_REGION }}
           RCLONE_CONFIG_S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
-          SOURCE_DIR: ${{ steps.build.outputs.output-directory }}
+          SOURCE_DIR: ${{ matrix.disk-type == 'installer-iso' && './output/installer' || steps.build.outputs.output-directory }}
         run: |
           sudo apt-get update
           sudo apt-get install -y rclone

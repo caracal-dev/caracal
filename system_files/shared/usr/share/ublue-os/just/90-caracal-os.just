@@ -295,7 +295,11 @@ first-run:
     echo 'eval "$(oh-my-posh init zsh --config '"'"'https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/refs/heads/main/themes/json.omp.json'"'"')"' >> ~/.zshrc
 
     # Set up Wine-native VST bridge
-    export WINELOADER='/opt/wine-staging/bin/wine'
+    export WINELOADER="$(command -v wine)"
+    if [[ -z "${WINELOADER}" ]]; then
+        echo "Wine is not installed or not on PATH." >&2
+        exit 1
+    fi
     wineboot -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
     mkdir -p "$vst3_dir"
@@ -310,7 +314,11 @@ first-run:
 setup-audio:
     #!/usr/bin/env bash
     set -euo pipefail
-    export WINELOADER='/opt/wine-staging/bin/wine'
+    export WINELOADER="$(command -v wine)"
+    if [[ -z "${WINELOADER}" ]]; then
+        echo "Wine is not installed or not on PATH." >&2
+        exit 1
+    fi
     wineboot -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
     mkdir -p "$vst3_dir"
@@ -366,7 +374,7 @@ install-flatpaks:
         org.gnome.Decibels \
         "io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf" \
         org.gnome.Loupe
-    # Remove Firefox (replaced by Zen Browser); try user scope then system scope
+    # Remove any legacy Firefox flatpak; Zen Browser is the default browser.
     flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true
     sudo flatpak uninstall -y org.mozilla.firefox 2>/dev/null || true
     echo "Flatpaks installed."
@@ -410,3 +418,14 @@ uninstall-bitwig:
     #!/usr/bin/env bash
     set -euo pipefail
     sudo /usr/lib/caracal-os/scripts/uninstall-bitwig.sh
+
+# Install rtcqs into a user-local virtualenv, including the GUI launcher
+install-rtcqs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    /usr/lib/caracal-os/scripts/install-rtcqs.sh
+
+uninstall-rtcqs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    /usr/lib/caracal-os/scripts/uninstall-rtcqs.sh

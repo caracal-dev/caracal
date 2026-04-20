@@ -15,7 +15,7 @@ CARACAL_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
 mkdir -p "$CARACAL_CONFIG_DIR"
 
 # Bump this when branding or default app changes need re-application across rebases.
-USER_SETUP_VER=4
+USER_SETUP_VER=8
 USER_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/version"
 
 if [[ -f "$USER_SETUP_VER_FILE" ]]; then
@@ -29,10 +29,44 @@ fi
 WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
 USER_SHELL="$(getent passwd "$(id -un)" | cut -d: -f7)"
 ALACRITTY_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/alacritty/alacritty.toml"
+USER_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+mkdir -p "$USER_CONFIG_DIR"
+
+DESIRED_PANEL_LAUNCHERS=(
+  "applications:Alacritty.desktop"
+  "applications:io.github.kolunmi.Bazaar.desktop"
+  "applications:app.zen_browser.zen.desktop"
+  "applications:ardour9.desktop"
+)
+DESIRED_PANEL_LAUNCHERS_CSV="$(
+  IFS=,
+  printf '%s' "${DESIRED_PANEL_LAUNCHERS[*]}"
+)"
+
+DESIRED_KICKOFF_FAVORITES=(
+  "ardour9.desktop"
+  "org.rncbc.qtractor.desktop"
+  "carla.desktop"
+  "org.hydrogenmusic.Hydrogen.desktop"
+  "org.musescore.MuseScore.desktop"
+  "org.tenacityaudio.Tenacity.desktop"
+  "org.rncbc.qjackctl.desktop"
+  "org.rncbc.qsynth.desktop"
+  "yoshimi.desktop"
+  "guitarix.desktop"
+  "sooperlooper.desktop"
+  "org.pulseaudio.pavucontrol.desktop"
+  "preferred://browser"
+  "org.kde.dolphin.desktop"
+  "systemsettings.desktop"
+)
+DESIRED_KICKOFF_FAVORITES_CSV="$(
+  IFS=,
+  printf '%s' "${DESIRED_KICKOFF_FAVORITES[*]}"
+)"
 
 # -- Lock screen wallpaper --
-# Written directly into the user config so it takes precedence over any stale
-# ~/.config/kscreenlockerrc left over from a previous image (e.g. after rebase).
 kwriteconfig6 \
   --file "$HOME/.config/kscreenlockerrc" \
   --group Greeter --group Wallpaper --group org.kde.image --group General \
@@ -44,41 +78,173 @@ kwriteconfig6 \
   --key PreviewImage "$WALLPAPER"
 
 # -- Desktop wallpaper --
-# plasma-apply-wallpaperimage talks to plasmashell over D-Bus; the service runs
-# After=graphical-session.target so Plasma is already up at this point.
 if command -v plasma-apply-wallpaperimage &>/dev/null; then
   plasma-apply-wallpaperimage "$WALLPAPER" || true
 fi
 
 # -- Alacritty migration --
-# Systems rebased from Zena can carry a stale shell override that points at
-# /usr/libexec/zena-shell, which is not shipped here and prevents Alacritty
-# from opening at all.
 if [[ -n "$USER_SHELL" ]] && [[ -f "$ALACRITTY_CONFIG" ]]; then
   sed -i "s|program = \"/usr/libexec/zena-shell\"|program = \"$USER_SHELL\"|" "$ALACRITTY_CONFIG"
 fi
 
+# Prefer Alacritty for KDE terminal launches in the current user session.
+kwriteconfig6 \
+  --file "$USER_CONFIG_DIR/kdeglobals" \
+  --group General \
+  --key TerminalApplication "Alacritty.desktop"
+
 # -- Default flatpaks --
 # Installed at user scope so no sudo is needed and they survive bootc rebases.
-# Flathub user remote is added first in case it isn't configured yet.
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || true
 
-flatpak install --user -y flathub \
-  io.github.kolunmi.Bazaar \
-  app.zen_browser.zen \
-  org.tenacityaudio.Tenacity \
-  com.ranfdev.DistroShelf \
-  org.kde.haruna \
-  org.gnome.Decibels \
-  "io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf" \
-  org.gnome.Loupe ||
-  true
+DEFAULT_FLATPAKS=(
+  io.github.kolunmi.Bazaar
+  app.zen_browser.zen
+  org.tenacityaudio.Tenacity
+  com.ranfdev.DistroShelf
+  org.kde.haruna
+  org.gnome.Decibels
+  io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf
+  org.gnome.Loupe
+)
 
-# Remove Firefox (replaced by Zen Browser).
+missing_flatpaks=()
+for app_id in "${DEFAULT_FLATPAKS[@]}"; do
+  if ! flatpak info --user "$app_id" >/dev/null 2>&1; then
+    missing_flatpaks+=("$app_id")
+  fi
+done
+
+flatpak_install_ok=1
+if ((${#missing_flatpaks[@]} > 0)); then
+  if ! flatpak install --user -y flathub "${missing_flatpaks[@]}"; then
+    echo "caracal-user-setup: failed to install one or more default flatpaks." >&2
+    flatpak_install_ok=0
+  fi
+fi
+
+# Remove any legacy Firefox flatpak (Zen Browser is the default browser).
 # Try both user and system scope so rebases away from browser-heavy images
 # actually converge on the Caracal default set.
 flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true
 flatpak uninstall --system -y org.mozilla.firefox 2>/dev/null || true
 
-echo "$USER_SETUP_VER" >"$USER_SETUP_VER_FILE"
-echo "caracal-user-setup v$USER_SETUP_VER complete."
+# Ensure existing users also resolve browser launches to Zen Browser.
+mkdir -p "$USER_CONFIG_DIR"
+
+update_kickoff_favorites_file() {
+  local file="$1"
+  local tmp_file
+
+  mkdir -p "$(dirname "$file")"
+  [[ -f "$file" ]] || : >"$file"
+
+  tmp_file="$(mktemp)"
+  awk -v desired="$DESIRED_KICKOFF_FAVORITES_CSV" '
+    function flush_section() {
+      if (in_section && !saw_ordering) {
+        print "ordering=" desired
+      }
+
+      in_section = 0
+      saw_ordering = 0
+    }
+
+    /^\[Favorites-org\.kde\.plasma\.kickoff\.favorites\.instance-[^]]+\]$/ {
+      flush_section()
+      in_section = 1
+      saw_any = 1
+      print
+      next
+    }
+
+    /^\[/ {
+      flush_section()
+      print
+      next
+    }
+
+    in_section && /^ordering=/ {
+      if (!saw_ordering) {
+        print "ordering=" desired
+      }
+      saw_ordering = 1
+      next
+    }
+
+    {
+      print
+    }
+
+    END {
+      flush_section()
+
+      if (!saw_any) {
+        if (NR > 0) {
+          print ""
+        }
+        print "[Favorites-org.kde.plasma.kickoff.favorites.instance-3-global]"
+        print "ordering=" desired
+      }
+    }
+  ' "$file" >"$tmp_file"
+
+  mv "$tmp_file" "$file"
+}
+xdg-settings set default-web-browser app.zen_browser.zen.desktop 2>/dev/null || true
+for mime in \
+  text/html \
+  x-scheme-handler/http \
+  x-scheme-handler/https \
+  x-scheme-handler/ftp \
+  x-scheme-handler/chrome \
+  application/xhtml+xml \
+  application/x-extension-htm \
+  application/x-extension-html \
+  application/x-extension-shtml \
+  application/x-extension-xhtml \
+  application/x-extension-xht; do
+  xdg-mime default app.zen_browser.zen.desktop "$mime" 2>/dev/null || true
+done
+
+# Converge the panel pins on Caracal defaults without resetting the rest
+# of the user's panel layout.
+PLASMA_APPLETSRC="$USER_CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc"
+if [[ -f "$PLASMA_APPLETSRC" ]]; then
+  # Rebases from Kinoite already have a panel config, so update the persisted
+  # launcher list directly instead of relying only on a live Plasma script.
+  perl -0pi -e 's/^launchers=.*$/launchers=$ENV{DESIRED_PANEL_LAUNCHERS_CSV}/mg' "$PLASMA_APPLETSRC"
+fi
+
+if command -v qdbus6 &>/dev/null; then
+  qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+    const desiredLaunchers = [
+      "applications:Alacritty.desktop",
+      "applications:io.github.kolunmi.Bazaar.desktop",
+      "applications:app.zen_browser.zen.desktop",
+      "applications:ardour9.desktop"
+    ];
+
+    for (const panel of panels()) {
+      for (const widget of panel.widgets()) {
+        if (widget.type === "org.kde.plasma.icontasks") {
+          widget.currentConfigGroup = ["General"];
+          widget.writeConfig("launchers", desiredLaunchers);
+          widget.reloadConfig();
+        }
+      }
+    }
+  ' 2>/dev/null || true
+fi
+
+# Seed the Kickoff favorites menu with standalone studio tools so apps that do
+# not surface as DAW plugins remain easy to discover.
+update_kickoff_favorites_file "$USER_CONFIG_DIR/kactivitymanagerd-statsrc"
+
+if ((flatpak_install_ok)); then
+  echo "$USER_SETUP_VER" >"$USER_SETUP_VER_FILE"
+  echo "caracal-user-setup v$USER_SETUP_VER complete."
+else
+  echo "caracal-user-setup: leaving version at ${STORED_VER:-unset} so missing apps retry on next login." >&2
+  exit 1
+fi

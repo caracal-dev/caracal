@@ -46,7 +46,7 @@ Plugins are installed system-wide in LV2, VST3, and CLAP formats where available
 - INTERSECT, Wavetable, jDrummer, Crypt2, LostAndFoundPiano
 - Guitarix, SooperLooper, Rakarrack
 - Bristol, Synthv1, Drumkv1
-- Surge XT, Decent Sampler (installed system-wide at build time)
+- Surge XT, Cardinal, Decent Sampler (installed system-wide at build time)
 - Full x42 and SWH LV2 plugin sets
 
 **Windows VST support:**
@@ -64,6 +64,25 @@ Plugins are installed system-wide in LV2, VST3, and CLAP formats where available
 - Zsh + Oh My Zsh (pre-configured skel in `/etc/skel`)
 - `oh-my-posh` prompt, `eza`, `zoxide`, `fzf`, `ripgrep`, `fd`
 - Neovim, Alacritty, 7zip, rsync
+
+### Instructions to install Vital Synth
+
+Caracal ships with Vitalium pre-installed. Vitalium is a ported version of Vital but may be missing some of the additional features and ecosystem of Vital.
+
+If Vitalium does not fit your needs and you wish to install Vital, you can. To install it:
+
+1. Create an account at [vital.audio](https://vital.audio) and download the Linux RPM installer labelled as "Linux (rpm)".
+2. Change into the directory where you saved it, for example:
+```bash
+cd ~/Downloads
+```
+
+3. Install it on the host:
+```bash
+sudo rpm-ostree install VitalInstaller.rpm
+```
+
+Reboot after the `rpm-ostree` install completes.
 
 ---
 

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Cardinal
+GenericName=Modular Synthesizer
+Comment=Standalone Cardinal modular synthesizer
+Exec=Cardinal
+TryExec=Cardinal
+Icon=audio-x-generic
+Terminal=false
+StartupNotify=true
+Categories=AudioVideo;Audio;Midi;
+Keywords=modular;synthesizer;synth;audio;midi;rack;

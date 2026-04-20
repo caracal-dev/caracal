@@ -12,6 +12,51 @@ ICON_TARGET_DIR="/usr/local/share/pixmaps"
 ICON_TARGET="${ICON_THEME_DIR}/cockos-reaper.png"
 ICON_COMPAT_TARGET="${ICON_THEME_DIR}/reaper.png"
 ICON_PIXMAP_TARGET="${ICON_TARGET_DIR}/reaper.png"
+FALLBACK_ICON_NAME="reaper"
+REAPER_VST_PATH="/usr/lib64/vst;/usr/lib64/vst3;/usr/local/lib64/vst;/usr/local/lib64/vst3;~/.vst;~/.vst3"
+REAPER_LV2_PATH="/usr/lib64/lv2;/usr/local/lib64/lv2;~/.lv2"
+REAPER_CLAP_PATH="/usr/lib64/clap;/usr/local/lib64/clap;~/.clap;%CLAP_PATH%"
+
+set_reaper_ini_value() {
+    local ini_file="$1"
+    local key="$2"
+    local value="$3"
+
+    if grep -q "^${key}=" "${ini_file}"; then
+        sed -i "s|^${key}=.*|${key}=${value}|" "${ini_file}"
+    else
+        printf '%s=%s\n' "${key}" "${value}" >> "${ini_file}"
+    fi
+}
+
+configure_reaper_plugin_paths() {
+    local target_user="${SUDO_USER:-}"
+    local target_home=""
+    local config_dir=""
+    local ini_file=""
+
+    if [[ -z "${target_user}" || "${target_user}" == "root" ]]; then
+        echo "Skipping REAPER user config seeding because SUDO_USER is not set."
+        return
+    fi
+
+    target_home="$(getent passwd "${target_user}" | cut -d: -f6)"
+    if [[ -z "${target_home}" || ! -d "${target_home}" ]]; then
+        echo "Could not resolve home directory for ${target_user}; skipping REAPER user config seeding."
+        return
+    fi
+
+    config_dir="${target_home}/.config/REAPER"
+    ini_file="${config_dir}/reaper.ini"
+
+    install -d -m755 -o "${target_user}" -g "${target_user}" "${config_dir}"
+    touch "${ini_file}"
+    chown "${target_user}:${target_user}" "${ini_file}"
+
+    set_reaper_ini_value "${ini_file}" "vstpath64" "${REAPER_VST_PATH}"
+    set_reaper_ini_value "${ini_file}" "lv2path" "${REAPER_LV2_PATH}"
+    set_reaper_ini_value "${ini_file}" "clappath" "${REAPER_CLAP_PATH}"
+}
 
 cleanup() {
     rm -rf "${REAPER_ARCHIVE}" "${REAPER_EXTRACT_DIR}"
@@ -24,7 +69,11 @@ curl -L -o "${REAPER_ARCHIVE}" "https://www.reaper.fm/files/7.x/reaper${REAPER_V
 tar -xJf "${REAPER_ARCHIVE}" -C /tmp
 
 cd "${REAPER_EXTRACT_DIR}"
-./install-reaper.sh --install /opt --integrate-desktop
+
+# The upstream desktop integration writes through xdg-* helpers into system
+# paths that are not writable on Atomic systems. Install the app only, then
+# manage the desktop file and icon locations ourselves below.
+./install-reaper.sh --install /opt
 
 mkdir -p /usr/local/share/applications
 mkdir -p "${ICON_THEME_DIR}"
@@ -94,6 +143,12 @@ if [ -f "${ICON_TARGET}" ]; then
     else
         printf 'Icon=cockos-reaper\n' >> "${DESKTOP_TARGET}"
     fi
+else
+    if grep -q '^Icon=' "${DESKTOP_TARGET}"; then
+        sed -i "s|^Icon=.*|Icon=${FALLBACK_ICON_NAME}|" "${DESKTOP_TARGET}"
+    else
+        printf 'Icon=%s\n' "${FALLBACK_ICON_NAME}" >> "${DESKTOP_TARGET}"
+    fi
 fi
 
 if command -v update-desktop-database >/dev/null 2>&1; then
@@ -107,6 +162,8 @@ fi
 if command -v kbuildsycoca6 >/dev/null 2>&1; then
     kbuildsycoca6 >/dev/null 2>&1 || true
 fi
+
+configure_reaper_plugin_paths
 
 echo "REAPER installed to /opt/REAPER"
 echo "Desktop entry written to /usr/local/share/applications/"

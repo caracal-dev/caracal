@@ -1,15 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-curl -L -o /tmp/decent-sampler.tar.gz "https://cdn.decentsamples.com/production/builds/ds/1.18.1/Decent_Sampler-1.18.1-Linux-Static-x86_64.tar.gz"
-tar xvf /tmp/decent-sampler.tar.gz -C /tmp
+readonly DECENT_SAMPLER_VERSION="1.18.1"
+readonly DECENT_SAMPLER_ARCHIVE="Decent_Sampler-${DECENT_SAMPLER_VERSION}-Linux-Static-x86_64.tar.gz"
+readonly DECENT_SAMPLER_URL="https://cdn.decentsamples.com/production/builds/ds/${DECENT_SAMPLER_VERSION}/${DECENT_SAMPLER_ARCHIVE}"
 
-cd /tmp
+workdir="$(mktemp -d)"
+trap 'rm -rf "${workdir}"' EXIT
 
-mkdir -p /usr/lib64/vst/decentsampler
-cd Decent_Sampler-1.18.1-Linux-Static-x86_64
-mv DecentSampler.so /usr/lib64/vst/decentsampler/
+curl -fL --retry 3 --retry-delay 2 -o "${workdir}/${DECENT_SAMPLER_ARCHIVE}" "${DECENT_SAMPLER_URL}"
+tar xzf "${workdir}/${DECENT_SAMPLER_ARCHIVE}" -C "${workdir}"
 
-rm -rf /tmp/decent-sampler.tar.gz /tmp/Decent* || true
+extract_dir="$(find "${workdir}" -maxdepth 1 -mindepth 1 -type d -name 'Decent_Sampler-*' | head -n 1)"
+if [[ -z "${extract_dir}" ]]; then
+    echo "Decent Sampler archive did not contain the expected directory layout" >&2
+    exit 1
+fi
 
-exit 0
+install -Dm755 "${extract_dir}/DecentSampler" "/usr/bin/DecentSampler"
+install -Dm755 "${extract_dir}/DecentSampler.so" "/usr/lib64/vst/DecentSampler.so"
+mkdir -p "/usr/lib64/vst3"
+cp -a "${extract_dir}/DecentSampler.vst3" "/usr/lib64/vst3/"
