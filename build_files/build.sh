@@ -269,12 +269,6 @@ systemctl enable brew-setup.service
 chmod +x /usr/libexec/caracal-user-setup
 systemctl --global enable caracal-user-setup.service
 
-# Plugins installed system wide
-bash "${SCRIPTS_DIR}/installsurgext.sh"
-bash "${SCRIPTS_DIR}/installcardinal.sh"
-bash "${SCRIPTS_DIR}/installdecentsampler.sh"
-# bash "${SCRIPTS_DIR}/installwinboat.sh"
-
 # Branding
 bash "${SCRIPTS_DIR}/branding.sh"
 

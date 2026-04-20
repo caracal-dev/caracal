@@ -308,7 +308,7 @@ first-run:
 
     echo 'First-run setup complete. Log out and back in for group changes to take effect.'
     echo 'Run  ujust install-flatpaks  to install recommended apps.'
-    echo 'Run  ujust install-reaper / install-renoise / install-bitwig  for optional DAWs.'
+    echo 'Run  ujust software-installer  for optional DAWs, plugins, and utilities.'
 
 # Set up yabridge Wine VST bridge for the current user
 setup-audio:
@@ -387,45 +387,50 @@ install-flatpaks:
 install-reaper:
     #!/usr/bin/env bash
     set -euo pipefail
-    sudo /usr/lib/caracal-os/scripts/install-reaper.sh
+    sudo /usr/lib/caracal-software-installer/scripts/install-reaper.sh
     ujust _ask-remove-ardour
 
 uninstall-reaper:
     #!/usr/bin/env bash
     set -euo pipefail
-    sudo /usr/lib/caracal-os/scripts/uninstall-reaper.sh
+    sudo /usr/lib/caracal-software-installer/scripts/uninstall-reaper.sh
 
 # Install Renoise (commercial, free demo available)
 install-renoise:
     #!/usr/bin/env bash
     set -euo pipefail
-    sudo /usr/lib/caracal-os/scripts/install-renoise.sh
+    sudo /usr/lib/caracal-software-installer/scripts/install-renoise.sh
     ujust _ask-remove-ardour
 
 uninstall-renoise:
     #!/usr/bin/env bash
     set -euo pipefail
-    sudo /usr/lib/caracal-os/scripts/uninstall-renoise.sh
+    sudo /usr/lib/caracal-software-installer/scripts/uninstall-renoise.sh
 
 # Install Bitwig Studio (commercial, requires licence)
 install-bitwig:
     #!/usr/bin/env bash
     set -euo pipefail
-    sudo /usr/lib/caracal-os/scripts/install-bitwig.sh
+    sudo /usr/lib/caracal-software-installer/scripts/install-bitwig.sh
     ujust _ask-remove-ardour
 
 uninstall-bitwig:
     #!/usr/bin/env bash
     set -euo pipefail
-    sudo /usr/lib/caracal-os/scripts/uninstall-bitwig.sh
+    sudo /usr/lib/caracal-software-installer/scripts/uninstall-bitwig.sh
 
 # Install rtcqs into a user-local virtualenv, including the GUI launcher
 install-rtcqs:
     #!/usr/bin/env bash
     set -euo pipefail
-    /usr/lib/caracal-os/scripts/install-rtcqs.sh
+    /usr/lib/caracal-software-installer/scripts/install-rtcqs.sh
 
 uninstall-rtcqs:
     #!/usr/bin/env bash
     set -euo pipefail
-    /usr/lib/caracal-os/scripts/uninstall-rtcqs.sh
+    /usr/lib/caracal-software-installer/scripts/uninstall-rtcqs.sh
+
+software-installer:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    caracal-software-installer

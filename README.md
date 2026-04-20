@@ -4,7 +4,7 @@
   <img src="assets/images/caracal-banner-light.png" alt="Caracal OS">
 </picture>
 
-A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoite (KDE Plasma), tuned from the ground up for audio production. Caracal-OS delivers a fast, immutable Linux desktop with everything a producer or sound engineer needs — baked into the image, ready on first boot.
+A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoite (KDE Plasma), tuned from the ground up for audio production. Caracal-OS delivers a fast, immutable Linux desktop with the core production stack ready on first boot, while heavier optional software ships through the bundled Caracal Software Installer.
 
 ---
 
@@ -35,6 +35,12 @@ ujust uninstall-renoise
 ujust uninstall-bitwig
 ```
 
+For the broader optional catalog, launch the bundled Caracal Software Installer from the app launcher or run:
+
+```bash
+ujust software-installer
+```
+
 ### Plugins & Instruments
 
 Plugins are installed system-wide in LV2, VST3, and CLAP formats where available.
@@ -46,8 +52,14 @@ Plugins are installed system-wide in LV2, VST3, and CLAP formats where available
 - INTERSECT, Wavetable, jDrummer, Crypt2, LostAndFoundPiano
 - Guitarix, SooperLooper, Rakarrack
 - Bristol, Synthv1, Drumkv1
-- Surge XT, Cardinal, Decent Sampler (installed system-wide at build time)
 - Full x42 and SWH LV2 plugin sets
+
+**Optional installs available through Caracal Software Installer:**
+
+- REAPER, Renoise, Bitwig Studio
+- Cardinal, Surge XT, Decent Sampler, Loopino
+- SunVox, Virtual ANS, TAL-Noisemaker, Wavetable
+- INTERSECT, Audio Assault plugins, RTCQS
 
 **Windows VST support:**
 

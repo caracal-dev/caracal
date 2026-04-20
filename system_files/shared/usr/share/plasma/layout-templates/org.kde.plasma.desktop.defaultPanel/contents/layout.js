@@ -92,7 +92,7 @@ for (let i = 0; i < allPanels.length; ++i) {
             // Only set our default if launchers is empty
             if (!currentLaunchers || currentLaunchers.trim() === "") {
                 widget.writeConfig("launchers", [
-                    "applications:Alacritty.desktop",
+                    "applications:org.alacritty.Alacritty.desktop",
                     "applications:io.github.kolunmi.Bazaar.desktop",
                     "applications:app.zen_browser.zen.desktop",
                     "applications:ardour9.desktop"
