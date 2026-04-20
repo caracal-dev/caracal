@@ -28,18 +28,17 @@ if [[ -z "${extract_dir}" || ! -d "${extract_dir}" ]]; then
     exit 1
 fi
 
-install -Dm755 "${extract_dir}/CardinalNative" "/usr/bin/Cardinal"
-install -Dm755 "${extract_dir}/CardinalJACK" "/usr/bin/CardinalJACK"
+install -Dm755 "${extract_dir}/CardinalNative" "/usr/local/bin/Cardinal"
+install -Dm755 "${extract_dir}/CardinalJACK" "/usr/local/bin/CardinalJACK"
 
-install_dir_bundle "${extract_dir}/Cardinal.vst" "/usr/lib64/vst"
-install_dir_bundle "${extract_dir}/Cardinal.vst3" "/usr/lib64/vst3"
-install_dir_bundle "${extract_dir}/CardinalFX.vst3" "/usr/lib64/vst3"
-install_dir_bundle "${extract_dir}/CardinalSynth.vst3" "/usr/lib64/vst3"
-install_dir_bundle "${extract_dir}/Cardinal.lv2" "/usr/lib64/lv2"
-install_dir_bundle "${extract_dir}/CardinalFX.lv2" "/usr/lib64/lv2"
-install_dir_bundle "${extract_dir}/CardinalSynth.lv2" "/usr/lib64/lv2"
-install_dir_bundle "${extract_dir}/CardinalMini.lv2" "/usr/lib64/lv2"
+install_dir_bundle "${extract_dir}/Cardinal.vst" "/usr/local/lib64/vst"
+install_dir_bundle "${extract_dir}/Cardinal.vst3" "/usr/local/lib64/vst3"
+install_dir_bundle "${extract_dir}/CardinalFX.vst3" "/usr/local/lib64/vst3"
+install_dir_bundle "${extract_dir}/CardinalSynth.vst3" "/usr/local/lib64/vst3"
+install_dir_bundle "${extract_dir}/Cardinal.lv2" "/usr/local/lib64/lv2"
+install_dir_bundle "${extract_dir}/CardinalFX.lv2" "/usr/local/lib64/lv2"
+install_dir_bundle "${extract_dir}/CardinalSynth.lv2" "/usr/local/lib64/lv2"
+install_dir_bundle "${extract_dir}/CardinalMini.lv2" "/usr/local/lib64/lv2"
+install_dir_bundle "${extract_dir}/Cardinal.clap" "/usr/local/lib64/clap"
 
-# Cardinal ships CLAP plugins plus shared resources inside a single directory.
-# Keep that directory intact so the plugin binaries retain their sibling assets.
-install_dir_bundle "${extract_dir}/Cardinal.clap" "/usr/lib64/clap"
+echo "Cardinal installed into /usr/local/bin and /usr/local/lib64"

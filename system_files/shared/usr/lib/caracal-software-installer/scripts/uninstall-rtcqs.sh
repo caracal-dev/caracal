@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Removes the user-local rtcqs virtualenv, wrappers, and desktop entry.
-# Intended to be called from ujust uninstall-rtcqs (runs as the target user).
 set -euo pipefail
 
 target_user="${SUDO_USER:-${USER}}"

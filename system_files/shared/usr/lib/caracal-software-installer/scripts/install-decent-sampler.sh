@@ -17,7 +17,10 @@ if [[ -z "${extract_dir}" ]]; then
     exit 1
 fi
 
-install -Dm755 "${extract_dir}/DecentSampler" "/usr/bin/DecentSampler"
-install -Dm755 "${extract_dir}/DecentSampler.so" "/usr/lib64/vst/DecentSampler.so"
-mkdir -p "/usr/lib64/vst3"
-cp -a "${extract_dir}/DecentSampler.vst3" "/usr/lib64/vst3/"
+install -Dm755 "${extract_dir}/DecentSampler" "/usr/local/bin/DecentSampler"
+install -Dm755 "${extract_dir}/DecentSampler.so" "/usr/local/lib64/vst/DecentSampler.so"
+mkdir -p "/usr/local/lib64/vst3"
+rm -rf "/usr/local/lib64/vst3/DecentSampler.vst3"
+cp -a "${extract_dir}/DecentSampler.vst3" "/usr/local/lib64/vst3/"
+
+echo "Decent Sampler installed into /usr/local"

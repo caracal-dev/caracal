@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Caracal Software Installer
+GenericName=Audio Software Installer
+Comment=Browse and install optional DAWs, plugins, and audio tools
+Exec=caracal-software-installer
+TryExec=caracal-software-installer
+Icon=/usr/share/icons/hicolor/scalable/places/app-icon-dark.svg
+Terminal=true
+StartupNotify=true
+Categories=AudioVideo;Audio;System;
+Keywords=caracal;audio;installer;plugins;daw;

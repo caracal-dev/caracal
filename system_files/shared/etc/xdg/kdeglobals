@@ -4,7 +4,7 @@ widgetStyle=Breeze
 
 [General]
 ColorScheme=Vapor
-TerminalApplication=Alacritty.desktop
+TerminalApplication=org.alacritty.Alacritty.desktop
 
 [Icons]
 Theme=breeze-dark

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Installs rtcqs and rtcqs_gui into a user-local Python virtualenv.
-# Intended to be called from ujust install-rtcqs (runs as the target user).
 set -euo pipefail
 
 target_user="${SUDO_USER:-${USER}}"

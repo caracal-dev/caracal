@@ -13,28 +13,22 @@ fi
 
 CARACAL_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
 mkdir -p "$CARACAL_CONFIG_DIR"
-
-# Bump this when branding or default app changes need re-application across rebases.
-USER_SETUP_VER=8
 USER_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/version"
-
-if [[ -f "$USER_SETUP_VER_FILE" ]]; then
-  STORED_VER=$(cat "$USER_SETUP_VER_FILE")
-  if [[ "$USER_SETUP_VER" == "$STORED_VER" ]]; then
-    echo "caracal-user-setup v$USER_SETUP_VER already ran. Exiting."
-    exit 0
-  fi
+FIRST_CARACAL_RUN=0
+if [[ ! -f "$USER_SETUP_VER_FILE" ]]; then
+  FIRST_CARACAL_RUN=1
 fi
 
 WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
 USER_SHELL="$(getent passwd "$(id -un)" | cut -d: -f7)"
 ALACRITTY_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/alacritty/alacritty.toml"
 USER_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+SOFTWARE_INSTALLER_DESKTOP_SOURCE="/usr/share/applications/caracal-software-installer.desktop"
 
 mkdir -p "$USER_CONFIG_DIR"
 
 DESIRED_PANEL_LAUNCHERS=(
-  "applications:Alacritty.desktop"
+  "applications:org.alacritty.Alacritty.desktop"
   "applications:io.github.kolunmi.Bazaar.desktop"
   "applications:app.zen_browser.zen.desktop"
   "applications:ardour9.desktop"
@@ -43,6 +37,39 @@ DESIRED_PANEL_LAUNCHERS_CSV="$(
   IFS=,
   printf '%s' "${DESIRED_PANEL_LAUNCHERS[*]}"
 )"
+
+sync_live_panel_launchers() {
+  local force="${1:-0}"
+
+  if ! command -v qdbus6 &>/dev/null; then
+    return
+  fi
+
+  qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
+    const desiredLaunchers = [
+      "applications:org.alacritty.Alacritty.desktop",
+      "applications:io.github.kolunmi.Bazaar.desktop",
+      "applications:app.zen_browser.zen.desktop",
+      "applications:ardour9.desktop"
+    ];
+
+    for (const panel of panels()) {
+      for (const widget of panel.widgets()) {
+        if (widget.type !== "org.kde.plasma.icontasks") {
+          continue;
+        }
+
+        widget.currentConfigGroup = ["General"];
+        const currentLaunchers = widget.readConfig("launchers", "");
+        const shouldForce = '"${force}"' === "1";
+        if (shouldForce || !currentLaunchers || currentLaunchers.trim() === "") {
+          widget.writeConfig("launchers", desiredLaunchers);
+          widget.reloadConfig();
+        }
+      }
+    }
+  ' 2>/dev/null || true
+}
 
 DESIRED_KICKOFF_FAVORITES=(
   "ardour9.desktop"
@@ -66,6 +93,22 @@ DESIRED_KICKOFF_FAVORITES_CSV="$(
   printf '%s' "${DESIRED_KICKOFF_FAVORITES[*]}"
 )"
 
+# Keep the live panel seeded on every session. On the first Caracal run after
+# a rebase from another image, force the Caracal pins once. After that, only
+# repair an empty taskbar so user customization is preserved.
+sync_live_panel_launchers "$FIRST_CARACAL_RUN"
+
+# Bump this when branding or default app changes need re-application across rebases.
+USER_SETUP_VER=10
+
+if [[ -f "$USER_SETUP_VER_FILE" ]]; then
+  STORED_VER=$(cat "$USER_SETUP_VER_FILE")
+  if [[ "$USER_SETUP_VER" == "$STORED_VER" ]]; then
+    echo "caracal-user-setup v$USER_SETUP_VER already ran."
+    exit 0
+  fi
+fi
+
 # -- Lock screen wallpaper --
 kwriteconfig6 \
   --file "$HOME/.config/kscreenlockerrc" \
@@ -82,6 +125,18 @@ if command -v plasma-apply-wallpaperimage &>/dev/null; then
   plasma-apply-wallpaperimage "$WALLPAPER" || true
 fi
 
+# -- Desktop shortcuts --
+DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || true)"
+if [[ -z "$DESKTOP_DIR" ]]; then
+  DESKTOP_DIR="$HOME/Desktop"
+fi
+
+if [[ -f "$SOFTWARE_INSTALLER_DESKTOP_SOURCE" ]]; then
+  install -d "$DESKTOP_DIR"
+  install -m755 "$SOFTWARE_INSTALLER_DESKTOP_SOURCE" \
+    "$DESKTOP_DIR/caracal-software-installer.desktop"
+fi
+
 # -- Alacritty migration --
 if [[ -n "$USER_SHELL" ]] && [[ -f "$ALACRITTY_CONFIG" ]]; then
   sed -i "s|program = \"/usr/libexec/zena-shell\"|program = \"$USER_SHELL\"|" "$ALACRITTY_CONFIG"
@@ -91,7 +146,7 @@ fi
 kwriteconfig6 \
   --file "$USER_CONFIG_DIR/kdeglobals" \
   --group General \
-  --key TerminalApplication "Alacritty.desktop"
+  --key TerminalApplication "org.alacritty.Alacritty.desktop"
 
 # -- Default flatpaks --
 # Installed at user scope so no sudo is needed and they survive bootc rebases.
@@ -206,36 +261,6 @@ for mime in \
   application/x-extension-xht; do
   xdg-mime default app.zen_browser.zen.desktop "$mime" 2>/dev/null || true
 done
-
-# Converge the panel pins on Caracal defaults without resetting the rest
-# of the user's panel layout.
-PLASMA_APPLETSRC="$USER_CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc"
-if [[ -f "$PLASMA_APPLETSRC" ]]; then
-  # Rebases from Kinoite already have a panel config, so update the persisted
-  # launcher list directly instead of relying only on a live Plasma script.
-  perl -0pi -e 's/^launchers=.*$/launchers=$ENV{DESIRED_PANEL_LAUNCHERS_CSV}/mg' "$PLASMA_APPLETSRC"
-fi
-
-if command -v qdbus6 &>/dev/null; then
-  qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
-    const desiredLaunchers = [
-      "applications:Alacritty.desktop",
-      "applications:io.github.kolunmi.Bazaar.desktop",
-      "applications:app.zen_browser.zen.desktop",
-      "applications:ardour9.desktop"
-    ];
-
-    for (const panel of panels()) {
-      for (const widget of panel.widgets()) {
-        if (widget.type === "org.kde.plasma.icontasks") {
-          widget.currentConfigGroup = ["General"];
-          widget.writeConfig("launchers", desiredLaunchers);
-          widget.reloadConfig();
-        }
-      }
-    }
-  ' 2>/dev/null || true
-fi
 
 # Seed the Kickoff favorites menu with standalone studio tools so apps that do
 # not surface as DAW plugins remain easy to discover.

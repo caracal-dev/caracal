@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Installs REAPER to /opt/REAPER (writable on atomic Fedora via /var/opt).
-# Intended to be called from ujust install-reaper (runs as root via sudo).
 set -euo pipefail
 
 REAPER_VERSION="765"
@@ -16,6 +15,29 @@ FALLBACK_ICON_NAME="reaper"
 REAPER_VST_PATH="/usr/lib64/vst;/usr/lib64/vst3;/usr/local/lib64/vst;/usr/local/lib64/vst3;~/.vst;~/.vst3"
 REAPER_LV2_PATH="/usr/lib64/lv2;/usr/local/lib64/lv2;~/.lv2"
 REAPER_CLAP_PATH="/usr/lib64/clap;/usr/local/lib64/clap;~/.clap;%CLAP_PATH%"
+
+resolve_bundled_reaper_icon() {
+    local script_dir=""
+    local candidates=()
+
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    if [[ -n "${CARACAL_INSTALLER_REAPER_ICON:-}" ]]; then
+        candidates+=("${CARACAL_INSTALLER_REAPER_ICON}")
+    fi
+
+    candidates+=(
+        "/usr/share/caracal-software-installer/assets/images/reaper.png"
+        "${script_dir}/../assets/images/reaper.png"
+    )
+
+    for candidate in "${candidates[@]}"; do
+        if [[ -f "${candidate}" ]]; then
+            printf '%s\n' "${candidate}"
+            return
+        fi
+    done
+}
 
 set_reaper_ini_value() {
     local ini_file="$1"
@@ -69,18 +91,12 @@ curl -L -o "${REAPER_ARCHIVE}" "https://www.reaper.fm/files/7.x/reaper${REAPER_V
 tar -xJf "${REAPER_ARCHIVE}" -C /tmp
 
 cd "${REAPER_EXTRACT_DIR}"
-
-# The upstream desktop integration writes through xdg-* helpers into system
-# paths that are not writable on Atomic systems. Install the app only, then
-# manage the desktop file and icon locations ourselves below.
 ./install-reaper.sh --install /opt
 
 mkdir -p /usr/local/share/applications
 mkdir -p "${ICON_THEME_DIR}"
 mkdir -p "${ICON_TARGET_DIR}"
 
-# The upstream installer is inconsistent about where it writes the desktop file.
-# Promote it to a system-wide location when present, otherwise write a fallback.
 desktop_source=""
 for candidate in \
     "/root/.local/share/applications/cockos-reaper.desktop" \
@@ -110,8 +126,12 @@ StartupWMClass=REAPER
 EOF
 fi
 
-# Promote a usable icon into /usr/local so menu/taskbar entries resolve on immutable systems.
 icon_source=""
+bundled_icon_source="$(resolve_bundled_reaper_icon || true)"
+if [ -n "${bundled_icon_source}" ]; then
+    icon_source="${bundled_icon_source}"
+fi
+
 for candidate in \
     "/root/.local/share/icons/hicolor/256x256/apps/reaper.png" \
     "/root/.local/share/icons/hicolor/128x128/apps/reaper.png" \
@@ -119,6 +139,9 @@ for candidate in \
     "/opt/REAPER/reaper.png" \
     "${REAPER_EXTRACT_DIR}/reaper.png"
 do
+    if [ -n "${icon_source}" ]; then
+        break
+    fi
     if [ -f "${candidate}" ]; then
         icon_source="${candidate}"
         break
@@ -131,7 +154,6 @@ if [ -n "${icon_source}" ]; then
     install -m644 "${icon_source}" "${ICON_PIXMAP_TARGET}"
 fi
 
-# Fix installer-generated paths when present.
 sed -i \
     -e 's|/root/opt/REAPER|/opt/REAPER|g' \
     -e 's|Exec=/root/opt/REAPER/|Exec=/opt/REAPER/|g' \
