@@ -20,9 +20,9 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/caracal-software-i
 # Build context: scripts live in build_files/, branding assets in system_files/assets/,
 # system files in system_files/shared/ (deployed via rsync in build.sh, same as Aurora)
 FROM scratch AS ctx
-COPY caracal/build_files /
-COPY caracal/system_files/assets /assets
-COPY caracal/system_files/shared /system_files/shared
+COPY build_files /
+COPY system_files/assets /assets
+COPY system_files/shared /system_files/shared
 COPY --from=brew /system_files /system_files/shared
 COPY --from=caracal-software-installer-build /out/caracal-software-installer /system_files/shared/usr/bin/caracal-software-installer
 COPY caracal-software-installer/scripts /system_files/shared/usr/lib/caracal-software-installer/scripts
