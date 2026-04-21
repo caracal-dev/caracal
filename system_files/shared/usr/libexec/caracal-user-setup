@@ -20,6 +20,13 @@ if [[ ! -f "$USER_SETUP_VER_FILE" ]]; then
 fi
 
 WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
+LOOK_AND_FEEL_PACKAGE="com.valve.vapor.desktop"
+SPLASH_THEME="com.valve.vapor"
+PLASMA_THEME="Vapor"
+COLOR_SCHEME="Vapor"
+ICON_THEME="breeze-dark"
+CURSOR_THEME="breeze_cursors"
+WIDGET_STYLE="Breeze"
 USER_SHELL="$(getent passwd "$(id -un)" | cut -d: -f7)"
 ALACRITTY_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/alacritty/alacritty.toml"
 USER_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
@@ -99,7 +106,7 @@ DESIRED_KICKOFF_FAVORITES_CSV="$(
 sync_live_panel_launchers "$FIRST_CARACAL_RUN"
 
 # Bump this when branding or default app changes need re-application across rebases.
-USER_SETUP_VER=10
+USER_SETUP_VER=11
 
 if [[ -f "$USER_SETUP_VER_FILE" ]]; then
   STORED_VER=$(cat "$USER_SETUP_VER_FILE")
@@ -107,6 +114,94 @@ if [[ -f "$USER_SETUP_VER_FILE" ]]; then
     echo "caracal-user-setup v$USER_SETUP_VER already ran."
     exit 0
   fi
+fi
+
+should_apply_vapor_theme() {
+  local current_look_and_feel
+  local current_color_scheme
+  local current_icon_theme
+  local current_plasma_theme
+  local current_widget_style
+
+  if ((FIRST_CARACAL_RUN)); then
+    return 0
+  fi
+
+  current_look_and_feel="$(
+    kreadconfig6 --file "$USER_CONFIG_DIR/kdeglobals" \
+      --group KDE --key LookAndFeelPackage 2>/dev/null || true
+  )"
+  current_widget_style="$(
+    kreadconfig6 --file "$USER_CONFIG_DIR/kdeglobals" \
+      --group KDE --key widgetStyle 2>/dev/null || true
+  )"
+  current_color_scheme="$(
+    kreadconfig6 --file "$USER_CONFIG_DIR/kdeglobals" \
+      --group General --key ColorScheme 2>/dev/null || true
+  )"
+  current_icon_theme="$(
+    kreadconfig6 --file "$USER_CONFIG_DIR/kdeglobals" \
+      --group Icons --key Theme 2>/dev/null || true
+  )"
+  current_plasma_theme="$(
+    kreadconfig6 --file "$USER_CONFIG_DIR/plasmarc" \
+      --group Theme --key name 2>/dev/null || true
+  )"
+
+  [[ -z "$current_look_and_feel" ]] &&
+    [[ -z "$current_widget_style" ]] &&
+    [[ -z "$current_color_scheme" ]] &&
+    [[ -z "$current_icon_theme" ]] &&
+    [[ -z "$current_plasma_theme" ]]
+}
+
+apply_vapor_theme() {
+  kwriteconfig6 \
+    --file "$USER_CONFIG_DIR/kdeglobals" \
+    --group KDE \
+    --key LookAndFeelPackage "$LOOK_AND_FEEL_PACKAGE"
+
+  kwriteconfig6 \
+    --file "$USER_CONFIG_DIR/kdeglobals" \
+    --group KDE \
+    --key widgetStyle "$WIDGET_STYLE"
+
+  kwriteconfig6 \
+    --file "$USER_CONFIG_DIR/kdeglobals" \
+    --group General \
+    --key ColorScheme "$COLOR_SCHEME"
+
+  kwriteconfig6 \
+    --file "$USER_CONFIG_DIR/kdeglobals" \
+    --group Icons \
+    --key Theme "$ICON_THEME"
+
+  kwriteconfig6 \
+    --file "$USER_CONFIG_DIR/plasmarc" \
+    --group Theme \
+    --key name "$PLASMA_THEME"
+
+  kwriteconfig6 \
+    --file "$USER_CONFIG_DIR/ksplashrc" \
+    --group KSplash \
+    --key Theme "$SPLASH_THEME"
+
+  if command -v plasma-apply-colorscheme &>/dev/null; then
+    plasma-apply-colorscheme "$COLOR_SCHEME" || true
+  fi
+
+  if command -v plasma-apply-desktoptheme &>/dev/null; then
+    plasma-apply-desktoptheme "$PLASMA_THEME" || true
+  fi
+
+  if command -v plasma-apply-cursortheme &>/dev/null; then
+    plasma-apply-cursortheme "$CURSOR_THEME" || true
+  fi
+}
+
+if should_apply_vapor_theme; then
+  apply_vapor_theme
+  sync_live_panel_launchers "$FIRST_CARACAL_RUN"
 fi
 
 # -- Lock screen wallpaper --

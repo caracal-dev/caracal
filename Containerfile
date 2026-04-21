@@ -12,7 +12,7 @@ FROM ghcr.io/ublue-os/brew:latest AS brew
 
 FROM quay.io/fedora/fedora:43 AS caracal-software-installer-fetch
 ARG ARCH=x86_64
-ARG CARACAL_SOFTWARE_INSTALLER_VERSION=v1.1
+ARG CARACAL_SOFTWARE_INSTALLER_VERSION=v1.2
 ARG CARACAL_SOFTWARE_INSTALLER_RELEASE_REPO=caracal-dev/caracal-software-installer
 RUN dnf5 -y install ca-certificates curl tar && dnf5 clean all
 RUN set -eux; \

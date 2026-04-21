@@ -48,20 +48,7 @@ dnf5 -y install \
   wine.x86_64 \
   winetricks \
   libcurl-gnutls \
-  INTERSECT \
-  INTERSECT-clap \
-  INTERSECT-lv2 \
-  INTERSECT-vst3 \
   Loopino-clap \
-  Loopino \
-  Wavetable \
-  Wavetable-vst3 \
-  Wavetable-lv2 \
-  Wavetable-clap \
-  jdrummer \
-  jdrummer-vst3 \
-  jdrummer-lv2 \
-  jdrummer-clap \
   Vaporizer2 \
   Vaporizer2-vst3 \
   Vaporizer2-lv2 \
@@ -69,35 +56,14 @@ dnf5 -y install \
   dexed \
   dexed-clap \
   dexed-vst3 \
-  odin2 \
-  odin2-vst3 \
-  odin2-lv2 \
   Crypt2 \
   Crypt2-vst3 \
   Crypt2-clap \
   Crypt2-lv2 \
-  OB-Xf \
-  OB-Xf-vst3 \
-  OB-Xf-clap \
-  OB-Xf-lv2 \
   LostAndFoundPiano \
   LostAndFoundPiano-vst3 \
   LostAndFoundPiano-clap \
   LostAndFoundPiano-lv2 \
-  BYOD \
-  BYOD-lv2 \
-  BYOD-clap \
-  BYOD-vst3 \
-  neural-amp-modeler-lv2 \
-  AIDA-X \
-  AIDA-X-clap \
-  AIDA-X-vst3 \
-  AIDA-X-lv2 \
-  dragonfly-reverb \
-  dragonfly-reverb-clap \
-  dragonfly-reverb-vst3 \
-  dragonfly-reverb-lv2 \
-  eza \
   vst-DISTRHO-Arctican.x86_64 \
   vst-DISTRHO-EasySSP.x86_64 \
   vst-DISTRHO-HiReSam.x86_64 \
@@ -136,7 +102,6 @@ dnf5 -y install \
   fd-find \
   zoxide \
   fzf \
-  oh-my-posh \
   python3-tkinter \
   ublue-os-just
 
@@ -191,9 +156,7 @@ dnf5 -y install \
 
 # Synths
 dnf5 -y install \
-  bristol \
-  synthv1 \
-  drumkv1
+  bristol
 
 # Guitar effects
 dnf5 -y install \
