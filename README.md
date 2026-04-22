@@ -1,3 +1,6 @@
+[![bluebuild build badge](https://github.com/caracal-dev/caracal/actions/workflows/build.yml/badge.svg)](https://github.com/caracal-dev/caracal/actions/workflows/build.yml) 
+[![bluebuild build badge](https://github.com/caracal-dev/caracal/actions/workflows/build-disk.yml/badge.svg)](https://github.com/caracal-dev/caracal/actions/workflows/build-disk.yml)
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/images/caracal-banner-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="assets/images/caracal-banner-light.png">
@@ -14,7 +17,7 @@ A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoi
 
 - **Bazzite kernel** — replaces the stock Fedora kernel with Bazzite's pre-built OCI kernel image
 - **CPU governor** — defaults to `performance` mode
-- **Realtime/memlock limits** — `@audio` and `@realtime` groups preconfigured with `rtprio 95` and unlimited memlock
+- **Realtime/memlock limits** — `@audio` and `@realtime` groups preconfigured with `rtprio 95` and unlimited memlock through both PAM and `systemd`
 
 ### DAWs (included)
 
@@ -125,7 +128,7 @@ Or do the group step manually:
 sudo usermod -aG audio,realtime $USER
 ```
 
-Then log out and back in for the group changes to take effect.
+Then reboot, or at minimum log out and back in, so the new group membership and session limits take effect.
 
 ---
 

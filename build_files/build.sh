@@ -105,6 +105,9 @@ dnf5 -y install \
   python3-tkinter \
   ublue-os-just
 
+# Virutal Machine Manager and dependencies
+dnf -y install @virtualization
+
 # Open source DAWs
 dnf5 -y install \
   ardour9 \
@@ -221,6 +224,21 @@ cat >/etc/security/limits.d/audio.conf <<'EOF'
 @realtime -  memlock    unlimited
 EOF
 
+# Graphical apps launched from the user systemd manager inherit limits from
+# systemd defaults instead of PAM on some Fedora/KDE session paths. Raise both
+# the system and user defaults so REAPER/yabridge can lock memory reliably.
+mkdir -p /usr/lib/systemd/system.conf.d /usr/lib/systemd/user.conf.d
+cat >/usr/lib/systemd/system.conf.d/90-caracal-audio.conf <<'EOF'
+[Manager]
+DefaultLimitMEMLOCK=infinity
+DefaultLimitRTPRIO=95
+EOF
+cat >/usr/lib/systemd/user.conf.d/90-caracal-audio.conf <<'EOF'
+[Manager]
+DefaultLimitMEMLOCK=infinity
+DefaultLimitRTPRIO=95
+EOF
+
 # Ensure audio group exists (user must run `ujust first-run` or `usermod -aG audio $USER` to join it)
 getent group audio || groupadd -r audio
 
@@ -228,6 +246,7 @@ getent group audio || groupadd -r audio
 systemctl enable cpupower.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
+systemctl enable --now libvirtd
 
 chmod +x /usr/libexec/caracal-user-setup
 systemctl --global enable caracal-user-setup.service
