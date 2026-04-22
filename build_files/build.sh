@@ -105,6 +105,9 @@ dnf5 -y install \
   python3-tkinter \
   ublue-os-just
 
+# Virutal Machine Manager and dependencies
+dnf -y install @virtualization
+
 # Open source DAWs
 dnf5 -y install \
   ardour9 \
@@ -228,6 +231,7 @@ getent group audio || groupadd -r audio
 systemctl enable cpupower.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
+systemctl enable --now libvirtd
 
 chmod +x /usr/libexec/caracal-user-setup
 systemctl --global enable caracal-user-setup.service
