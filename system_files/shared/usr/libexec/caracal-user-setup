@@ -35,7 +35,7 @@ SOFTWARE_INSTALLER_DESKTOP_SOURCE="/usr/share/applications/caracal-software-inst
 mkdir -p "$USER_CONFIG_DIR"
 
 DESIRED_PANEL_LAUNCHERS=(
-  "applications:org.alacritty.Alacritty.desktop"
+  "applications:Alacritty.desktop"
   "applications:io.github.kolunmi.Bazaar.desktop"
   "applications:app.zen_browser.zen.desktop"
   "applications:ardour9.desktop"
@@ -47,6 +47,7 @@ DESIRED_PANEL_LAUNCHERS_CSV="$(
 
 sync_live_panel_launchers() {
   local force="${1:-0}"
+  local replace_only="${2:-0}"
 
   if ! command -v qdbus6 &>/dev/null; then
     return
@@ -54,11 +55,12 @@ sync_live_panel_launchers() {
 
   qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
     const desiredLaunchers = [
-      "applications:org.alacritty.Alacritty.desktop",
+      "applications:Alacritty.desktop",
       "applications:io.github.kolunmi.Bazaar.desktop",
       "applications:app.zen_browser.zen.desktop",
       "applications:ardour9.desktop"
     ];
+    const legacyLauncher = "applications:org.alacritty.Alacritty.desktop";
 
     for (const panel of panels()) {
       for (const widget of panel.widgets()) {
@@ -68,8 +70,29 @@ sync_live_panel_launchers() {
 
         widget.currentConfigGroup = ["General"];
         const currentLaunchers = widget.readConfig("launchers", "");
+        const launcherList = Array.isArray(currentLaunchers)
+          ? currentLaunchers
+          : String(currentLaunchers)
+              .split(",")
+              .map((launcher) => launcher.trim())
+              .filter(Boolean);
         const shouldForce = '"${force}"' === "1";
-        if (shouldForce || !currentLaunchers || currentLaunchers.trim() === "") {
+        const replaceOnly = '"${replace_only}"' === "1";
+
+        if (launcherList.includes(legacyLauncher)) {
+          const migratedLaunchers = launcherList.map((launcher) =>
+            launcher === legacyLauncher ? desiredLaunchers[0] : launcher
+          );
+          widget.writeConfig("launchers", migratedLaunchers);
+          widget.reloadConfig();
+          continue;
+        }
+
+        if (replaceOnly) {
+          continue;
+        }
+
+        if (shouldForce || launcherList.length === 0) {
           widget.writeConfig("launchers", desiredLaunchers);
           widget.reloadConfig();
         }
@@ -106,7 +129,7 @@ DESIRED_KICKOFF_FAVORITES_CSV="$(
 sync_live_panel_launchers "$FIRST_CARACAL_RUN"
 
 # Bump this when branding or default app changes need re-application across rebases.
-USER_SETUP_VER=11
+USER_SETUP_VER=12
 
 if [[ -f "$USER_SETUP_VER_FILE" ]]; then
   STORED_VER=$(cat "$USER_SETUP_VER_FILE")
@@ -156,6 +179,10 @@ should_apply_vapor_theme() {
 }
 
 apply_vapor_theme() {
+  if command -v plasma-apply-lookandfeel &>/dev/null; then
+    plasma-apply-lookandfeel -a "$LOOK_AND_FEEL_PACKAGE" || true
+  fi
+
   kwriteconfig6 \
     --file "$USER_CONFIG_DIR/kdeglobals" \
     --group KDE \
@@ -204,6 +231,9 @@ if should_apply_vapor_theme; then
   sync_live_panel_launchers "$FIRST_CARACAL_RUN"
 fi
 
+# Repair legacy pinned launchers without overwriting any other user taskbar changes.
+sync_live_panel_launchers 0 1
+
 # -- Lock screen wallpaper --
 kwriteconfig6 \
   --file "$HOME/.config/kscreenlockerrc" \
@@ -241,7 +271,7 @@ fi
 kwriteconfig6 \
   --file "$USER_CONFIG_DIR/kdeglobals" \
   --group General \
-  --key TerminalApplication "org.alacritty.Alacritty.desktop"
+  --key TerminalApplication "Alacritty.desktop"
 
 # -- Default flatpaks --
 # Installed at user scope so no sudo is needed and they survive bootc rebases.
