@@ -268,6 +268,190 @@ setup-virtual-channels ACTION="":
         echo "Virtual channels removed. Log out or run ujust restart-pipewire to apply."
     fi
 
+# ── Virtualization ────────────────────────────────────────────────────────────
+
+# Adapted from Bazzite's setup-virtualization recipe:
+# https://github.com/ublue-os/bazzite
+# Caracal-specific changes:
+# - virtualization packages are already baked into the image
+# - Bazzite's delayed libvirtd setup service is not used here
+# - kvmfr support is omitted because Caracal does not currently ship that module
+# Set up libvirt, VFIO kernel args, and USB hot plugging helpers
+[group("virtualization")]
+setup-virtualization ACTION="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    source /usr/lib/ujust/ujust.sh
+
+    if [[ $(id -u) -eq 0 ]]; then
+        echo "Please do not run this command as root."
+        exit 1
+    fi
+
+    on_valve_hardware() {
+        command -v /usr/libexec/hwsupport/valve-hardware >/dev/null 2>&1 &&
+            /usr/libexec/hwsupport/valve-hardware
+    }
+
+    ensure_libvirtd() {
+        if ! systemctl is-enabled --quiet libvirtd.service 2>/dev/null; then
+            echo "Enabling libvirtd..."
+            sudo systemctl enable --now libvirtd
+        elif ! systemctl is-active --quiet libvirtd.service 2>/dev/null; then
+            echo "Starting libvirtd..."
+            sudo systemctl start libvirtd
+        fi
+    }
+
+    ensure_swtpm_state() {
+        echo "Making sure swtpm state exists..."
+        sudo mkdir -p /var/lib/swtpm-localca
+        sudo chown tss:tss /var/lib/swtpm-localca 2>/dev/null || sudo chown tss /var/lib/swtpm-localca
+        sudo restorecon -Rv /var/lib/libvirt /var/log/libvirt /var/lib/swtpm-localca 2>/dev/null || true
+    }
+
+    grant_iso_acl() {
+        if command -v setfacl >/dev/null 2>&1; then
+            echo "Giving qemu read access to ISO files in $HOME..."
+            sudo setfacl -m u:qemu:rx "$HOME" || true
+        fi
+    }
+
+    cpu_vendor_karg() {
+        local cpu_vendor
+        cpu_vendor="$(awk -F': ' '/vendor_id/ { print $2; exit }' /proc/cpuinfo)"
+        case "$cpu_vendor" in
+            AuthenticAMD) echo "amd_iommu=on" ;;
+            GenuineIntel) echo "intel_iommu=on" ;;
+            *) return 1 ;;
+        esac
+    }
+
+    OPTION="{{ ACTION }}"
+    if [[ "$OPTION" == "help" ]]; then
+        echo "Usage: ujust setup-virtualization <option>"
+        echo "  virt-on     Enable virtualization kernel args and libvirtd"
+        echo "  virt-off    Disable virtualization kernel args and libvirtd"
+        echo "  group       Add $USER to the libvirt group"
+        echo "  vfio-on     Enable VFIO-related kernel args"
+        echo "  vfio-off    Disable VFIO-related kernel args"
+        echo "  usbhp-on    Enable SPICE USB hot plugging rule"
+        echo "  usbhp-off   Disable SPICE USB hot plugging rule"
+        exit 0
+    elif [[ -z "$OPTION" ]]; then
+        echo "${bold}Virtualization Setup${normal}"
+        echo "Caracal already ships the virtualization packages in the base image."
+        OPTION=$(Choose \
+            "Enable virtualization" \
+            "Disable virtualization" \
+            "Add $USER to libvirt group" \
+            "Enable VFIO drivers" \
+            "Disable VFIO drivers" \
+            "Enable USB hot plugging" \
+            "Disable USB hot plugging" \
+        )
+    fi
+
+    if on_valve_hardware; then
+        echo "${red}${b}WARNING${n}: Virtualization and VFIO are not well supported on Steam Deck-class hardware."
+    fi
+
+    if [[ "${OPTION,,}" =~ (^enable[[:space:]]virtualization|virt-on) ]]; then
+        ensure_libvirtd
+        ensure_swtpm_state
+        grant_iso_acl
+        rpm-ostree kargs \
+            --append-if-missing="kvm.ignore_msrs=1" \
+            --append-if-missing="kvm.report_ignored_msrs=0"
+        echo "Virtualization enabled. Reboot if kernel args changed."
+
+    elif [[ "${OPTION,,}" =~ (^disable[[:space:]]virtualization|virt-off) ]]; then
+        if systemctl is-enabled --quiet libvirtd.service 2>/dev/null ||
+            systemctl is-active --quiet libvirtd.service 2>/dev/null; then
+            echo "Disabling libvirtd..."
+            sudo systemctl disable --now libvirtd || true
+        fi
+        rpm-ostree kargs \
+            --delete-if-present="kvm.ignore_msrs=1" \
+            --delete-if-present="kvm.report_ignored_msrs=0"
+        echo "Virtualization disabled. Base packages remain installed; reboot if kernel args changed."
+
+    elif [[ "${OPTION,,}" =~ group ]]; then
+        if ! getent group libvirt >/dev/null 2>&1; then
+            echo "libvirt group is missing."
+            exit 1
+        fi
+        sudo usermod -aG libvirt "$USER"
+        echo "Added $USER to libvirt. Log out and back in for group membership to apply."
+
+    elif [[ "${OPTION,,}" =~ (^enable[[:space:]]vfio|vfio-on) ]]; then
+        if on_valve_hardware; then
+            echo "IOMMU/VFIO is not supported on this hardware."
+            exit 0
+        fi
+
+        ensure_libvirtd
+        vendor_karg="$(cpu_vendor_karg)" || {
+            echo "Failed to determine CPU vendor."
+            exit 1
+        }
+
+        rpm-ostree initramfs --enable
+        rpm-ostree kargs \
+            --append-if-missing="kvm.ignore_msrs=1" \
+            --append-if-missing="kvm.report_ignored_msrs=0" \
+            --append-if-missing="${vendor_karg}" \
+            --append-if-missing="iommu=pt" \
+            --append-if-missing="rd.driver.pre=vfio-pci" \
+            --append-if-missing="vfio_pci.disable_vga=1"
+
+        echo "VFIO kernel args queued for next boot."
+        echo 'Add passthrough device IDs separately with: rpm-ostree kargs --append-if-missing="vfio_pci.ids=xxxx:yyyy,xxxx:zzzz"'
+        echo "Reboot after enabling VFIO."
+
+    elif [[ "${OPTION,,}" =~ (^disable[[:space:]]vfio|vfio-off) ]]; then
+        echo "Make sure any VFIO-backed VMs are not set to autostart before continuing."
+        CONFIRM=$(Choose Cancel Continue)
+        if [[ "$CONFIRM" != "Continue" ]]; then
+            exit 0
+        fi
+
+        vfio_ids="$(rpm-ostree kargs | tr ' ' '\n' | grep '^vfio_pci.ids=' || true)"
+        rpm_ostree_args=(
+            --delete-if-present="iommu=pt"
+            --delete-if-present="iommu=on"
+            --delete-if-present="amd_iommu=on"
+            --delete-if-present="intel_iommu=on"
+            --delete-if-present="rd.driver.pre=vfio-pci"
+            --delete-if-present="vfio_pci.disable_vga=1"
+            --delete-if-present="vfio_pci.disable_vga=0"
+        )
+        if [[ -n "$vfio_ids" ]]; then
+            rpm_ostree_args+=(--delete-if-present="$vfio_ids")
+        fi
+
+        sudo rm -f /etc/dracut.conf.d/vfio.conf
+        rpm-ostree kargs "${rpm_ostree_args[@]}"
+        echo "VFIO kernel args removed. Reboot to apply."
+
+    elif [[ "${OPTION,,}" =~ (^enable[[:space:]]usb|usbhp-on) ]]; then
+        echo "Adding udev rule for USB hot plugging..."
+        printf '%s\n' 'ACTION=="add", SUBSYSTEM=="usb", TAG+="uaccess"' |
+            sudo tee /etc/udev/rules.d/72-usbhp.rules >/dev/null
+        sudo udevadm control --reload || true
+        echo "USB hot plugging enabled."
+
+    elif [[ "${OPTION,,}" =~ (^disable[[:space:]]usb|usbhp-off) ]]; then
+        sudo rm -f /etc/udev/rules.d/72-usbhp.rules
+        sudo udevadm control --reload || true
+        echo "USB hot plugging disabled."
+
+    else
+        echo "Unknown option: $OPTION"
+        echo "Run 'ujust setup-virtualization help' for usage."
+        exit 1
+    fi
+
 # ── First-run & setup ─────────────────────────────────────────────────────────
 
 # First-run setup: add audio/realtime groups, install shell extras, and set up yabridge

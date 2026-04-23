@@ -53,21 +53,6 @@ mv -f 05-rpmostree.install.bak 05-rpmostree.install
 mv -f 50-dracut.install.bak 50-dracut.install
 popd
 
-# Build initramfs inside the container so bootc can deploy it directly.
-#   --no-hostonly : include all drivers, not just the CI build host's hardware
-#   --add ostree  : include the ostree dracut module for atomic deployments
-KVER=$(ls /usr/lib/modules | head -n1)
-dracut \
-    --reproducible \
-    --no-hostonly \
-    --add "ostree" \
-    --zstd \
-    --force \
-    "/usr/lib/modules/${KVER}/initramfs.img" \
-    "${KVER}"
-
-chmod 0600 "/usr/lib/modules/${KVER}/initramfs.img"
-
 # Clear any kernel files the RPM dropped in /boot — atomic images manage
 # /boot via the bootloader layer.
 rm -rf /boot/*

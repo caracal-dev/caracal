@@ -1,0 +1,19 @@
+#!/usr/bin/bash
+# Build initramfs after all branding and system file changes are present so
+# Plymouth assets inside the early boot image match the final rootfs.
+#
+# Adapted from https://github.com/ublue-os/bazzite (Apache 2.0)
+
+set -eoux pipefail
+
+KVER="$(ls /usr/lib/modules | head -n1)"
+dracut \
+    --reproducible \
+    --no-hostonly \
+    --add "ostree" \
+    --zstd \
+    --force \
+    "/usr/lib/modules/${KVER}/initramfs.img" \
+    "${KVER}"
+
+chmod 0600 "/usr/lib/modules/${KVER}/initramfs.img"

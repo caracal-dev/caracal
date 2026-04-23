@@ -65,5 +65,16 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/run \
     /ctx/build.sh
 
+### Initramfs
+## Build initramfs after branding/custom assets are in place so Plymouth uses
+## the Caracal logo during early boot, not the base Fedora asset from the
+## pre-branding filesystem snapshot.
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/build-initramfs
+
 ### Lint
 RUN bootc container lint
