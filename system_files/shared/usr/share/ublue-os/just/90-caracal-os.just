@@ -274,7 +274,15 @@ setup-virtual-channels ACTION="":
 first-run:
     #!/usr/bin/env bash
     set -euo pipefail
-    sudo usermod -aG audio,realtime "$USER"
+    target_user="${SUDO_USER:-$(logname 2>/dev/null || id -un)}"
+    if [[ -z "$target_user" ]] || [[ "$target_user" == "root" ]]; then
+        echo "Run ujust first-run as your regular user, not root." >&2
+        exit 1
+    fi
+
+    sudo getent group audio >/dev/null || sudo groupadd -r audio
+    sudo getent group realtime >/dev/null || sudo groupadd -r realtime
+    sudo usermod -aG audio,realtime "$target_user"
 
 
     # Set up Wine-native VST bridge
@@ -289,6 +297,7 @@ first-run:
     yabridgectl add "$vst3_dir"
     yabridgectl sync
 
+    echo "Added ${target_user} to audio and realtime."
     echo 'First-run setup complete. Reboot, or at minimum log out and back in, so group changes and session limits take effect.'
     echo 'Run  ujust install-flatpaks  to install recommended apps.'
     echo 'Run  ujust software-installer  for optional DAWs, plugins, and utilities.'
