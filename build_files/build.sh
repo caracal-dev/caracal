@@ -6,7 +6,13 @@ set -ouex pipefail
 SCRIPTS_DIR="/ctx/scripts"
 
 # System files
-rsync -rvKlO --exclude='/etc/hostname' /ctx/system_files/shared/ /
+rsync -rvKlO \
+  --exclude='/etc/hostname' \
+  --exclude='/usr/bin/caracal-software-installer' \
+  --exclude='/usr/lib/caracal-software-installer/***' \
+  --exclude='/usr/share/caracal-software-installer/***' \
+  --exclude='/usr/share/applications/caracal-software-installer.desktop' \
+  /ctx/system_files/shared/ /
 echo "caracal" >/etc/hostname
 
 # COPR repositories
@@ -16,6 +22,9 @@ dnf5 -y copr enable timlau/audio
 dnf5 -y copr enable teervo/DISTRHO
 dnf5 -y copr enable alternateved/eza
 dnf5 -y copr enable ublue-os/packages
+dnf5 -y copr enable tumillanino/caracal-software-installer
+
+dnf5 -y install caracal-software-installer
 
 # Realtime support
 dnf5 -y install realtime-setup
