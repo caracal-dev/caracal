@@ -14,115 +14,36 @@ fi
 CARACAL_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
 mkdir -p "$CARACAL_CONFIG_DIR"
 USER_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/version"
-FIRST_CARACAL_RUN=0
-if [[ ! -f "$USER_SETUP_VER_FILE" ]]; then
-  FIRST_CARACAL_RUN=1
-fi
 
 WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
 USER_SHELL="$(getent passwd "$(id -un)" | cut -d: -f7)"
 ALACRITTY_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/alacritty/alacritty.toml"
 USER_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 SOFTWARE_INSTALLER_DESKTOP_SOURCE="/usr/share/applications/caracal-software-installer.desktop"
+SYSTEM_KICKOFF_FAVORITES_FILE="/etc/xdg/kactivitymanagerd-statsrc"
+USER_KICKOFF_FAVORITES_FILE="$USER_CONFIG_DIR/kactivitymanagerd-statsrc"
+USER_PLASMA_APPLETSRC="$USER_CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc"
 
 mkdir -p "$USER_CONFIG_DIR"
 
-DESIRED_PANEL_LAUNCHERS=(
-  "applications:Alacritty.desktop"
-  "applications:io.github.kolunmi.Bazaar.desktop"
-  "applications:app.zen_browser.zen.desktop"
-  "applications:ardour9.desktop"
-)
-DESIRED_PANEL_LAUNCHERS_CSV="$(
-  IFS=,
-  printf '%s' "${DESIRED_PANEL_LAUNCHERS[*]}"
-)"
-
-sync_live_panel_launchers() {
-  local force="${1:-0}"
-  local replace_only="${2:-0}"
-
-  if ! command -v qdbus6 &>/dev/null; then
-    return
-  fi
-
-  qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '
-    const desiredLaunchers = [
-      "applications:Alacritty.desktop",
-      "applications:io.github.kolunmi.Bazaar.desktop",
-      "applications:app.zen_browser.zen.desktop",
-      "applications:ardour9.desktop"
-    ];
-    const legacyLauncher = "applications:org.alacritty.Alacritty.desktop";
-
-    for (const panel of panels()) {
-      for (const widget of panel.widgets()) {
-        if (widget.type !== "org.kde.plasma.icontasks") {
-          continue;
-        }
-
-        widget.currentConfigGroup = ["General"];
-        const currentLaunchers = widget.readConfig("launchers", "");
-        const launcherList = Array.isArray(currentLaunchers)
-          ? currentLaunchers
-          : String(currentLaunchers)
-              .split(",")
-              .map((launcher) => launcher.trim())
-              .filter(Boolean);
-        const shouldForce = '"${force}"' === "1";
-        const replaceOnly = '"${replace_only}"' === "1";
-
-        if (launcherList.includes(legacyLauncher)) {
-          const migratedLaunchers = launcherList.map((launcher) =>
-            launcher === legacyLauncher ? desiredLaunchers[0] : launcher
-          );
-          widget.writeConfig("launchers", migratedLaunchers);
-          widget.reloadConfig();
-          continue;
-        }
-
-        if (replaceOnly) {
-          continue;
-        }
-
-        if (shouldForce || launcherList.length === 0) {
-          widget.writeConfig("launchers", desiredLaunchers);
-          widget.reloadConfig();
-        }
-      }
-    }
-  ' 2>/dev/null || true
+migrate_legacy_panel_launcher_id() {
+  [[ -f "$USER_PLASMA_APPLETSRC" ]] || return
+  sed -i \
+    's|applications:org\.alacritty\.Alacritty\.desktop|applications:Alacritty.desktop|g' \
+    "$USER_PLASMA_APPLETSRC"
 }
 
-DESIRED_KICKOFF_FAVORITES=(
-  "ardour9.desktop"
-  "org.rncbc.qtractor.desktop"
-  "carla.desktop"
-  "org.hydrogenmusic.Hydrogen.desktop"
-  "org.musescore.MuseScore.desktop"
-  "org.tenacityaudio.Tenacity.desktop"
-  "org.rncbc.qjackctl.desktop"
-  "org.rncbc.qsynth.desktop"
-  "yoshimi.desktop"
-  "guitarix.desktop"
-  "sooperlooper.desktop"
-  "org.pulseaudio.pavucontrol.desktop"
-  "preferred://browser"
-  "org.kde.dolphin.desktop"
-  "systemsettings.desktop"
-)
-DESIRED_KICKOFF_FAVORITES_CSV="$(
-  IFS=,
-  printf '%s' "${DESIRED_KICKOFF_FAVORITES[*]}"
-)"
+drop_user_seeded_kickoff_favorites_if_pristine() {
+  [[ -f "$USER_KICKOFF_FAVORITES_FILE" ]] || return
+  [[ -f "$SYSTEM_KICKOFF_FAVORITES_FILE" ]] || return
 
-# Keep the live panel seeded on every session. On the first Caracal run after
-# a rebase from another image, force the Caracal pins once. After that, only
-# repair an empty taskbar so user customization is preserved.
-sync_live_panel_launchers "$FIRST_CARACAL_RUN"
+  if cmp -s "$USER_KICKOFF_FAVORITES_FILE" "$SYSTEM_KICKOFF_FAVORITES_FILE"; then
+    rm -f "$USER_KICKOFF_FAVORITES_FILE"
+  fi
+}
 
-# Bump this when branding or default app changes need re-application across rebases.
-USER_SETUP_VER=14
+# Bump this when user-config migrations need re-application across rebases.
+USER_SETUP_VER=15
 
 if [[ -f "$USER_SETUP_VER_FILE" ]]; then
   STORED_VER=$(cat "$USER_SETUP_VER_FILE")
@@ -133,16 +54,19 @@ if [[ -f "$USER_SETUP_VER_FILE" ]]; then
 fi
 
 # Follow Bazzite's model: ship Vapor as the system look-and-feel package and
-# avoid stamping Plasma/KSplash theme state into user config on login. If an
-# earlier Caracal build wrote a temporary Breeze KSplash override, drop it so
-# Plasma falls back to the packaged Vapor defaults again.
+# avoid stamping Plasma defaults into user config on login. If an earlier
+# Caracal build wrote temporary compatibility overrides, drop them so Plasma
+# falls back to the packaged defaults again.
 if [[ -f "$USER_CONFIG_DIR/ksplashrc" ]] &&
   grep -q '^Theme=org\.kde\.Breeze$' "$USER_CONFIG_DIR/ksplashrc"; then
   rm -f "$USER_CONFIG_DIR/ksplashrc"
 fi
 
-# Repair legacy pinned launchers without overwriting any other user taskbar changes.
-sync_live_panel_launchers 0 1
+# Earlier Caracal builds repaired panel pins and Kickoff favorites in user
+# config at login time. Keep only minimal migrations for that legacy state and
+# let the packaged Plasma defaults own new profiles going forward.
+migrate_legacy_panel_launcher_id
+drop_user_seeded_kickoff_favorites_if_pristine
 
 # -- Lock screen wallpaper --
 kwriteconfig6 \
@@ -221,66 +145,6 @@ flatpak uninstall --system -y org.mozilla.firefox 2>/dev/null || true
 
 # Ensure existing users also resolve browser launches to Zen Browser.
 mkdir -p "$USER_CONFIG_DIR"
-
-update_kickoff_favorites_file() {
-  local file="$1"
-  local tmp_file
-
-  mkdir -p "$(dirname "$file")"
-  [[ -f "$file" ]] || : >"$file"
-
-  tmp_file="$(mktemp)"
-  awk -v desired="$DESIRED_KICKOFF_FAVORITES_CSV" '
-    function flush_section() {
-      if (in_section && !saw_ordering) {
-        print "ordering=" desired
-      }
-
-      in_section = 0
-      saw_ordering = 0
-    }
-
-    /^\[Favorites-org\.kde\.plasma\.kickoff\.favorites\.instance-[^]]+\]$/ {
-      flush_section()
-      in_section = 1
-      saw_any = 1
-      print
-      next
-    }
-
-    /^\[/ {
-      flush_section()
-      print
-      next
-    }
-
-    in_section && /^ordering=/ {
-      if (!saw_ordering) {
-        print "ordering=" desired
-      }
-      saw_ordering = 1
-      next
-    }
-
-    {
-      print
-    }
-
-    END {
-      flush_section()
-
-      if (!saw_any) {
-        if (NR > 0) {
-          print ""
-        }
-        print "[Favorites-org.kde.plasma.kickoff.favorites.instance-3-global]"
-        print "ordering=" desired
-      }
-    }
-  ' "$file" >"$tmp_file"
-
-  mv "$tmp_file" "$file"
-}
 xdg-settings set default-web-browser app.zen_browser.zen.desktop 2>/dev/null || true
 for mime in \
   text/html \
@@ -296,10 +160,6 @@ for mime in \
   application/x-extension-xht; do
   xdg-mime default app.zen_browser.zen.desktop "$mime" 2>/dev/null || true
 done
-
-# Seed the Kickoff favorites menu with standalone studio tools so apps that do
-# not surface as DAW plugins remain easy to discover.
-update_kickoff_favorites_file "$USER_CONFIG_DIR/kactivitymanagerd-statsrc"
 
 if ((flatpak_install_ok)); then
   echo "$USER_SETUP_VER" >"$USER_SETUP_VER_FILE"
