@@ -505,18 +505,22 @@ setup-audio:
 setup-zsh:
     #!/usr/bin/env bash
     set -euo pipefail
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    sh -c "KEEP_ZSHRC=yes CHSH=yes $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     git clone https://github.com/zsh-users/zsh-autosuggestions.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
     git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting"
     git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autocomplete"
+
     {
+        echo 'export ZSH="$HOME/.oh-my-zsh"'
+        echo 'ZSH_THEME="robbyrussell"'
         echo 'plugins=(git'
         echo 'zsh-autosuggestions'
         echo 'zsh-syntax-highlighting'
         echo 'fast-syntax-highlighting'
         echo 'zsh-autocomplete'
         echo ')'
+        echo 'source $ZSH/oh-my-zsh.sh'
     } >> ~/.zshrc
 
 # Legacy helper: expose system plugins in Reaper's default user scan directories
