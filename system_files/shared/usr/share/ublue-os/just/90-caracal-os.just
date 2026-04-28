@@ -482,12 +482,71 @@ first-run:
     yabridgectl sync
 
     echo "Added ${target_user} to audio and realtime."
+
+    echo "Routing plugins to user folders"
+        mkdir -p ~/.vst3 ~/.lv2 ~/.clap ~/.vst
+    cp -rn /usr/lib64/vst3/* ~/.vst3/ 2>/dev/null || true
+    cp -rn /usr/lib64/vst/*  ~/.vst/  2>/dev/null || true
+    cp -rn /usr/lib64/lv2/*  ~/.lv2/  2>/dev/null || true
+    cp -rn /usr/lib64/clap/* ~/.clap/ 2>/dev/null || true
+    
+    echo "Audio plugins have been moved to user folders"
+
+    echo "Installing Caracal OS recommended flatpaks..."
+    flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+    flatpak install --user -y flathub \
+        io.github.kolunmi.Bazaar \
+        org.tenacityaudio.Tenacity \
+        app.zen_browser.zen \
+        com.ranfdev.DistroShelf \
+        org.kde.haruna \
+        org.gnome.Decibels \
+        "io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf" \
+        org.gnome.Loupe
+    # Remove any legacy Firefox flatpak; Zen Browser is the default browser.
+    flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true
+    sudo flatpak uninstall -y org.mozilla.firefox 2>/dev/null || true
+    echo "Flatpaks installed."
+
+    echo "Setting up shell"
+    function brew-bundle(){
+        echo 'Installing bling tools from Homebrew...'
+        brew bundle --file /usr/share/ublue-os/homebrew/caracal-cli.Brewfile --verbose
+    }
+    sh -c "KEEP_ZSHRC=yes CHSH=yes $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    git clone https://github.com/zsh-users/zsh-autosuggestions.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+    git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting"
+
+
+    {
+        echo 'export ZSH="$HOME/.oh-my-zsh"'
+        echo 'ZSH_THEME="robbyrussell"'
+        echo 'plugins=(git'
+        echo 'zsh-autosuggestions'
+        echo 'zsh-syntax-highlighting'
+        echo 'fast-syntax-highlighting'
+        echo ')'
+        echo 'source $ZSH/oh-my-zsh.sh'
+        echo eval "$(atuin init zsh)"  
+        echo eval "$(zoxide init zsh)"        echo alias grep='ug'
+        echo alias cd="z"
+        echo alias egrep='ug -E'
+        echo alias fgrep='ug -F'
+        echo alias xzgrep='ug -z'
+        echo alias xzegrep='ug -zE'
+        echo alias xzfgrep='ug -zF'
+        echo alias ll='eza -l --icons=auto --group-directories-first'
+        echo alias l.='eza -d .*'
+        echo alias ls='eza --icons=auto'
+        echo alias l1='eza -1'
+    } >> ~/.zshrc
     echo 'First-run setup complete. Reboot, or at minimum log out and back in, so group changes and session limits take effect.'
     echo 'Run  ujust install-flatpaks  to install recommended apps.'
     echo 'Run  ujust software-installer  for optional DAWs, plugins, and utilities.'
 
 # Set up yabridge Wine VST bridge for the current user
-setup-audio:
+update-audio:
     #!/usr/bin/env bash
     set -euo pipefail
     export WINELOADER="$(command -v wine)"
@@ -501,29 +560,6 @@ setup-audio:
     yabridgectl add "$vst3_dir"
     yabridgectl sync
 
-# Install Oh-My-Zsh and plugins
-setup-zsh:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    sh -c "KEEP_ZSHRC=yes CHSH=yes $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    git clone https://github.com/zsh-users/zsh-autosuggestions.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
-    git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting"
-    git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autocomplete"
-
-    {
-        echo 'export ZSH="$HOME/.oh-my-zsh"'
-        echo 'ZSH_THEME="robbyrussell"'
-        echo 'plugins=(git'
-        echo 'zsh-autosuggestions'
-        echo 'zsh-syntax-highlighting'
-        echo 'fast-syntax-highlighting'
-        echo 'zsh-autocomplete'
-        echo ')'
-        echo 'source $ZSH/oh-my-zsh.sh'
-    } >> ~/.zshrc
-
-# Legacy helper: expose system plugins in Reaper's default user scan directories
 route-plugins:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -540,7 +576,7 @@ route-plugins:
 # ── Flatpaks ──────────────────────────────────────────────────────────────────
 
 # Install recommended Caracal OS flatpaks (browser, media players, PDF viewer)
-install-flatpaks:
+reinstall-flatpaks:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "Installing Caracal OS recommended flatpaks..."
