@@ -245,6 +245,13 @@ systemctl enable --now libvirtd
 chmod +x /usr/libexec/caracal-user-setup
 systemctl --global enable caracal-user-setup.service
 
+# Remove Vapor/VGUI SteamOS theme leftovers from base packages
+rm -rf \
+  /usr/share/plasma/look-and-feel/com.valve.vapor.desktop \
+  /usr/share/plasma/look-and-feel/com.valve.vgui.desktop \
+  /usr/share/color-schemes/Vapor.colors \
+  /usr/share/plasma/desktoptheme/Vapor
+
 # Branding
 bash "${SCRIPTS_DIR}/branding.sh"
 

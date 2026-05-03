@@ -1,2 +1,28 @@
+# Kickoff favorites for instances 1-8. The instance number is the applet's
+# numeric ID assigned at first panel creation. We cover the common range so
+# fresh installs converge without needing the user-setup fallback.
+# Only apps present in the image are listed; stubs for uninstalled apps are
+# omitted so Kickoff does not show broken entries.
+[Favorites-org.kde.plasma.kickoff.favorites.instance-1-global]
+ordering=ardour9.desktop,org.rncbc.qtractor.desktop,carla.desktop,org.hydrogenmusic.Hydrogen.desktop,org.rncbc.qjackctl.desktop,org.tenacityaudio.Tenacity.desktop,guitarix.desktop,org.pulseaudio.pavucontrol.desktop,preferred://browser,org.kde.dolphin.desktop,systemsettings.desktop
+
+[Favorites-org.kde.plasma.kickoff.favorites.instance-2-global]
+ordering=ardour9.desktop,org.rncbc.qtractor.desktop,carla.desktop,org.hydrogenmusic.Hydrogen.desktop,org.rncbc.qjackctl.desktop,org.tenacityaudio.Tenacity.desktop,guitarix.desktop,org.pulseaudio.pavucontrol.desktop,preferred://browser,org.kde.dolphin.desktop,systemsettings.desktop
+
 [Favorites-org.kde.plasma.kickoff.favorites.instance-3-global]
-ordering=ardour9.desktop,cardinal.desktop,org.rncbc.qtractor.desktop,carla.desktop,org.hydrogenmusic.Hydrogen.desktop,org.musescore.MuseScore.desktop,org.tenacityaudio.Tenacity.desktop,org.rncbc.qjackctl.desktop,org.rncbc.qsynth.desktop,yoshimi.desktop,guitarix.desktop,sooperlooper.desktop,org.pulseaudio.pavucontrol.desktop,preferred://browser,org.kde.dolphin.desktop,systemsettings.desktop
+ordering=ardour9.desktop,org.rncbc.qtractor.desktop,carla.desktop,org.hydrogenmusic.Hydrogen.desktop,org.rncbc.qjackctl.desktop,org.tenacityaudio.Tenacity.desktop,guitarix.desktop,org.pulseaudio.pavucontrol.desktop,preferred://browser,org.kde.dolphin.desktop,systemsettings.desktop
+
+[Favorites-org.kde.plasma.kickoff.favorites.instance-4-global]
+ordering=ardour9.desktop,org.rncbc.qtractor.desktop,carla.desktop,org.hydrogenmusic.Hydrogen.desktop,org.rncbc.qjackctl.desktop,org.tenacityaudio.Tenacity.desktop,guitarix.desktop,org.pulseaudio.pavucontrol.desktop,preferred://browser,org.kde.dolphin.desktop,systemsettings.desktop
+
+[Favorites-org.kde.plasma.kickoff.favorites.instance-5-global]
+ordering=ardour9.desktop,org.rncbc.qtractor.desktop,carla.desktop,org.hydrogenmusic.Hydrogen.desktop,org.rncbc.qjackctl.desktop,org.tenacityaudio.Tenacity.desktop,guitarix.desktop,org.pulseaudio.pavucontrol.desktop,preferred://browser,org.kde.dolphin.desktop,systemsettings.desktop
+
+[Favorites-org.kde.plasma.kickoff.favorites.instance-6-global]
+ordering=ardour9.desktop,org.rncbc.qtractor.desktop,carla.desktop,org.hydrogenmusic.Hydrogen.desktop,org.rncbc.qjackctl.desktop,org.tenacityaudio.Tenacity.desktop,guitarix.desktop,org.pulseaudio.pavucontrol.desktop,preferred://browser,org.kde.dolphin.desktop,systemsettings.desktop
+
+[Favorites-org.kde.plasma.kickoff.favorites.instance-7-global]
+ordering=ardour9.desktop,org.rncbc.qtractor.desktop,carla.desktop,org.hydrogenmusic.Hydrogen.desktop,org.rncbc.qjackctl.desktop,org.tenacityaudio.Tenacity.desktop,guitarix.desktop,org.pulseaudio.pavucontrol.desktop,preferred://browser,org.kde.dolphin.desktop,systemsettings.desktop
+
+[Favorites-org.kde.plasma.kickoff.favorites.instance-8-global]
+ordering=ardour9.desktop,org.rncbc.qtractor.desktop,carla.desktop,org.hydrogenmusic.Hydrogen.desktop,org.rncbc.qjackctl.desktop,org.tenacityaudio.Tenacity.desktop,guitarix.desktop,org.pulseaudio.pavucontrol.desktop,preferred://browser,org.kde.dolphin.desktop,systemsettings.desktop
