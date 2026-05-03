@@ -42,6 +42,38 @@ drop_user_seeded_kickoff_favorites_if_pristine() {
   fi
 }
 
+set_kickoff_favorites() {
+  local appletsrc="$USER_CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc"
+  [[ -f "$appletsrc" ]] || return
+
+  # Find the Kickoff applet's numeric ID from the appletsrc.
+  # Section headers look like: [Containments][N][Applets][M]
+  # We track M then check if the next plugin= line is Kickoff.
+  local kickoff_id
+  kickoff_id=$(awk '
+    /^\[Containments\]\[[0-9]+\]\[Applets\]\[[0-9]+\]$/ {
+      s = $0
+      gsub(/.*\[Applets\]\[/, "", s)
+      gsub(/\].*/, "", s)
+      last_id = s
+    }
+    /^plugin=org\.kde\.plasma\.kickoff/ { print last_id; exit }
+  ' "$appletsrc")
+  [[ -n "$kickoff_id" ]] || return
+
+  local statsrc="$USER_CONFIG_DIR/kactivitymanagerd-statsrc"
+  local group="Favorites-org.kde.plasma.kickoff.favorites.instance-${kickoff_id}-global"
+  local favorites="ardour9.desktop,org.rncbc.qtractor.desktop,carla.desktop,org.hydrogenmusic.Hydrogen.desktop,org.rncbc.qjackctl.desktop,org.tenacityaudio.Tenacity.desktop,guitarix.desktop,org.pulseaudio.pavucontrol.desktop,preferred://browser,org.kde.dolphin.desktop,systemsettings.desktop"
+
+  local current
+  current=$(kreadconfig6 --file "$statsrc" --group "$group" --key ordering 2>/dev/null || true)
+
+  # Replace if empty or if the ordering still contains apps not shipped in this image.
+  if [[ -z "$current" ]] || echo "$current" | grep -qE "cardinal\.desktop|musescore|qsynth|yoshimi|sooperlooper"; then
+    kwriteconfig6 --file "$statsrc" --group "$group" --key ordering "$favorites"
+  fi
+}
+
 migrate_legacy_vapor_theme_config() {
   local current_look_and_feel current_color_scheme current_plasma_theme current_splash_theme
 
@@ -76,11 +108,12 @@ migrate_legacy_vapor_theme_config() {
       --key ColorScheme "BreezeDark"
   fi
 
-  if [[ "$current_plasma_theme" == "Vapor" ]]; then
+  if [[ "$current_plasma_theme" == "Vapor" ]] ||
+    [[ "$current_plasma_theme" == "default" ]]; then
     kwriteconfig6 \
       --file "$USER_CONFIG_DIR/plasmarc" \
       --group Theme \
-      --key name "default"
+      --key name "caracal"
   fi
 
   # Remove any stale user ksplash override so the system Breeze Dark default
@@ -93,7 +126,7 @@ migrate_legacy_vapor_theme_config() {
 }
 
 # Bump this when user-config migrations need re-application across rebases.
-USER_SETUP_VER=19
+USER_SETUP_VER=20
 
 if [[ -f "$USER_SETUP_VER_FILE" ]]; then
   STORED_VER=$(cat "$USER_SETUP_VER_FILE")
@@ -111,10 +144,10 @@ if [[ -f "$USER_CONFIG_DIR/ksplashrc" ]] &&
   rm -f "$USER_CONFIG_DIR/ksplashrc"
 fi
 
-# Earlier Caracal builds repaired panel pins and Kickoff favorites in user config at login time.
 migrate_legacy_vapor_theme_config
 migrate_legacy_panel_launcher_id
 drop_user_seeded_kickoff_favorites_if_pristine
+set_kickoff_favorites
 
 # -- Lock screen wallpaper --
 kwriteconfig6 \
