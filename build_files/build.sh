@@ -243,6 +243,7 @@ systemctl enable brew-setup.service
 systemctl enable --now libvirtd
 
 chmod +x /usr/libexec/caracal-user-setup
+chmod +x /usr/libexec/caracal-flatpak-setup
 systemctl --global enable caracal-user-setup.service
 
 # Remove Vapor/VGUI SteamOS theme leftovers from base packages
