@@ -176,4 +176,4 @@ jobs:
             exit 1
           fi
 
-          rclone copyto "${ISO_PATH}" "R2:${BUCKET_NAME}/$(basename "${ISO_PATH}") --s3-no-check-bucket"
+          rclone copyto "${ISO_PATH}" "R2:${BUCKET_NAME}/$(basename "${ISO_PATH}")"
