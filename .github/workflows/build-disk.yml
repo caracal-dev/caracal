@@ -150,18 +150,29 @@ jobs:
           compression-level: 0
           overwrite: true
       
-      - name: Upload to S3
-        if: inputs.upload-to-s3 == true && github.event_name != 'pull_request'
+      - name: Upload installer ISO to Cloudflare R2
+        if: inputs.upload-to-s3 == true && github.event_name != 'pull_request' && matrix.disk-type == 'installer-iso'
         shell: bash
         env:
-          RCLONE_CONFIG_S3_TYPE: s3
-          RCLONE_CONFIG_S3_PROVIDER: ${{ secrets.S3_PROVIDER }}
-          RCLONE_CONFIG_S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
-          RCLONE_CONFIG_S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-          RCLONE_CONFIG_S3_REGION: ${{ secrets.S3_REGION }}
-          RCLONE_CONFIG_S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
-          SOURCE_DIR: ${{ matrix.disk-type == 'installer-iso' && './output/installer' || steps.build.outputs.output-directory }}
+          RCLONE_CONFIG_R2_TYPE: s3
+          RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY }}
+          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.SECRET_S3_ACCESS_KEY }}
+          RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.S3_ENDPOINT_DEFAULT }}
+          BUCKET_NAME: ${{ vars.R2_BUCKET_NAME || secrets.S3_BUCKET_NAME }}
         run: |
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y rclone
-          rclone copy $SOURCE_DIR S3:${{ secrets.S3_BUCKET_NAME }}
+          if [ -z "${BUCKET_NAME}" ]; then
+            echo "Set repository variable R2_BUCKET_NAME or secret S3_BUCKET_NAME before enabling upload-to-s3." >&2
+            exit 1
+          fi
+
+          ISO_PATH=$(find ./output/installer -maxdepth 1 -type f -name '*.iso' | head -n 1)
+          if [ -z "${ISO_PATH}" ]; then
+            echo "No installer ISO was found in ./output/installer." >&2
+            exit 1
+          fi
+
+          rclone copyto "${ISO_PATH}" "R2:${BUCKET_NAME}/$(basename "${ISO_PATH}")"
