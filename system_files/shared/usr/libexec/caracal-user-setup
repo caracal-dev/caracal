@@ -106,59 +106,30 @@ set_kickoff_favorites() {
   fi
 }
 
-migrate_legacy_vapor_theme_config() {
-  local current_look_and_feel current_color_scheme current_plasma_theme current_splash_theme
+apply_default_theme_config() {
+  kwriteconfig6 \
+    --file "$USER_CONFIG_DIR/kdeglobals" \
+    --group KDE \
+    --key LookAndFeelPackage "org.kde.breezedark.desktop"
 
-  current_look_and_feel="$(
-    kreadconfig6 --file "$USER_CONFIG_DIR/kdeglobals" \
-      --group KDE --key LookAndFeelPackage 2>/dev/null || true
-  )"
-  current_color_scheme="$(
-    kreadconfig6 --file "$USER_CONFIG_DIR/kdeglobals" \
-      --group General --key ColorScheme 2>/dev/null || true
-  )"
-  current_plasma_theme="$(
-    kreadconfig6 --file "$USER_CONFIG_DIR/plasmarc" \
-      --group Theme --key name 2>/dev/null || true
-  )"
-  current_splash_theme="$(
-    kreadconfig6 --file "$USER_CONFIG_DIR/ksplashrc" \
-      --group KSplash --key Theme 2>/dev/null || true
-  )"
+  kwriteconfig6 \
+    --file "$USER_CONFIG_DIR/kdeglobals" \
+    --group General \
+    --key ColorScheme "BreezeDark"
 
-  if [[ "$current_look_and_feel" == "com.valve.vapor.desktop" ]]; then
-    kwriteconfig6 \
-      --file "$USER_CONFIG_DIR/kdeglobals" \
-      --group KDE \
-      --key LookAndFeelPackage "org.kde.breezedark.desktop"
-  fi
+  kwriteconfig6 \
+    --file "$USER_CONFIG_DIR/plasmarc" \
+    --group Theme \
+    --key name "caracal"
 
-  if [[ "$current_color_scheme" == "Vapor" ]]; then
-    kwriteconfig6 \
-      --file "$USER_CONFIG_DIR/kdeglobals" \
-      --group General \
-      --key ColorScheme "BreezeDark"
-  fi
-
-  if [[ "$current_plasma_theme" == "Vapor" ]] ||
-    [[ "$current_plasma_theme" == "default" ]]; then
-    kwriteconfig6 \
-      --file "$USER_CONFIG_DIR/plasmarc" \
-      --group Theme \
-      --key name "caracal"
-  fi
-
-  # Remove any stale user ksplash override so the system Breeze Dark default
-  # can take over after theme migrations.
-  if [[ "$current_look_and_feel" == "com.valve.vapor.desktop" ]] ||
-    [[ "$current_splash_theme" == "org.kde.Breeze" ]] ||
-    [[ "$current_splash_theme" == "com.valve.vapor.desktop" ]]; then
-    rm -f "$USER_CONFIG_DIR/ksplashrc"
-  fi
+  kwriteconfig6 \
+    --file "$USER_CONFIG_DIR/ksplashrc" \
+    --group KSplash \
+    --key Theme "org.kde.breezedark.desktop"
 }
 
 # Bump this when user-config migrations need re-application across rebases.
-USER_SETUP_VER=21
+USER_SETUP_VER=22
 DEFAULT_FLATPAK_SETUP_VER=1
 should_run_user_setup=1
 
@@ -176,15 +147,7 @@ if (( ! should_run_user_setup )); then
   exit 0
 fi
 
-# Avoid stamping Plasma defaults into user config on login. If an earlier
-# Caracal build wrote problematic custom theme values, rewrite only those
-# specific legacy keys so Plasma falls back to the safer packaged defaults.
-if [[ -f "$USER_CONFIG_DIR/ksplashrc" ]] &&
-  grep -Eq '^Theme=(org\.kde\.Breeze|com\.valve\.vapor\.desktop)$' "$USER_CONFIG_DIR/ksplashrc"; then
-  rm -f "$USER_CONFIG_DIR/ksplashrc"
-fi
-
-migrate_legacy_vapor_theme_config
+apply_default_theme_config
 migrate_legacy_panel_launcher_id
 drop_user_seeded_kickoff_favorites_if_pristine
 set_kickoff_favorites
