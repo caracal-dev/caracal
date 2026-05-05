@@ -158,6 +158,7 @@ jobs:
           RCLONE_CONFIG_R2_PROVIDER: Cloudflare
           RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY }}
           RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.SECRET_S3_ACCESS_KEY }}
+          RCLONE_CONFIG_R2_REGION: auto
           RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.S3_ENDPOINT_DEFAULT }}
           BUCKET_NAME: ${{ vars.R2_BUCKET_NAME || secrets.S3_BUCKET_NAME }}
         run: |
