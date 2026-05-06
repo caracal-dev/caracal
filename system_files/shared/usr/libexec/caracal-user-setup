@@ -65,6 +65,18 @@ migrate_legacy_panel_launcher_id() {
     "$USER_PLASMA_APPLETSRC"
 }
 
+drop_invalid_user_plasma_layout() {
+  [[ -f "$USER_PLASMA_APPLETSRC" ]] || return
+
+  # A valid Plasma shell layout contains containment sections. We previously
+  # shipped an incomplete appletsrc seed that could leave users with a blank
+  # desktop after the next login; drop that malformed user copy so Plasma can
+  # regenerate a normal layout.
+  if ! grep -q '^\[Containments\]\[[0-9]\+\]' "$USER_PLASMA_APPLETSRC"; then
+    rm -f "$USER_PLASMA_APPLETSRC"
+  fi
+}
+
 drop_user_seeded_kickoff_favorites_if_pristine() {
   [[ -f "$USER_KICKOFF_FAVORITES_FILE" ]] || return
   [[ -f "$SYSTEM_KICKOFF_FAVORITES_FILE" ]] || return
@@ -129,7 +141,7 @@ apply_default_theme_config() {
 }
 
 # Bump this when user-config migrations need re-application across rebases.
-USER_SETUP_VER=22
+USER_SETUP_VER=23
 DEFAULT_FLATPAK_SETUP_VER=1
 should_run_user_setup=1
 
@@ -148,6 +160,7 @@ if (( ! should_run_user_setup )); then
 fi
 
 apply_default_theme_config
+drop_invalid_user_plasma_layout
 migrate_legacy_panel_launcher_id
 drop_user_seeded_kickoff_favorites_if_pristine
 set_kickoff_favorites
