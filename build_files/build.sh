@@ -8,6 +8,10 @@ SCRIPTS_DIR="/ctx/scripts"
 # System files
 rsync -rvKlO \
   --exclude='/etc/hostname' \
+  --exclude='/usr/bin/caracal-setup' \
+  --exclude='/usr/lib/caracal-setup/***' \
+  --exclude='/usr/share/caracal-setup/***' \
+  --exclude='/usr/share/applications/caracal-setup.desktop' \
   --exclude='/usr/bin/caracal-software-installer' \
   --exclude='/usr/lib/caracal-software-installer/***' \
   --exclude='/usr/share/caracal-software-installer/***' \
@@ -22,9 +26,9 @@ dnf5 -y copr enable timlau/audio
 dnf5 -y copr enable teervo/DISTRHO
 dnf5 -y copr enable alternateved/eza
 dnf5 -y copr enable ublue-os/packages
-dnf5 -y copr enable tumillanino/caracal-software-installer
+dnf5 -y copr enable tumillanino/caracal-setup
 
-dnf5 -y install caracal-software-installer
+dnf5 -y install caracal-setup caracal-software-installer
 
 # Realtime support
 dnf5 -y install realtime-setup
@@ -39,8 +43,7 @@ dnf5 -y remove \
   vim-minimal \
   firefox \
   firefox-langpacks \
-  konsole \
-  konsole-part \
+  \
   plasma-discover \
   plasma-discover-flatpak \
   plasma-discover-kns \
@@ -243,7 +246,9 @@ systemctl enable brew-setup.service
 systemctl enable --now libvirtd
 
 chmod +x /usr/libexec/caracal-user-setup
+chmod +x /usr/libexec/caracal-setup-launch
 chmod +x /usr/libexec/caracal-flatpak-setup
+systemctl --global enable caracal-setup-launch.service
 systemctl --global enable caracal-user-setup.service
 
 # Remove Vapor/VGUI SteamOS theme leftovers from base packages

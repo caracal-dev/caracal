@@ -2,6 +2,7 @@ var panel = new Panel
 var panelScreen = panel.screen
 
 // No need to set panel.location as ShellCorona::addPanel will automatically pick one available edge
+panel.floating = false
 
 // For an Icons-Only Task Manager on the bottom, *3 is too much, *2 is too little
 // Round up to next highest even number since the Panel size widget only displays
@@ -92,10 +93,11 @@ for (let i = 0; i < allPanels.length; ++i) {
             // Only set our default if launchers is empty
             if (!currentLaunchers || currentLaunchers.trim() === "") {
                 widget.writeConfig("launchers", [
-                    "applications:Alacritty.desktop",
-                    "applications:io.github.kolunmi.Bazaar.desktop",
                     "applications:app.zen_browser.zen.desktop",
-                    "applications:ardour9.desktop"
+                    "applications:org.alacritty.Alacritty.desktop",
+                    "applications:io.github.kolunmi.Bazaar.desktop",
+                    "applications:ardour9.desktop",
+                    "preferred://filemanager"
                 ]);
                 widget.reloadConfig();
             }

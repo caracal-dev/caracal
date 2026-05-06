@@ -24,6 +24,7 @@ SOFTWARE_INSTALLER_DESKTOP_SOURCE="/usr/share/applications/caracal-software-inst
 SYSTEM_KICKOFF_FAVORITES_FILE="/etc/xdg/kactivitymanagerd-statsrc"
 USER_KICKOFF_FAVORITES_FILE="$USER_CONFIG_DIR/kactivitymanagerd-statsrc"
 USER_PLASMA_APPLETSRC="$USER_CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc"
+USER_PLASMASHELLRC="$USER_CONFIG_DIR/plasmashellrc"
 
 mkdir -p "$USER_CONFIG_DIR"
 
@@ -61,8 +62,20 @@ launch_default_flatpak_setup() {
 migrate_legacy_panel_launcher_id() {
   [[ -f "$USER_PLASMA_APPLETSRC" ]] || return
   sed -i \
-    's|applications:org\.alacritty\.Alacritty\.desktop|applications:Alacritty.desktop|g' \
+    's|applications:Alacritty\.desktop|applications:org.alacritty.Alacritty.desktop|g' \
     "$USER_PLASMA_APPLETSRC"
+}
+
+drop_invalid_user_plasma_layout() {
+  [[ -f "$USER_PLASMA_APPLETSRC" ]] || return
+
+  # A valid Plasma shell layout contains containment sections. We previously
+  # shipped an incomplete appletsrc seed that could leave users with a blank
+  # desktop after the next login; drop that malformed user copy so Plasma can
+  # regenerate a normal layout.
+  if ! grep -q '^\[Containments\]\[[0-9]\+\]' "$USER_PLASMA_APPLETSRC"; then
+    rm -f "$USER_PLASMA_APPLETSRC"
+  fi
 }
 
 drop_user_seeded_kickoff_favorites_if_pristine() {
@@ -120,7 +133,7 @@ apply_default_theme_config() {
   kwriteconfig6 \
     --file "$USER_CONFIG_DIR/plasmarc" \
     --group Theme \
-    --key name "caracal"
+    --key name "breeze-dark"
 
   kwriteconfig6 \
     --file "$USER_CONFIG_DIR/ksplashrc" \
@@ -128,8 +141,77 @@ apply_default_theme_config() {
     --key Theme "org.kde.breezedark.desktop"
 }
 
+disable_floating_panels() {
+  [[ -f "$USER_PLASMASHELLRC" ]] || return
+
+  awk '
+    /^\[PlasmaViews\]\[Panel [0-9]+\]$/ {
+      print
+      in_panel=1
+      next
+    }
+    /^\[/ {
+      in_panel=0
+      print
+      next
+    }
+    in_panel && /^floating=/ {
+      print "floating=0"
+      next
+    }
+    { print }
+  ' "$USER_PLASMASHELLRC" > "${USER_PLASMASHELLRC}.tmp"
+
+  mv "${USER_PLASMASHELLRC}.tmp" "$USER_PLASMASHELLRC"
+}
+
+set_user_panel_branding() {
+  [[ -f "$USER_PLASMA_APPLETSRC" ]] || return
+
+  python3 - "$USER_PLASMA_APPLETSRC" <<'PY'
+import configparser
+import sys
+
+path = sys.argv[1]
+parser = configparser.RawConfigParser(strict=False, delimiters=('='))
+parser.optionxform = str
+with open(path, 'r', encoding='utf-8') as fh:
+    parser.read_file(fh)
+
+changed = False
+launchers = ",".join([
+    "applications:app.zen_browser.zen.desktop",
+    "applications:org.alacritty.Alacritty.desktop",
+    "applications:io.github.kolunmi.Bazaar.desktop",
+    "applications:ardour9.desktop",
+    "preferred://filemanager",
+])
+
+for section in parser.sections():
+    if section.endswith("[Configuration][General]") and parser.has_option(section, "icon"):
+        if parser.get(section, "icon", fallback="") != "distributor-logo":
+            parser.set(section, "icon", "distributor-logo")
+            changed = True
+
+    if section.endswith("[Configuration][General]") and parser.has_option(section, "launchers"):
+        current = parser.get(section, "launchers", fallback="").strip()
+        if (
+            current == "" or
+            current == "applications:Alacritty.desktop,applications:app.zen_browser.zen.desktop,applications:org.kde.dolphin.desktop,applications:io.github.kolunmi.Bazaar.desktop" or
+            current == "applications:org.alacritty.Alacritty.desktop,applications:io.github.kolunmi.Bazaar.desktop,applications:app.zen_browser.zen.desktop,applications:ardour9.desktop"
+        ):
+            if current != launchers:
+                parser.set(section, "launchers", launchers)
+                changed = True
+
+if changed:
+    with open(path, 'w', encoding='utf-8') as fh:
+        parser.write(fh, space_around_delimiters=False)
+PY
+}
+
 # Bump this when user-config migrations need re-application across rebases.
-USER_SETUP_VER=22
+USER_SETUP_VER=26
 DEFAULT_FLATPAK_SETUP_VER=1
 should_run_user_setup=1
 
@@ -148,7 +230,10 @@ if (( ! should_run_user_setup )); then
 fi
 
 apply_default_theme_config
+disable_floating_panels
+drop_invalid_user_plasma_layout
 migrate_legacy_panel_launcher_id
+set_user_panel_branding
 drop_user_seeded_kickoff_favorites_if_pristine
 set_kickoff_favorites
 
@@ -189,7 +274,7 @@ fi
 kwriteconfig6 \
   --file "$USER_CONFIG_DIR/kdeglobals" \
   --group General \
-  --key TerminalApplication "Alacritty.desktop"
+  --key TerminalApplication "org.alacritty.Alacritty.desktop"
 
 # Ensure existing users also resolve browser launches to Zen Browser.
 mkdir -p "$USER_CONFIG_DIR"
