@@ -39,8 +39,7 @@ dnf5 -y remove \
   vim-minimal \
   firefox \
   firefox-langpacks \
-  konsole \
-  konsole-part \
+  \
   plasma-discover \
   plasma-discover-flatpak \
   plasma-discover-kns \

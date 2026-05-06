@@ -509,6 +509,9 @@ first-run:
     sudo flatpak uninstall -y org.mozilla.firefox 2>/dev/null || true
     echo "Flatpaks installed."
 
+    echo "Setting Alacritty theme"
+    cp -rn -u /usr/share/ublue-os/alacritty ~/.config/
+
     echo "Setting up shell"
     function brew-bundle(){
         echo 'Installing bling tools from Homebrew...'

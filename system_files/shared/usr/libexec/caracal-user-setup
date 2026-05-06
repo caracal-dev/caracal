@@ -61,7 +61,7 @@ launch_default_flatpak_setup() {
 migrate_legacy_panel_launcher_id() {
   [[ -f "$USER_PLASMA_APPLETSRC" ]] || return
   sed -i \
-    's|applications:org\.alacritty\.Alacritty\.desktop|applications:Alacritty.desktop|g' \
+    's|applications:Alacritty\.desktop|applications:org.alacritty.Alacritty.desktop|g' \
     "$USER_PLASMA_APPLETSRC"
 }
 
@@ -189,7 +189,7 @@ fi
 kwriteconfig6 \
   --file "$USER_CONFIG_DIR/kdeglobals" \
   --group General \
-  --key TerminalApplication "Alacritty.desktop"
+  --key TerminalApplication "org.alacritty.Alacritty.desktop"
 
 # Ensure existing users also resolve browser launches to Zen Browser.
 mkdir -p "$USER_CONFIG_DIR"
