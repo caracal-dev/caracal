@@ -1,0 +1,12 @@
+[Unit]
+Description=Launch Caracal Setup on first login after install or rebase
+ConditionUser=!@system
+After=caracal-user-setup.service graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/caracal-setup-launch
+
+[Install]
+WantedBy=graphical-session.target

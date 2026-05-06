@@ -1,0 +1,46 @@
+#!/usr/bin/bash
+# Launches the Caracal first-run wizard once for each user after a fresh install.
+
+set -euo pipefail
+
+if [ "${EUID:-$(id -u)}" -lt 1000 ]; then
+  echo "caracal-setup-launch: skipping system user."
+  exit 0
+fi
+
+if ! command -v caracal-setup >/dev/null 2>&1; then
+  echo "caracal-setup-launch: caracal-setup is not installed."
+  exit 0
+fi
+
+CARACAL_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
+mkdir -p "$CARACAL_CONFIG_DIR"
+
+MARKER_FILE="$CARACAL_CONFIG_DIR/setup-launch-version"
+MARKER_VALUE="launched"
+
+if [[ -f "$MARKER_FILE" ]] && [[ "$(cat "$MARKER_FILE")" == "$MARKER_VALUE" ]]; then
+  echo "caracal-setup-launch: already launched."
+  exit 0
+fi
+
+if command -v systemctl >/dev/null 2>&1 &&
+  systemctl --user --quiet is-active caracal-setup-app.service; then
+  echo "caracal-setup-launch: setup app is already running."
+  exit 0
+fi
+
+if command -v systemd-run >/dev/null 2>&1; then
+  systemd-run \
+    --user \
+    --quiet \
+    --collect \
+    --unit=caracal-setup-app \
+    --property=Type=exec \
+    /usr/bin/caracal-setup
+else
+  /usr/bin/caracal-setup >/dev/null 2>&1 &
+fi
+
+printf '%s\n' "$MARKER_VALUE" > "$MARKER_FILE"
+echo "caracal-setup-launch: launched caracal-setup."
