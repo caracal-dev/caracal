@@ -165,50 +165,6 @@ disable_floating_panels() {
   mv "${USER_PLASMASHELLRC}.tmp" "$USER_PLASMASHELLRC"
 }
 
-set_user_panel_branding() {
-  [[ -f "$USER_PLASMA_APPLETSRC" ]] || return
-
-  python3 - "$USER_PLASMA_APPLETSRC" <<'PY'
-import configparser
-import sys
-
-path = sys.argv[1]
-parser = configparser.RawConfigParser(strict=False, delimiters=('='))
-parser.optionxform = str
-with open(path, 'r', encoding='utf-8') as fh:
-    parser.read_file(fh)
-
-changed = False
-launchers = ",".join([
-    "applications:app.zen_browser.zen.desktop",
-    "applications:org.alacritty.Alacritty.desktop",
-    "applications:io.github.kolunmi.Bazaar.desktop",
-    "applications:ardour9.desktop",
-    "preferred://filemanager",
-])
-
-for section in parser.sections():
-    if section.endswith("[Configuration][General]") and parser.has_option(section, "icon"):
-        if parser.get(section, "icon", fallback="") != "distributor-logo":
-            parser.set(section, "icon", "distributor-logo")
-            changed = True
-
-    if section.endswith("[Configuration][General]") and parser.has_option(section, "launchers"):
-        current = parser.get(section, "launchers", fallback="").strip()
-        if (
-            current == "" or
-            current == "applications:Alacritty.desktop,applications:app.zen_browser.zen.desktop,applications:org.kde.dolphin.desktop,applications:io.github.kolunmi.Bazaar.desktop" or
-            current == "applications:org.alacritty.Alacritty.desktop,applications:io.github.kolunmi.Bazaar.desktop,applications:app.zen_browser.zen.desktop,applications:ardour9.desktop"
-        ):
-            if current != launchers:
-                parser.set(section, "launchers", launchers)
-                changed = True
-
-if changed:
-    with open(path, 'w', encoding='utf-8') as fh:
-        parser.write(fh, space_around_delimiters=False)
-PY
-}
 
 # Bump this when user-config migrations need re-application across rebases.
 USER_SETUP_VER=26
@@ -233,7 +189,6 @@ apply_default_theme_config
 disable_floating_panels
 drop_invalid_user_plasma_layout
 migrate_legacy_panel_launcher_id
-set_user_panel_branding
 drop_user_seeded_kickoff_favorites_if_pristine
 set_kickoff_favorites
 

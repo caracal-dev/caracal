@@ -14,15 +14,16 @@ Rectangle {
     property int stage
 
     onStageChanged: {
-        if (stage === 2) {
+        if (stage >= 1) {
             introAnimation.running = true;
+        }
+        if (stage >= 5) {
+            Qt.quit()
         }
     }
 
     width: 1280
     height: 800
-
-    Component.onCompleted: stage = 2
 
     Item {
         id: content

@@ -547,7 +547,7 @@ first-run:
         echo alias l1='eza -1'
     } >> ~/.zshrc
 
-    echo "zsh" >~/.bashrc
+    echo 'exec zsh' >> ~/.bashrc
     ## Set hostname again in case it is not set properly
     hostnamectl hostname "caracal"
     
