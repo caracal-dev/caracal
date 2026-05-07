@@ -1,8 +1,8 @@
 #!/usr/bin/bash
 # Applies Caracal OS branding and default apps to the current user's config.
-# Runs after the graphical session starts so plasma-apply-wallpaperimage works.
-# Uses version tracking so it re-runs whenever the number below is bumped,
-# which ensures branding and app defaults survive a bootc rebase from another image.
+# Runs in two phases: a pre-session migration that must finish before Plasma
+# starts, plus a post-session phase for wallpaper application that needs a live
+# graphical session. Version tracking forces reruns across rebases when needed.
 
 set -oue pipefail
 
@@ -13,7 +13,8 @@ fi
 
 CARACAL_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
 mkdir -p "$CARACAL_CONFIG_DIR"
-USER_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/version"
+PRE_SESSION_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/pre-session-version"
+POST_SESSION_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/post-session-version"
 FLATPAK_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/flatpak-version"
 
 WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
@@ -25,6 +26,7 @@ SYSTEM_KICKOFF_FAVORITES_FILE="/etc/xdg/kactivitymanagerd-statsrc"
 USER_KICKOFF_FAVORITES_FILE="$USER_CONFIG_DIR/kactivitymanagerd-statsrc"
 USER_PLASMA_APPLETSRC="$USER_CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc"
 USER_PLASMASHELLRC="$USER_CONFIG_DIR/plasmashellrc"
+MODE="${1:-pre-session}"
 
 mkdir -p "$USER_CONFIG_DIR"
 
@@ -165,89 +167,141 @@ disable_floating_panels() {
   mv "${USER_PLASMASHELLRC}.tmp" "$USER_PLASMASHELLRC"
 }
 
+reset_legacy_user_plasma_layout() {
+  [[ -f "$USER_PLASMA_APPLETSRC" ]] || return
+
+  # v26 rewrote user appletsrc with Python configparser after Plasma started.
+  # That broken rewrite can survive rebases and make plasmashell crash on the
+  # next login. If we see the old Caracal panel branding markers on a profile
+  # that has not passed the new pre-session migration yet, back it up and let
+  # Plasma regenerate a clean layout.
+  local needs_reset=0
+  if grep -q '^icon=distributor-logo$' "$USER_PLASMA_APPLETSRC"; then
+    needs_reset=1
+  fi
+  if grep -q '^launchers=applications:app\.zen_browser\.zen\.desktop,applications:org\.alacritty\.Alacritty\.desktop,applications:io\.github\.kolunmi\.Bazaar\.desktop,applications:ardour9\.desktop,preferred://filemanager$' "$USER_PLASMA_APPLETSRC"; then
+    needs_reset=1
+  fi
+  (( needs_reset )) || return
+
+  local backup_path="${USER_PLASMA_APPLETSRC}.caracal-v26.bak"
+  if [[ ! -f "$backup_path" ]]; then
+    cp -a "$USER_PLASMA_APPLETSRC" "$backup_path"
+  fi
+  rm -f "$USER_PLASMA_APPLETSRC"
+}
+
+should_run_versioned_setup() {
+  local version_file="$1"
+  local desired_version="$2"
+  local stored_version=""
+
+  if [[ -f "$version_file" ]]; then
+    stored_version=$(cat "$version_file")
+  fi
+
+  [[ "$stored_version" != "$desired_version" ]]
+}
+
+run_pre_session_setup() {
+  apply_default_theme_config
+  disable_floating_panels
+  drop_invalid_user_plasma_layout
+  reset_legacy_user_plasma_layout
+  migrate_legacy_panel_launcher_id
+  drop_user_seeded_kickoff_favorites_if_pristine
+  set_kickoff_favorites
+
+  # -- Lock screen wallpaper --
+  kwriteconfig6 \
+    --file "$HOME/.config/kscreenlockerrc" \
+    --group Greeter --group Wallpaper --group org.kde.image --group General \
+    --key Image "$WALLPAPER"
+
+  kwriteconfig6 \
+    --file "$HOME/.config/kscreenlockerrc" \
+    --group Greeter --group Wallpaper --group org.kde.image --group General \
+    --key PreviewImage "$WALLPAPER"
+
+  # -- Desktop shortcuts --
+  DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || true)"
+  if [[ -z "$DESKTOP_DIR" ]]; then
+    DESKTOP_DIR="$HOME/Desktop"
+  fi
+
+  if [[ -f "$SOFTWARE_INSTALLER_DESKTOP_SOURCE" ]]; then
+    install -d "$DESKTOP_DIR"
+    install -m755 "$SOFTWARE_INSTALLER_DESKTOP_SOURCE" \
+      "$DESKTOP_DIR/caracal-software-installer.desktop"
+  fi
+
+  # -- Alacritty migration --
+  if [[ -n "$USER_SHELL" ]] && [[ -f "$ALACRITTY_CONFIG" ]]; then
+    sed -i "s|program = \"/usr/libexec/zena-shell\"|program = \"$USER_SHELL\"|" "$ALACRITTY_CONFIG"
+  fi
+
+  # Prefer Alacritty for KDE terminal launches in the current user session.
+  kwriteconfig6 \
+    --file "$USER_CONFIG_DIR/kdeglobals" \
+    --group General \
+    --key TerminalApplication "org.alacritty.Alacritty.desktop"
+
+  # Ensure existing users also resolve browser launches to Zen Browser.
+  mkdir -p "$USER_CONFIG_DIR"
+  xdg-settings set default-web-browser app.zen_browser.zen.desktop 2>/dev/null || true
+  for mime in \
+    text/html \
+    x-scheme-handler/http \
+    x-scheme-handler/https \
+    x-scheme-handler/ftp \
+    x-scheme-handler/chrome \
+    application/xhtml+xml \
+    application/x-extension-htm \
+    application/x-extension-html \
+    application/x-extension-shtml \
+    application/x-extension-xhtml \
+    application/x-extension-xht; do
+    xdg-mime default app.zen_browser.zen.desktop "$mime" 2>/dev/null || true
+  done
+}
+
+run_post_session_setup() {
+  # plasma-apply-wallpaperimage needs a live Plasma session.
+  if command -v plasma-apply-wallpaperimage &>/dev/null; then
+    plasma-apply-wallpaperimage "$WALLPAPER" || true
+  fi
+}
 
 # Bump this when user-config migrations need re-application across rebases.
-USER_SETUP_VER=26
+PRE_SESSION_SETUP_VER=27
+POST_SESSION_SETUP_VER=27
 DEFAULT_FLATPAK_SETUP_VER=1
-should_run_user_setup=1
-
-if [[ -f "$USER_SETUP_VER_FILE" ]]; then
-  STORED_VER=$(cat "$USER_SETUP_VER_FILE")
-  if [[ "$USER_SETUP_VER" == "$STORED_VER" ]]; then
-    should_run_user_setup=0
-  fi
-fi
 
 launch_default_flatpak_setup
 
-if (( ! should_run_user_setup )); then
-  echo "caracal-user-setup v$USER_SETUP_VER already ran."
-  exit 0
-fi
+case "$MODE" in
+  pre-session)
+    if ! should_run_versioned_setup "$PRE_SESSION_SETUP_VER_FILE" "$PRE_SESSION_SETUP_VER"; then
+      echo "caracal-user-setup pre-session v$PRE_SESSION_SETUP_VER already ran."
+      exit 0
+    fi
 
-apply_default_theme_config
-disable_floating_panels
-drop_invalid_user_plasma_layout
-migrate_legacy_panel_launcher_id
-drop_user_seeded_kickoff_favorites_if_pristine
-set_kickoff_favorites
+    run_pre_session_setup
+    echo "$PRE_SESSION_SETUP_VER" >"$PRE_SESSION_SETUP_VER_FILE"
+    echo "caracal-user-setup pre-session v$PRE_SESSION_SETUP_VER complete."
+    ;;
+  post-session)
+    if ! should_run_versioned_setup "$POST_SESSION_SETUP_VER_FILE" "$POST_SESSION_SETUP_VER"; then
+      echo "caracal-user-setup post-session v$POST_SESSION_SETUP_VER already ran."
+      exit 0
+    fi
 
-# -- Lock screen wallpaper --
-kwriteconfig6 \
-  --file "$HOME/.config/kscreenlockerrc" \
-  --group Greeter --group Wallpaper --group org.kde.image --group General \
-  --key Image "$WALLPAPER"
-
-kwriteconfig6 \
-  --file "$HOME/.config/kscreenlockerrc" \
-  --group Greeter --group Wallpaper --group org.kde.image --group General \
-  --key PreviewImage "$WALLPAPER"
-
-# -- Desktop wallpaper --
-if command -v plasma-apply-wallpaperimage &>/dev/null; then
-  plasma-apply-wallpaperimage "$WALLPAPER" || true
-fi
-
-# -- Desktop shortcuts --
-DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || true)"
-if [[ -z "$DESKTOP_DIR" ]]; then
-  DESKTOP_DIR="$HOME/Desktop"
-fi
-
-if [[ -f "$SOFTWARE_INSTALLER_DESKTOP_SOURCE" ]]; then
-  install -d "$DESKTOP_DIR"
-  install -m755 "$SOFTWARE_INSTALLER_DESKTOP_SOURCE" \
-    "$DESKTOP_DIR/caracal-software-installer.desktop"
-fi
-
-# -- Alacritty migration --
-if [[ -n "$USER_SHELL" ]] && [[ -f "$ALACRITTY_CONFIG" ]]; then
-  sed -i "s|program = \"/usr/libexec/zena-shell\"|program = \"$USER_SHELL\"|" "$ALACRITTY_CONFIG"
-fi
-
-# Prefer Alacritty for KDE terminal launches in the current user session.
-kwriteconfig6 \
-  --file "$USER_CONFIG_DIR/kdeglobals" \
-  --group General \
-  --key TerminalApplication "org.alacritty.Alacritty.desktop"
-
-# Ensure existing users also resolve browser launches to Zen Browser.
-mkdir -p "$USER_CONFIG_DIR"
-xdg-settings set default-web-browser app.zen_browser.zen.desktop 2>/dev/null || true
-for mime in \
-  text/html \
-  x-scheme-handler/http \
-  x-scheme-handler/https \
-  x-scheme-handler/ftp \
-  x-scheme-handler/chrome \
-  application/xhtml+xml \
-  application/x-extension-htm \
-  application/x-extension-html \
-  application/x-extension-shtml \
-  application/x-extension-xhtml \
-  application/x-extension-xht; do
-  xdg-mime default app.zen_browser.zen.desktop "$mime" 2>/dev/null || true
-done
-
-echo "$USER_SETUP_VER" >"$USER_SETUP_VER_FILE"
-echo "caracal-user-setup v$USER_SETUP_VER complete."
+    run_post_session_setup
+    echo "$POST_SESSION_SETUP_VER" >"$POST_SESSION_SETUP_VER_FILE"
+    echo "caracal-user-setup post-session v$POST_SESSION_SETUP_VER complete."
+    ;;
+  *)
+    echo "caracal-user-setup: unknown mode '$MODE'." >&2
+    exit 1
+    ;;
+esac
