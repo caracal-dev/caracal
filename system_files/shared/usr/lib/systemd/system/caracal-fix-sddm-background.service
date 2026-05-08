@@ -1,0 +1,13 @@
+[Unit]
+Description=Repair stale SDDM greeter background override
+DefaultDependencies=no
+After=local-fs.target systemd-tmpfiles-setup.service
+Before=sddm.service
+ConditionPathExists=/var/lib/sddm/.local/share/sddm/themes/caracal/theme.conf.user
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/caracal-fix-sddm-background
+
+[Install]
+WantedBy=multi-user.target

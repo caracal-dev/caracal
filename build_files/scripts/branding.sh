@@ -77,10 +77,14 @@ SPLASH_LOGO="/ctx/assets/logos/caracal-splash.svg"
 mkdir -p /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/images
 cp "$SPLASH_LOGO" /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/images/caracal-logo.svg
 
-# Plymouth boot splash: replace watermark with Caracal logo
-# Remove Bazzite/Kinoite animation frames so only our watermark shows
+# Plymouth boot splash
+# Remove Bazzite/Kinoite animation frames so only our watermark shows.
 rm -f /usr/share/plymouth/themes/spinner/animation-*.png
 rm -f /usr/share/plymouth/themes/spinner/throbber-*.png
+# Re-copy watermark after package installs — dnf may reinstall plymouth-theme-spinner
+# and overwrite the rsync'd file before dracut runs.
+cp /ctx/system_files/shared/usr/share/plymouth/themes/spinner/watermark.png \
+   /usr/share/plymouth/themes/spinner/watermark.png
 
 # Replace EFI boot picker icon with Caracal logo
 mkdir -p /usr/share/pixmaps/bootloader

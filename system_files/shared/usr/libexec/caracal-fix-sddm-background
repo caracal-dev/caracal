@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+override="/var/lib/sddm/.local/share/sddm/themes/caracal/theme.conf.user"
+caracal_bg="/usr/share/wallpapers/caracal/caracal-lake.png"
+
+if [[ ! -f "${override}" ]]; then
+  exit 0
+fi
+
+# Only rewrite the stock Fedora/KDE background override. Leave genuine user
+# customizations untouched.
+if grep -q '^background=/usr/share/backgrounds/default\.jxl$' "${override}"; then
+  tmp="$(mktemp)"
+  trap 'rm -f "${tmp}"' EXIT
+
+  awk -v bg="${caracal_bg}" '
+    BEGIN {
+      seen_general = 0
+      saw_type = 0
+      saw_background = 0
+    }
+    /^\[General\]$/ {
+      seen_general = 1
+      print
+      next
+    }
+    /^type=/ {
+      saw_type = 1
+      print "type=image"
+      next
+    }
+    /^background=/ {
+      saw_background = 1
+      print "background=" bg
+      next
+    }
+    { print }
+    END {
+      if (!seen_general) {
+        print "[General]"
+      }
+      if (!saw_type) {
+        print "type=image"
+      }
+      if (!saw_background) {
+        print "background=" bg
+      }
+    }
+  ' "${override}" > "${tmp}"
+
+  install -o sddm -g sddm -m 0644 "${tmp}" "${override}"
+fi
