@@ -75,7 +75,7 @@ drop_invalid_user_plasma_layout() {
   # shipped an incomplete appletsrc seed that could leave users with a blank
   # desktop after the next login; drop that malformed user copy so Plasma can
   # regenerate a normal layout.
-  if ! grep -q '^\[Containments\]\[[0-9]\+\]' "$USER_PLASMA_APPLETSRC"; then
+  if ! grep -qE '^\[Containments\]\[[0-9]+\]' "$USER_PLASMA_APPLETSRC"; then
     rm -f "$USER_PLASMA_APPLETSRC"
   fi
 }
@@ -176,10 +176,10 @@ reset_legacy_user_plasma_layout() {
   # that has not passed the new pre-session migration yet, back it up and let
   # Plasma regenerate a clean layout.
   local needs_reset=0
-  if grep -q '^icon=distributor-logo$' "$USER_PLASMA_APPLETSRC"; then
+  if grep -qE '^icon=distributor-logo' "$USER_PLASMA_APPLETSRC"; then
     needs_reset=1
   fi
-  if grep -q '^launchers=applications:app\.zen_browser\.zen\.desktop,applications:org\.alacritty\.Alacritty\.desktop,applications:io\.github\.kolunmi\.Bazaar\.desktop,applications:ardour9\.desktop,preferred://filemanager$' "$USER_PLASMA_APPLETSRC"; then
+  if grep -qE '^launchers=applications:app\.zen_browser\.zen\.desktop,applications:org\.alacritty\.Alacritty\.desktop,applications:io\.github\.kolunmi\.Bazaar\.desktop,applications:ardour9\.desktop,preferred://filemanager' "$USER_PLASMA_APPLETSRC"; then
     needs_reset=1
   fi
   (( needs_reset )) || return
@@ -245,9 +245,16 @@ run_pre_session_setup() {
     --file "$USER_CONFIG_DIR/kdeglobals" \
     --group General \
     --key TerminalApplication "org.alacritty.Alacritty.desktop"
+}
+
+run_post_session_setup() {
+  # plasma-apply-wallpaperimage needs a live Plasma session.
+  if command -v plasma-apply-wallpaperimage &>/dev/null; then
+    plasma-apply-wallpaperimage "$WALLPAPER" || true
+  fi
 
   # Ensure existing users also resolve browser launches to Zen Browser.
-  mkdir -p "$USER_CONFIG_DIR"
+  # These commands often require a running session bus/portal.
   xdg-settings set default-web-browser app.zen_browser.zen.desktop 2>/dev/null || true
   for mime in \
     text/html \
@@ -265,16 +272,9 @@ run_pre_session_setup() {
   done
 }
 
-run_post_session_setup() {
-  # plasma-apply-wallpaperimage needs a live Plasma session.
-  if command -v plasma-apply-wallpaperimage &>/dev/null; then
-    plasma-apply-wallpaperimage "$WALLPAPER" || true
-  fi
-}
-
 # Bump this when user-config migrations need re-application across rebases.
-PRE_SESSION_SETUP_VER=27
-POST_SESSION_SETUP_VER=27
+PRE_SESSION_SETUP_VER=28
+POST_SESSION_SETUP_VER=28
 DEFAULT_FLATPAK_SETUP_VER=1
 
 launch_default_flatpak_setup
