@@ -544,6 +544,12 @@ first-run:
         echo alias l1='eza -1'
     } >> ~/.zshrc
 
+    {
+      echo 'if [[ $- == *i* ]]; then'
+      echo '  exec zsh'
+      echo 'fi'
+    } >> ~/.bashrc
+
     echo "Setting Alacritty theme"
     mkdir -p ~/.config/alacritty
     cp -rn -u /usr/share/ublue-os/alacritty ~/.config/
