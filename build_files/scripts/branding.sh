@@ -51,6 +51,19 @@ cp /ctx/assets/wallpapers/* /usr/share/wallpapers/caracal/
 # theme, then apply our wallpaper override to that single theme.
 rm -rf /usr/share/sddm/themes/caracal
 cp -a /usr/share/sddm/themes/01-breeze-fedora /usr/share/sddm/themes/caracal
+# Patch theme.conf directly — SDDM reads this from the theme directory.
+# theme.conf.user at runtime is read from the sddm user's XDG data home
+# (/var/lib/sddm/.local/share/sddm/themes/caracal/), NOT from here; a
+# tmpfiles rule handles that deployment.
+sed -i \
+  -e 's|^background=.*|background=/usr/share/wallpapers/caracal/caracal-lake.png|' \
+  -e 's|^type=.*|type=image|' \
+  /usr/share/sddm/themes/caracal/theme.conf
+# Fail the build explicitly if the sed didn't match (silent no-op otherwise).
+grep -q '^background=/usr/share/wallpapers/caracal/caracal-lake.png' \
+  /usr/share/sddm/themes/caracal/theme.conf
+# Also write theme.conf.user into the theme dir for any SDDM builds that do
+# search there, and as the source file for the tmpfiles copy rule.
 cat > /usr/share/sddm/themes/caracal/theme.conf.user << 'EOF'
 [General]
 type=image
@@ -64,11 +77,14 @@ SPLASH_LOGO="/ctx/assets/logos/caracal-splash.svg"
 mkdir -p /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/images
 cp "$SPLASH_LOGO" /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/images/caracal-logo.svg
 
-# Plymouth boot splash: replace watermark with Caracal logo
-# Remove Bazzite/Kinoite animation frames so only our watermark shows
+# Plymouth boot splash
+# Remove Bazzite/Kinoite animation frames so only our watermark shows.
 rm -f /usr/share/plymouth/themes/spinner/animation-*.png
 rm -f /usr/share/plymouth/themes/spinner/throbber-*.png
-cp /ctx/assets/logos/caracal.png /usr/share/plymouth/themes/spinner/watermark.png
+# Re-copy watermark after package installs — dnf may reinstall plymouth-theme-spinner
+# and overwrite the rsync'd file before dracut runs.
+cp /ctx/system_files/shared/usr/share/plymouth/themes/spinner/watermark.png \
+   /usr/share/plymouth/themes/spinner/watermark.png
 
 # Replace EFI boot picker icon with Caracal logo
 mkdir -p /usr/share/pixmaps/bootloader

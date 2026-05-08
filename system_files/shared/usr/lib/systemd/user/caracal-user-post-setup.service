@@ -1,0 +1,12 @@
+[Unit]
+Description=Apply Caracal OS post-session user setup
+ConditionUser=!@system
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/caracal-user-setup post-session
+
+[Install]
+WantedBy=graphical-session.target

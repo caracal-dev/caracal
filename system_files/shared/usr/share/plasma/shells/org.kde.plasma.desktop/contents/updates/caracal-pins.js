@@ -8,7 +8,7 @@ const desiredLaunchers = [
 
 const legacyLaunchers = [
     "applications:Alacritty.desktop,applications:app.zen_browser.zen.desktop,applications:org.kde.dolphin.desktop,applications:io.github.kolunmi.Bazaar.desktop",
-    "applications:org.alacritty.Alacritty.desktop,applications:io.github.kolunmi.Bazaar.desktop,applications:app.zen_browser.zen.desktop,applications:ardour9.desktop"
+    "applications:Alacritty.desktop,applications:io.github.kolunmi.Bazaar.desktop,applications:app.zen_browser.zen.desktop,applications:ardour9.desktop"
 ];
 
 const allPanels = panels();

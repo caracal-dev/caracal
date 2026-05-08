@@ -176,4 +176,12 @@ jobs:
             exit 1
           fi
 
+          CHECKSUM_PATH=$(find ./output/installer -maxdepth 1 -type f \( -name '*.iso-CHECKSUM' -o -name '*CHECKSUM*' -o -name '*.sha256' -o -name '*.sha256sum' \) | head -n 1)
+          if [ -z "${CHECKSUM_PATH}" ]; then
+            echo "No checksum file was found in ./output/installer." >&2
+            exit 1
+          fi
+
           rclone copyto "${ISO_PATH}" "R2:${BUCKET_NAME}/$(basename "${ISO_PATH}")"
+
+          rclone copyto "${CHECKSUM_PATH}" "R2:${BUCKET_NAME}/$(basename "${CHECKSUM_PATH}")"
