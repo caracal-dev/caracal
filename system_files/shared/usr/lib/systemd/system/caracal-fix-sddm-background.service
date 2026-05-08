@@ -1,9 +1,10 @@
 [Unit]
 Description=Repair stale SDDM greeter background override
 DefaultDependencies=no
-After=local-fs.target systemd-tmpfiles-setup.service
+Wants=usr-share-sddm-themes.mount
+After=local-fs.target systemd-tmpfiles-setup.service usr-share-sddm-themes.mount
 Before=sddm.service
-ConditionPathExists=/var/lib/sddm/.local/share/sddm/themes/caracal/theme.conf.user
+ConditionPathExists=/usr/share/sddm/themes/caracal/theme.conf
 
 [Service]
 Type=oneshot
