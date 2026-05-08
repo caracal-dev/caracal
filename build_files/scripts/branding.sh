@@ -51,13 +51,19 @@ cp /ctx/assets/wallpapers/* /usr/share/wallpapers/caracal/
 # theme, then apply our wallpaper override to that single theme.
 rm -rf /usr/share/sddm/themes/caracal
 cp -a /usr/share/sddm/themes/01-breeze-fedora /usr/share/sddm/themes/caracal
-# Patch theme.conf directly — on immutable/ostree systems theme.conf.user is
-# not reliably picked up, so writing into the primary config is more robust.
+# Patch theme.conf directly — SDDM reads this from the theme directory.
+# theme.conf.user at runtime is read from the sddm user's XDG data home
+# (/var/lib/sddm/.local/share/sddm/themes/caracal/), NOT from here; a
+# tmpfiles rule handles that deployment.
 sed -i \
   -e 's|^background=.*|background=/usr/share/wallpapers/caracal/caracal-lake.png|' \
   -e 's|^type=.*|type=image|' \
   /usr/share/sddm/themes/caracal/theme.conf
-# Also write theme.conf.user as a belt-and-suspenders fallback.
+# Fail the build explicitly if the sed didn't match (silent no-op otherwise).
+grep -q '^background=/usr/share/wallpapers/caracal/caracal-lake.png' \
+  /usr/share/sddm/themes/caracal/theme.conf
+# Also write theme.conf.user into the theme dir for any SDDM builds that do
+# search there, and as the source file for the tmpfiles copy rule.
 cat > /usr/share/sddm/themes/caracal/theme.conf.user << 'EOF'
 [General]
 type=image
