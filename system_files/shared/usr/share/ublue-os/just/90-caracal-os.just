@@ -548,18 +548,10 @@ first-run:
     mkdir -p ~/.config/alacritty
     cp -rn -u /usr/share/ublue-os/alacritty ~/.config/
 
-#    {
-#    echo  'if [[ $- == *i* ]]; then'
-#    echo '    exec zsh'
-#    echo 'fi'
-#    } >> ~/.bashrc
-
-    ## Set hostname again in case it is not set properly
-#    hostnamectl hostname "caracal"
-    
     echo 'First-run setup complete. Reboot, or at minimum log out and back in, so group changes and session limits take effect.'
     echo 'Run  ujust install-flatpaks  to install recommended apps.'
     echo 'Run  ujust software-installer  for optional DAWs, plugins, and utilities.'
+
 
 # Set up yabridge Wine VST bridge for the current user
 update-audio:
