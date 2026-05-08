@@ -12,4 +12,5 @@ X-KDE-PluginInfo-License=GPL-2.0+
 X-KDE-PluginInfo-Name=org.kde.breezedark.desktop
 X-KDE-PluginInfo-Version=1.0
 X-KDE-PluginInfo-Website=
+X-Plasma-RootContainmentLayout=org.kde.plasma.desktop-layout.js
 X-Plasma-MainScript=defaults

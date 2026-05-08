@@ -51,6 +51,13 @@ cp /ctx/assets/wallpapers/* /usr/share/wallpapers/caracal/
 # theme, then apply our wallpaper override to that single theme.
 rm -rf /usr/share/sddm/themes/caracal
 cp -a /usr/share/sddm/themes/01-breeze-fedora /usr/share/sddm/themes/caracal
+# Patch theme.conf directly — on immutable/ostree systems theme.conf.user is
+# not reliably picked up, so writing into the primary config is more robust.
+sed -i \
+  -e 's|^background=.*|background=/usr/share/wallpapers/caracal/caracal-lake.png|' \
+  -e 's|^type=.*|type=image|' \
+  /usr/share/sddm/themes/caracal/theme.conf
+# Also write theme.conf.user as a belt-and-suspenders fallback.
 cat > /usr/share/sddm/themes/caracal/theme.conf.user << 'EOF'
 [General]
 type=image
@@ -68,7 +75,6 @@ cp "$SPLASH_LOGO" /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/con
 # Remove Bazzite/Kinoite animation frames so only our watermark shows
 rm -f /usr/share/plymouth/themes/spinner/animation-*.png
 rm -f /usr/share/plymouth/themes/spinner/throbber-*.png
-cp /ctx/assets/logos/caracal.png /usr/share/plymouth/themes/spinner/watermark.png
 
 # Replace EFI boot picker icon with Caracal logo
 mkdir -p /usr/share/pixmaps/bootloader

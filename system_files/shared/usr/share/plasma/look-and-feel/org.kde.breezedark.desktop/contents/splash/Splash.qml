@@ -5,7 +5,7 @@
 */
 
 import QtQuick
-import org.kde.kirigami 2 as Kirigami
+import org.kde.kirigami as Kirigami
 
 Rectangle {
     id: root
@@ -14,15 +14,13 @@ Rectangle {
     property int stage
 
     onStageChanged: {
-        if (stage === 2) {
+        if (stage >= 1) {
             introAnimation.running = true;
         }
     }
 
     width: 1280
     height: 800
-
-    Component.onCompleted: stage = 2
 
     Item {
         id: content
@@ -52,4 +50,27 @@ Rectangle {
         duration: Kirigami.Units.veryLongDuration * 2
         easing.type: Easing.InOutQuad
     }
+
+    states: [
+        State {
+            name: "ready"
+            when: stage >= 5
+            PropertyChanges {
+                target: root
+                opacity: 0
+            }
+        }
+    ]
+
+    transitions: [
+        Transition {
+            from: ""
+            to: "ready"
+            NumberAnimation {
+                property: "opacity"
+                duration: Kirigami.Units.veryLongDuration
+                easing.type: Easing.InOutQuad
+            }
+        }
+    ]
 }

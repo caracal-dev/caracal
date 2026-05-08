@@ -509,15 +509,12 @@ first-run:
     sudo flatpak uninstall -y org.mozilla.firefox 2>/dev/null || true
     echo "Flatpaks installed."
 
-    echo "Setting Alacritty theme"
-    cp -rn -u /usr/share/ublue-os/alacritty ~/.config/
-
     echo "Setting up shell"
     function brew-bundle(){
         echo 'Installing bling tools from Homebrew...'
         brew bundle --file /usr/share/ublue-os/homebrew/caracal-cli.Brewfile --verbose
     }
-    sh -c "KEEP_ZSHRC=yes CHSH=yes $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    sh -c "KEEP_ZSHRC=yes CHSH=no $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     git clone https://github.com/zsh-users/zsh-autosuggestions.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
     git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting"
@@ -547,9 +544,18 @@ first-run:
         echo alias l1='eza -1'
     } >> ~/.zshrc
 
-    echo "zsh" >~/.bashrc
+    echo "Setting Alacritty theme"
+    mkdir -p ~/.config/alacritty
+    cp -rn -u /usr/share/ublue-os/alacritty ~/.config/
+
+#    {
+#    echo  'if [[ $- == *i* ]]; then'
+#    echo '    exec zsh'
+#    echo 'fi'
+#    } >> ~/.bashrc
+
     ## Set hostname again in case it is not set properly
-    hostnamectl hostname "caracal"
+#    hostnamectl hostname "caracal"
     
     echo 'First-run setup complete. Reboot, or at minimum log out and back in, so group changes and session limits take effect.'
     echo 'Run  ujust install-flatpaks  to install recommended apps.'

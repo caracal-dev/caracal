@@ -1,0 +1,10 @@
+[KDE]
+LookAndFeelPackage=org.kde.breezedark.desktop
+widgetStyle=Breeze
+
+[General]
+ColorScheme=BreezeDark
+TerminalApplication=org.alacritty.Alacritty.desktop
+
+[Icons]
+Theme=breeze-dark
