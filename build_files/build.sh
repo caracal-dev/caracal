@@ -244,6 +244,7 @@ systemctl enable cpupower.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
+systemctl enable usr-share-sddm-themes.mount
 
 chmod +x /usr/libexec/caracal-user-setup
 chmod +x /usr/libexec/caracal-setup-launch

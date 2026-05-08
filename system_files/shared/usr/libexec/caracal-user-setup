@@ -15,6 +15,7 @@ CARACAL_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
 mkdir -p "$CARACAL_CONFIG_DIR"
 PRE_SESSION_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/pre-session-version"
 POST_SESSION_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/post-session-version"
+LEGACY_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/version"
 FLATPAK_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/flatpak-version"
 
 WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
@@ -61,25 +62,6 @@ launch_default_flatpak_setup() {
   fi
 }
 
-migrate_legacy_panel_launcher_id() {
-  [[ -f "$USER_PLASMA_APPLETSRC" ]] || return
-  sed -i \
-    's|applications:Alacritty\.desktop|applications:org.alacritty.Alacritty.desktop|g' \
-    "$USER_PLASMA_APPLETSRC"
-}
-
-drop_invalid_user_plasma_layout() {
-  [[ -f "$USER_PLASMA_APPLETSRC" ]] || return
-
-  # A valid Plasma shell layout contains containment sections. We previously
-  # shipped an incomplete appletsrc seed that could leave users with a blank
-  # desktop after the next login; drop that malformed user copy so Plasma can
-  # regenerate a normal layout.
-  if ! grep -qE '^\[Containments\]\[[0-9]+\]' "$USER_PLASMA_APPLETSRC"; then
-    rm -f "$USER_PLASMA_APPLETSRC"
-  fi
-}
-
 drop_user_seeded_kickoff_favorites_if_pristine() {
   [[ -f "$USER_KICKOFF_FAVORITES_FILE" ]] || return
   [[ -f "$SYSTEM_KICKOFF_FAVORITES_FILE" ]] || return
@@ -89,106 +71,35 @@ drop_user_seeded_kickoff_favorites_if_pristine() {
   fi
 }
 
-set_kickoff_favorites() {
-  local appletsrc="$USER_CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc"
-  [[ -f "$appletsrc" ]] || return
+backup_and_remove_if_present() {
+  local path="$1"
+  local suffix="$2"
+  [[ -f "$path" ]] || return
 
-  # Find the Kickoff applet's numeric ID from the appletsrc.
-  # Section headers look like: [Containments][N][Applets][M]
-  # We track M then check if the next plugin= line is Kickoff.
-  local kickoff_id
-  kickoff_id=$(awk '
-    /^\[Containments\]\[[0-9]+\]\[Applets\]\[[0-9]+\]$/ {
-      s = $0
-      gsub(/.*\[Applets\]\[/, "", s)
-      gsub(/\].*/, "", s)
-      last_id = s
-    }
-    /^plugin=org\.kde\.plasma\.kickoff/ { print last_id; exit }
-  ' "$appletsrc")
-  [[ -n "$kickoff_id" ]] || return
-
-  local statsrc="$USER_CONFIG_DIR/kactivitymanagerd-statsrc"
-  local group="Favorites-org.kde.plasma.kickoff.favorites.instance-${kickoff_id}-global"
-  local favorites="ardour9.desktop,org.rncbc.qtractor.desktop,carla.desktop,org.hydrogenmusic.Hydrogen.desktop,org.rncbc.qjackctl.desktop,org.tenacityaudio.Tenacity.desktop,guitarix.desktop,org.pulseaudio.pavucontrol.desktop,preferred://browser,org.kde.dolphin.desktop,systemsettings.desktop"
-
-  local current
-  current=$(kreadconfig6 --file "$statsrc" --group "$group" --key ordering 2>/dev/null || true)
-
-  # Replace if empty or if the ordering still contains apps not shipped in this image.
-  if [[ -z "$current" ]] || echo "$current" | grep -qE "cardinal\.desktop|musescore|qsynth|yoshimi|sooperlooper"; then
-    kwriteconfig6 --file "$statsrc" --group "$group" --key ordering "$favorites"
+  local backup_path="${path}.${suffix}.bak"
+  if [[ ! -f "$backup_path" ]]; then
+    cp -a "$path" "$backup_path"
   fi
+  rm -f "$path"
 }
 
-apply_default_theme_config() {
-  kwriteconfig6 \
-    --file "$USER_CONFIG_DIR/kdeglobals" \
-    --group KDE \
-    --key LookAndFeelPackage "org.kde.breezedark.desktop"
-
-  kwriteconfig6 \
-    --file "$USER_CONFIG_DIR/kdeglobals" \
-    --group General \
-    --key ColorScheme "BreezeDark"
-
-  kwriteconfig6 \
-    --file "$USER_CONFIG_DIR/plasmarc" \
-    --group Theme \
-    --key name "breeze-dark"
-
-  kwriteconfig6 \
-    --file "$USER_CONFIG_DIR/ksplashrc" \
-    --group KSplash \
-    --key Theme "org.kde.breezedark.desktop"
-}
-
-disable_floating_panels() {
-  [[ -f "$USER_PLASMASHELLRC" ]] || return
-
-  awk '
-    /^\[PlasmaViews\]\[Panel [0-9]+\]$/ {
-      print
-      in_panel=1
-      next
-    }
-    /^\[/ {
-      in_panel=0
-      print
-      next
-    }
-    in_panel && /^floating=/ {
-      print "floating=0"
-      next
-    }
-    { print }
-  ' "$USER_PLASMASHELLRC" > "${USER_PLASMASHELLRC}.tmp"
-
-  mv "${USER_PLASMASHELLRC}.tmp" "$USER_PLASMASHELLRC"
-}
-
-reset_legacy_user_plasma_layout() {
-  [[ -f "$USER_PLASMA_APPLETSRC" ]] || return
-
-  # v26 rewrote user appletsrc with Python configparser after Plasma started.
-  # That broken rewrite can survive rebases and make plasmashell crash on the
-  # next login. If we see the old Caracal panel branding markers on a profile
-  # that has not passed the new pre-session migration yet, back it up and let
-  # Plasma regenerate a clean layout.
+reset_legacy_plasma_session_state() {
   local needs_reset=0
-  if grep -qE '^icon=distributor-logo' "$USER_PLASMA_APPLETSRC"; then
+
+  if [[ -f "$LEGACY_SETUP_VER_FILE" ]]; then
     needs_reset=1
   fi
-  if grep -qE '^launchers=applications:app\.zen_browser\.zen\.desktop,applications:org\.alacritty\.Alacritty\.desktop,applications:io\.github\.kolunmi\.Bazaar\.desktop,applications:ardour9\.desktop,preferred://filemanager' "$USER_PLASMA_APPLETSRC"; then
+
+  if [[ -f "$USER_PLASMA_APPLETSRC" ]] &&
+    grep -qE 'distributor-logo|app\.zen_browser\.zen\.desktop|ardour9\.desktop|applications:Alacritty\.desktop|applications:org\.alacritty\.Alacritty\.desktop' "$USER_PLASMA_APPLETSRC"; then
     needs_reset=1
   fi
+
   (( needs_reset )) || return
 
-  local backup_path="${USER_PLASMA_APPLETSRC}.caracal-v26.bak"
-  if [[ ! -f "$backup_path" ]]; then
-    cp -a "$USER_PLASMA_APPLETSRC" "$backup_path"
-  fi
-  rm -f "$USER_PLASMA_APPLETSRC"
+  backup_and_remove_if_present "$USER_PLASMA_APPLETSRC" "caracal-reset"
+  backup_and_remove_if_present "$USER_PLASMASHELLRC" "caracal-reset"
+  rm -f "$LEGACY_SETUP_VER_FILE"
 }
 
 should_run_versioned_setup() {
@@ -204,13 +115,8 @@ should_run_versioned_setup() {
 }
 
 run_pre_session_setup() {
-  apply_default_theme_config
-  disable_floating_panels
-  drop_invalid_user_plasma_layout
-  reset_legacy_user_plasma_layout
-  migrate_legacy_panel_launcher_id
+  reset_legacy_plasma_session_state
   drop_user_seeded_kickoff_favorites_if_pristine
-  set_kickoff_favorites
 
   # -- Lock screen wallpaper --
   kwriteconfig6 \
@@ -273,8 +179,8 @@ run_post_session_setup() {
 }
 
 # Bump this when user-config migrations need re-application across rebases.
-PRE_SESSION_SETUP_VER=28
-POST_SESSION_SETUP_VER=28
+PRE_SESSION_SETUP_VER=29
+POST_SESSION_SETUP_VER=29
 DEFAULT_FLATPAK_SETUP_VER=1
 
 launch_default_flatpak_setup

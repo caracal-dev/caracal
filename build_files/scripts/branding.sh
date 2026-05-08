@@ -75,7 +75,6 @@ cp "$SPLASH_LOGO" /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/con
 # Remove Bazzite/Kinoite animation frames so only our watermark shows
 rm -f /usr/share/plymouth/themes/spinner/animation-*.png
 rm -f /usr/share/plymouth/themes/spinner/throbber-*.png
-cp /ctx/assets/logos/caracal.png /usr/share/plymouth/themes/spinner/watermark.png
 
 # Replace EFI boot picker icon with Caracal logo
 mkdir -p /usr/share/pixmaps/bootloader
