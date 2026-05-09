@@ -63,11 +63,11 @@ copr_audio_packages=(
   wine.x86_64
   winetricks
   libcurl-gnutls
-  Loopino-clap
-  dexed-clap
-  dexed-vst3
-  Crypt2-lv2
-  LostAndFoundPiano-lv2
+  #  Loopino-clap
+  #  dexed-clap
+  #  dexed-vst3
+  #  Crypt2-lv2
+  #  LostAndFoundPiano-lv2
   vst-DISTRHO-drumsynth.x86_64
   vst-DISTRHO-eqinox.x86_64 vst-DISTRHO-vitalium.x86_64
 )
