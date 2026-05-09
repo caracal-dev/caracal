@@ -244,6 +244,10 @@ systemctl enable cpupower.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
+if systemctl cat gdm.service >/dev/null 2>&1; then
+  systemctl disable gdm.service || true
+fi
+systemctl enable sddm.service
 systemctl enable caracal-fix-sddm-background.service
 systemctl enable usr-share-sddm-themes.mount
 
