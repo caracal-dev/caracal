@@ -492,23 +492,6 @@ first-run:
     
     echo "Audio plugins have been moved to user folders"
 
-    echo "Installing Caracal OS recommended flatpaks..."
-    flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-    flatpak install --user -y flathub \
-        io.github.kolunmi.Bazaar \
-        org.tenacityaudio.Tenacity \
-        app.zen_browser.zen \
-        com.ranfdev.DistroShelf \
-        org.kde.haruna \
-        org.gnome.Decibels \
-        it.mijorus.gearlever \
-        "io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf" \
-        org.gnome.Loupe
-    # Remove any legacy Firefox flatpak; Zen Browser is the default browser.
-    flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true
-    sudo flatpak uninstall -y org.mozilla.firefox 2>/dev/null || true
-    echo "Flatpaks installed."
-
     echo "Setting up shell"
     function brew-bundle(){
         echo 'Installing bling tools from Homebrew...'
@@ -518,7 +501,6 @@ first-run:
     git clone https://github.com/zsh-users/zsh-autosuggestions.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
     git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting"
-
 
     {
         echo 'export ZSH="$HOME/.oh-my-zsh"'
@@ -555,8 +537,6 @@ first-run:
     cp -rn -u /usr/share/ublue-os/alacritty ~/.config/
 
     echo 'First-run setup complete. Reboot, or at minimum log out and back in, so group changes and session limits take effect.'
-    echo 'Run  ujust install-flatpaks  to install recommended apps.'
-    echo 'Run  ujust software-installer  for optional DAWs, plugins, and utilities.'
 
 
 # Set up yabridge Wine VST bridge for the current user
