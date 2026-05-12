@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Caracal Audio Controller
+Comment=Start the Caracal audio tray controller
+Exec=caracal-audio-controller
+TryExec=caracal-audio-controller
+Icon=caracal-audio-controller
+Terminal=false
+X-GNOME-Autostart-enabled=true
+X-KDE-autostart-after=panel
+OnlyShowIn=KDE;
+StartupNotify=false
