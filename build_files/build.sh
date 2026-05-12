@@ -102,12 +102,8 @@ dnf5 -y install \
   openssl \
   openssh \
   7zip \
-  rsync \
   neovim \
   alacritty \
-  fd-find \
-  zoxide \
-  fzf \
   python3-tkinter \
   ublue-os-just \
   distrobox
