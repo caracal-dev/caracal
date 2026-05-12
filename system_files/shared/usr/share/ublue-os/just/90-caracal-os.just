@@ -538,9 +538,13 @@ first-run:
 
     echo 'First-run setup complete. Reboot, or at minimum log out and back in, so group changes and session limits take effect.'
 
+# Simply just syncs yabridge
+update-audio:
+  #!/usr/bin/env bash
+  yabridgectl sync
 
 # Set up yabridge Wine VST bridge for the current user
-update-audio:
+setup-audio:
     #!/usr/bin/env bash
     set -euo pipefail
     export WINELOADER="$(command -v wine)"
