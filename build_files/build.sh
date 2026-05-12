@@ -28,7 +28,7 @@ dnf5 -y copr enable alternateved/eza
 dnf5 -y copr enable ublue-os/packages
 dnf5 -y copr enable tumillanino/caracal-setup
 
-dnf5 -y install caracal-setup caracal-software-installer
+dnf5 -y install caracal-setup caracal-software-installer caracal-audio-controller
 
 # Realtime support
 dnf5 -y install realtime-setup
@@ -102,12 +102,8 @@ dnf5 -y install \
   openssl \
   openssh \
   7zip \
-  rsync \
   neovim \
   alacritty \
-  fd-find \
-  zoxide \
-  fzf \
   python3-tkinter \
   ublue-os-just \
   distrobox
