@@ -27,6 +27,7 @@ dnf5 -y copr enable teervo/DISTRHO
 dnf5 -y copr enable alternateved/eza
 dnf5 -y copr enable ublue-os/packages
 dnf5 -y copr enable tumillanino/caracal-packages
+dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 
 dnf5 -y install caracal-setup caracal-software-installer caracal-audio-controller
 
@@ -95,6 +96,8 @@ dnf5 -y install "${copr_audio_packages[@]}"
 
 # Bazaar app store
 dnf5 -y install krunner-bazaar
+
+dnf -y install ghostty
 
 # General tooling
 dnf5 -y install \

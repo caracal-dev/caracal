@@ -52,5 +52,7 @@ fi
 flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true
 flatpak uninstall --system -y org.mozilla.firefox 2>/dev/null || true
 
+flatpak update --appstream
+
 echo "$FLATPAK_SETUP_VER" >"$FLATPAK_SETUP_VER_FILE"
 echo "caracal-flatpak-setup v$FLATPAK_SETUP_VER complete."

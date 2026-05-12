@@ -95,7 +95,7 @@ reset_legacy_plasma_session_state() {
     needs_reset=1
   fi
 
-  (( needs_reset )) || return
+  ((needs_reset)) || return
 
   backup_and_remove_if_present "$USER_PLASMA_APPLETSRC" "caracal-reset"
   backup_and_remove_if_present "$USER_PLASMASHELLRC" "caracal-reset"
@@ -186,28 +186,28 @@ DEFAULT_FLATPAK_SETUP_VER=1
 launch_default_flatpak_setup
 
 case "$MODE" in
-  pre-session)
-    if ! should_run_versioned_setup "$PRE_SESSION_SETUP_VER_FILE" "$PRE_SESSION_SETUP_VER"; then
-      echo "caracal-user-setup pre-session v$PRE_SESSION_SETUP_VER already ran."
-      exit 0
-    fi
+pre-session)
+  if ! should_run_versioned_setup "$PRE_SESSION_SETUP_VER_FILE" "$PRE_SESSION_SETUP_VER"; then
+    echo "caracal-user-setup pre-session v$PRE_SESSION_SETUP_VER already ran."
+    exit 0
+  fi
 
-    run_pre_session_setup
-    echo "$PRE_SESSION_SETUP_VER" >"$PRE_SESSION_SETUP_VER_FILE"
-    echo "caracal-user-setup pre-session v$PRE_SESSION_SETUP_VER complete."
-    ;;
-  post-session)
-    if ! should_run_versioned_setup "$POST_SESSION_SETUP_VER_FILE" "$POST_SESSION_SETUP_VER"; then
-      echo "caracal-user-setup post-session v$POST_SESSION_SETUP_VER already ran."
-      exit 0
-    fi
+  run_pre_session_setup
+  echo "$PRE_SESSION_SETUP_VER" >"$PRE_SESSION_SETUP_VER_FILE"
+  echo "caracal-user-setup pre-session v$PRE_SESSION_SETUP_VER complete."
+  ;;
+post-session)
+  if ! should_run_versioned_setup "$POST_SESSION_SETUP_VER_FILE" "$POST_SESSION_SETUP_VER"; then
+    echo "caracal-user-setup post-session v$POST_SESSION_SETUP_VER already ran."
+    exit 0
+  fi
 
-    run_post_session_setup
-    echo "$POST_SESSION_SETUP_VER" >"$POST_SESSION_SETUP_VER_FILE"
-    echo "caracal-user-setup post-session v$POST_SESSION_SETUP_VER complete."
-    ;;
-  *)
-    echo "caracal-user-setup: unknown mode '$MODE'." >&2
-    exit 1
-    ;;
+  run_post_session_setup
+  echo "$POST_SESSION_SETUP_VER" >"$POST_SESSION_SETUP_VER_FILE"
+  echo "caracal-user-setup post-session v$POST_SESSION_SETUP_VER complete."
+  ;;
+*)
+  echo "caracal-user-setup: unknown mode '$MODE'." >&2
+  exit 1
+  ;;
 esac
