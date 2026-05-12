@@ -26,7 +26,7 @@ dnf5 -y copr enable timlau/audio
 dnf5 -y copr enable teervo/DISTRHO
 dnf5 -y copr enable alternateved/eza
 dnf5 -y copr enable ublue-os/packages
-dnf5 -y copr enable tumillanino/caracal-setup
+dnf5 -y copr enable tumillanino/caracal-packages
 
 dnf5 -y install caracal-setup caracal-software-installer caracal-audio-controller
 
