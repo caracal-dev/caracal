@@ -141,16 +141,11 @@ run_pre_session_setup() {
       "$DESKTOP_DIR/caracal-software-installer.desktop"
   fi
 
-  # -- Alacritty migration --
-  if [[ -n "$USER_SHELL" ]] && [[ -f "$ALACRITTY_CONFIG" ]]; then
-    sed -i "s|program = \"/usr/libexec/zena-shell\"|program = \"$USER_SHELL\"|" "$ALACRITTY_CONFIG"
-  fi
-
   # Prefer Alacritty for KDE terminal launches in the current user session.
   kwriteconfig6 \
     --file "$USER_CONFIG_DIR/kdeglobals" \
     --group General \
-    --key TerminalApplication "org.alacritty.Alacritty.desktop"
+    --key TerminalApplication "Alacritty.desktop"
 }
 
 run_post_session_setup() {
