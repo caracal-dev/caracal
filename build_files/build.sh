@@ -24,7 +24,6 @@ echo "caracal" >/etc/hostname
 dnf5 -y copr enable patrickl/wine-tkg
 dnf5 -y copr enable timlau/audio
 dnf5 -y copr enable teervo/DISTRHO
-dnf5 -y copr enable alternateved/eza
 dnf5 -y copr enable ublue-os/packages
 dnf5 -y copr enable tumillanino/caracal-packages
 
@@ -258,13 +257,6 @@ chmod +x /usr/libexec/caracal-fix-sddm-background
 systemctl --global enable caracal-setup-launch.service
 systemctl --global enable caracal-user-setup.service
 systemctl --global enable caracal-user-post-setup.service
-
-# Remove Vapor/VGUI SteamOS theme leftovers from base packages
-rm -rf \
-  /usr/share/plasma/look-and-feel/com.valve.vapor.desktop \
-  /usr/share/plasma/look-and-feel/com.valve.vgui.desktop \
-  /usr/share/color-schemes/Vapor.colors \
-  /usr/share/plasma/desktoptheme/Vapor
 
 # Branding
 bash "${SCRIPTS_DIR}/branding.sh"
