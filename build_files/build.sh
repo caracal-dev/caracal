@@ -29,6 +29,9 @@ dnf5 -y copr enable tumillanino/caracal-packages
 
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 
+dnf -y install "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+dnf -y install "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
+
 dnf5 -y install caracal-setup caracal-software-installer caracal-audio-controller
 
 # Realtime support
@@ -139,17 +142,30 @@ dnf -y install \
   nxpwireless-firmware \
   tiwilink-firmware
 
-# JACK Audio
+# Audio compatibility
 dnf5 -y install \
-  jack-audio-connection-kit \
+  pipewire-jack-audio-connection-kit \
   jack-audio-connection-kit-dbus \
   qjackctl \
-  ffado
-
-# Pulse Audio and Pipewire tools
-dnf5 -y install \
+  ffado \
   pavucontrol \
-  pipewire-alsa
+  pipewire-alsa \
+  pipewire-utils \
+  helvum \
+  rtkit \
+  lame \
+  flac \
+  libavcodec-freeworld \
+  gstreamer1-plugins-bad-freeworld \
+  gstreamer1-plugins-good \
+  gstreamer1-plugins-ugly \
+  gstreamer1-libav \
+  tuned-profiles-realtime \
+  libusb1 \
+  hidapi \
+  v4l-utils \
+  wireplumber \
+  easyeffects
 
 # Midi
 # dnf5 -y install \
@@ -168,9 +184,9 @@ fedora_audio_plugin_packages=(
   lsp-plugins-lv2
   calf
   guitarix
-  lv2-samplv1
-  lv2-synthv1
-  lv2-drumkv1
+  #  lv2-samplv1
+  #  lv2-synthv1
+  #  lv2-drumkv1
   lv2-carla
 )
 dnf5 -y install "${fedora_audio_plugin_packages[@]}"
@@ -204,6 +220,8 @@ dnf5 -y install \
 dnf5 -y install \
   freerdp \
   podman-compose
+
+dnf -y swap 'ffmpeg-free' 'ffmpeg' --allowerasing
 
 # System config
 sed -Ei "s/secure_path = (.*)/secure_path = \1:\/home\/linuxbrew\/.linuxbrew\/bin/" /etc/sudoers

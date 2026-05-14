@@ -466,7 +466,7 @@ first-run:
 
     sudo getent group audio >/dev/null || sudo groupadd -r audio
     sudo getent group realtime >/dev/null || sudo groupadd -r realtime
-    sudo usermod -aG audio,realtime "$target_user"
+    sudo usermod -aG audio,realtime,pipewire "$target_user"
 
 
     # Set up Wine-native VST bridge
@@ -501,7 +501,7 @@ first-run:
     git clone https://github.com/zsh-users/zsh-autosuggestions.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
     git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting"
-
+    brew-bundle
     {
         echo 'export ZSH="$HOME/.oh-my-zsh"'
         echo 'ZSH_THEME="candy"'
