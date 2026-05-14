@@ -142,6 +142,18 @@ dnf -y install \
   nxpwireless-firmware \
   tiwilink-firmware
 
+# Hardware compatibility and diagnostics
+dnf5 -y install \
+  alsa-utils \
+  alsa-plugins-jack \
+  usbutils \
+  pciutils \
+  i2c-tools \
+  ddcutil \
+  evtest \
+  a2jmidid \
+  midisport-firmware
+
 # Audio compatibility
 dnf5 -y install \
   pipewire-jack-audio-connection-kit \
