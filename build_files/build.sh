@@ -27,8 +27,8 @@ dnf5 -y copr enable teervo/DISTRHO
 dnf5 -y copr enable ublue-os/packages
 dnf5 -y copr enable tumillanino/caracal-packages
 
-curl -fSSL "https://copr.fedorainfracloud.org/coprs/scottames/ghostty/repo/fedora-${FEDORA_VERSION}/scottames-ghostty-fedora-${FEDORA_VERSION}.repo" \
-  -o /etc/yum.repos.d/_copr_ghostty.repo
+dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+
 dnf -y install 'https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm' -y
 dnf -y install 'https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm' -y
 
