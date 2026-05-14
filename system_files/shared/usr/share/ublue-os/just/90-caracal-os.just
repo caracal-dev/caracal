@@ -466,7 +466,7 @@ first-run:
 
     sudo getent group audio >/dev/null || sudo groupadd -r audio
     sudo getent group realtime >/dev/null || sudo groupadd -r realtime
-    sudo usermod -aG audio,realtime "$target_user"
+    sudo usermod -aG audio,realtime,pipewire "$target_user"
 
 
     # Set up Wine-native VST bridge
