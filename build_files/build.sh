@@ -28,6 +28,9 @@ dnf5 -y copr enable ublue-os/packages
 dnf5 -y copr enable tumillanino/caracal-packages
 
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+# Fedora ostree images expose /opt through /var/opt. Materialize the backing
+# directory before installing RPMs that unpack files directly under /opt.
+install -d /var/opt
 dnf -y install "https://github.com/TheAssassin/AppImageLauncher/releases/download/v3.0.0-beta-3/appimagelauncher_3.0.0-beta-2-gha287.96cb937_x86_64.rpm"
 dnf -y install "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 dnf -y install "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
