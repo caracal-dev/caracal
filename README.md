@@ -16,7 +16,7 @@ A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoi
 ### Performance
 
 - **Bazzite kernel** — replaces the stock Fedora kernel with Bazzite's pre-built OCI kernel image
-- **CPU governor** — defaults to `performance` mode
+- **CPU governor** — defaults to `performance` mode through `cpupower`, with a Caracal service fallback that reapplies the governor and CPU energy preference for low-latency DAWs
 - **Realtime/memlock limits** — `@audio` and `@realtime` groups preconfigured with `rtprio 95` and unlimited memlock through both PAM and `systemd`
 - Preconfigured Wine/Yabridge compatibility for using Windows VST plugins
 

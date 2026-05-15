@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+write_value() {
+    local value="$1"
+    shift
+
+    local path
+    for path in "$@"; do
+        [[ -w "$path" ]] || continue
+        printf '%s\n' "$value" >"$path" 2>/dev/null || true
+    done
+}
+
+if command -v cpupower >/dev/null 2>&1; then
+    cpupower frequency-set --governor performance >/dev/null 2>&1 || true
+fi
+
+if command -v powerprofilesctl >/dev/null 2>&1; then
+    powerprofilesctl set performance >/dev/null 2>&1 || true
+fi
+
+shopt -s nullglob
+
+governor_paths=(/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_governor)
+write_value performance "${governor_paths[@]}"
+
+preference_paths=(/sys/devices/system/cpu/cpu[0-9]*/cpufreq/energy_performance_preference)
+write_value performance "${preference_paths[@]}"

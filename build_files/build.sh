@@ -26,6 +26,7 @@ dnf5 -y copr enable timlau/audio
 dnf5 -y copr enable teervo/DISTRHO
 dnf5 -y copr enable ublue-os/packages
 dnf5 -y copr enable tumillanino/caracal-packages
+dnf5 -y copr enable langdon/appimagelauncher
 
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 
@@ -67,6 +68,7 @@ copr_audio_packages=(
   wine.x86_64
   winetricks
   libcurl-gnutls
+  appimagelauncher
   #  Loopino-clap
   #  dexed-clap
   #  dexed-vst3
@@ -112,7 +114,8 @@ dnf5 -y install \
   alacritty \
   python3-tkinter \
   ublue-os-just \
-  distrobox
+  distrobox \
+  zenity
 
 # Virutal Machine Manager and dependencies
 dnf -y install @virtualization
@@ -270,6 +273,7 @@ getent group audio || groupadd -r audio
 
 # ── Services ──────────────────────────────────────────────────────────────────
 systemctl enable cpupower.service
+systemctl enable caracal-cpu-performance.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
@@ -281,6 +285,7 @@ systemctl enable caracal-fix-sddm-background.service
 systemctl enable usr-share-sddm-themes.mount
 
 chmod +x /usr/libexec/caracal-user-setup
+chmod +x /usr/libexec/caracal-cpu-performance
 chmod +x /usr/libexec/caracal-setup-launch
 chmod +x /usr/libexec/caracal-flatpak-setup
 chmod +x /usr/libexec/caracal-fix-sddm-background
