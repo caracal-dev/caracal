@@ -28,7 +28,10 @@ dnf5 -y copr enable ublue-os/packages
 dnf5 -y copr enable tumillanino/caracal-packages
 
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
-
+# Fedora ostree images expose /opt through /var/opt. Materialize the backing
+# directory before installing RPMs that unpack files directly under /opt.
+install -d /var/opt
+dnf -y install "https://github.com/TheAssassin/AppImageLauncher/releases/download/v3.0.0-beta-3/appimagelauncher_3.0.0-beta-2-gha287.96cb937_x86_64.rpm"
 dnf -y install "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 dnf -y install "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
 
@@ -67,6 +70,7 @@ copr_audio_packages=(
   wine.x86_64
   winetricks
   libcurl-gnutls
+  appimagelauncher
   #  Loopino-clap
   #  dexed-clap
   #  dexed-vst3
@@ -112,7 +116,8 @@ dnf5 -y install \
   alacritty \
   python3-tkinter \
   ublue-os-just \
-  distrobox
+  distrobox \
+  zenity
 
 # Virutal Machine Manager and dependencies
 dnf -y install @virtualization
@@ -270,6 +275,7 @@ getent group audio || groupadd -r audio
 
 # ── Services ──────────────────────────────────────────────────────────────────
 systemctl enable cpupower.service
+systemctl enable caracal-cpu-performance.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
@@ -281,6 +287,7 @@ systemctl enable caracal-fix-sddm-background.service
 systemctl enable usr-share-sddm-themes.mount
 
 chmod +x /usr/libexec/caracal-user-setup
+chmod +x /usr/libexec/caracal-cpu-performance
 chmod +x /usr/libexec/caracal-setup-launch
 chmod +x /usr/libexec/caracal-flatpak-setup
 chmod +x /usr/libexec/caracal-fix-sddm-background

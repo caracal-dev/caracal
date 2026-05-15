@@ -138,6 +138,33 @@ restart-pipewire:
     echo "Restarting PipeWire..."
     systemctl --user restart pipewire.service
 
+# Reapply and report CPU performance mode for low-latency DAWs
+[group("audio")]
+cpu-performance:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    sudo systemctl restart caracal-cpu-performance.service
+
+    shopt -s nullglob
+    governor_paths=(/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_governor)
+    preference_paths=(/sys/devices/system/cpu/cpu[0-9]*/cpufreq/energy_performance_preference)
+
+    if ((${#governor_paths[@]})); then
+        printf 'CPU governors: '
+        for path in "${governor_paths[@]}"; do
+            [[ -r "$path" ]] && printf '%s\n' "$(<"$path")"
+        done | sort -u | paste -sd ', ' -
+    else
+        echo 'CPU governors: unavailable'
+    fi
+
+    if ((${#preference_paths[@]})); then
+        printf 'Energy preferences: '
+        for path in "${preference_paths[@]}"; do
+            [[ -r "$path" ]] && printf '%s\n' "$(<"$path")"
+        done | sort -u | paste -sd ', ' -
+    fi
+
 # Toggle Bluetooth headset profile mitigation. When enabled, prevents automatic
 # switch to low-quality HFP/HSP profile — keeps A2DP (high quality) at all times.
 

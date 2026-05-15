@@ -1,0 +1,13 @@
+[Unit]
+Description=Apply Caracal low-latency CPU performance settings
+Documentation=man:cpupower(1)
+After=cpupower.service power-profiles-daemon.service tuned.service
+Wants=cpupower.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/caracal-cpu-performance
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
