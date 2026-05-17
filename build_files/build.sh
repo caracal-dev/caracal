@@ -113,7 +113,6 @@ dnf5 -y install \
   openssh \
   7zip \
   neovim \
-  alacritty \
   python3-tkinter \
   ublue-os-just \
   distrobox \

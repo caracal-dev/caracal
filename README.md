@@ -92,7 +92,7 @@ If you are coming from Windows, the easiest path is:
    - `~/.lv2`
 5. Re-scan plugins in your DAW or restart the DAW.
 
-If those folders do not exist yet, you might not have run the 'ujust first-run' step. To set this up, open Alacritty and run 'ujust first-run'. On Linux, folders that start with a `.` are hidden by default, so in a file manager you may need to enable "Show Hidden Files" first. You can do this by pressing Ctrl+H while in the Home directory.
+If those folders do not exist yet, you might not have run the 'ujust first-run' step. To set this up, open Ghostty and run 'ujust first-run'. On Linux, folders that start with a `.` are hidden by default, so in a file manager you may need to enable "Show Hidden Files" first. You can do this by pressing Ctrl+H while in the Home directory.
 
 ### Audio Stack
 
@@ -104,7 +104,7 @@ If those folders do not exist yet, you might not have run the 'ujust first-run' 
 
 - Zsh + Oh My Zsh (pre-configured)
 - `eza`, `zoxide`, `fzf`, `ugrep`, `fd`
-- Neovim, Alacritty, 7zip, rsync
+- Neovim, Ghostty, 7zip, rsync
 
 ---
 
