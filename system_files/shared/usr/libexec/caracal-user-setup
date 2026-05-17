@@ -20,7 +20,6 @@ FLATPAK_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/flatpak-version"
 
 WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
 USER_SHELL="$(getent passwd "$(id -un)" | cut -d: -f7)"
-ALACRITTY_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/alacritty/alacritty.toml"
 USER_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 SOFTWARE_INSTALLER_DESKTOP_SOURCE="/usr/share/applications/caracal-software-installer.desktop"
 SYSTEM_KICKOFF_FAVORITES_FILE="/etc/xdg/kactivitymanagerd-statsrc"
@@ -141,11 +140,11 @@ run_pre_session_setup() {
       "$DESKTOP_DIR/caracal-software-installer.desktop"
   fi
 
-  # Prefer Alacritty for KDE terminal launches in the current user session.
+  # Prefer Ghostty for KDE terminal launches in the current user session.
   kwriteconfig6 \
     --file "$USER_CONFIG_DIR/kdeglobals" \
     --group General \
-    --key TerminalApplication "Alacritty.desktop"
+    --key TerminalApplication "com.mitchellh.ghostty.desktop"
 }
 
 run_post_session_setup() {
@@ -174,7 +173,7 @@ run_post_session_setup() {
 }
 
 # Bump this when user-config migrations need re-application across rebases.
-PRE_SESSION_SETUP_VER=29
+PRE_SESSION_SETUP_VER=30
 POST_SESSION_SETUP_VER=29
 DEFAULT_FLATPAK_SETUP_VER=1
 

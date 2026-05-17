@@ -15,7 +15,7 @@ for (let i = 0; i < allPanels.length; ++i) {
             widget.currentConfigGroup = ["General"];
             widget.writeConfig("launchers", [
                 "applications:app.zen_browser.zen.desktop",
-                "applications:Alacritty.desktop",
+                "applications:com.mitchellh.ghostty.desktop",
                 "applications:io.github.kolunmi.Bazaar.desktop",
                 "applications:ardour9.desktop",
                 "preferred://filemanager"
