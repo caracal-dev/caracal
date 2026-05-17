@@ -559,9 +559,9 @@ first-run:
       echo 'fi'
     } >> ~/.bashrc
 
-    echo "Setting Alacritty theme"
-    mkdir -p ~/.config/alacritty
-    cp -rn -u /usr/share/ublue-os/alacritty ~/.config/
+    echo "Setting Ghostty theme"
+    mkdir -p ~/.config/ghostty
+    cp -rn -u /usr/share/ublue-os/ghostty ~/.config/
 
     echo 'First-run setup complete. Reboot, or at minimum log out and back in, so group changes and session limits take effect.'
 

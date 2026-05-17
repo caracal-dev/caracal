@@ -1,5 +1,0 @@
-[general]
-import = [
-  "~/.config/alacritty/themes/caracal.toml",
-  "~/.config/alacritty/shell.toml"
-]
