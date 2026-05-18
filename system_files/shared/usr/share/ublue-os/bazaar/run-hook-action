@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+action="${1:-}"
+
+case "${action}" in
+    install-jetbrains-toolbox)
+        ujust install-jetbrains-toolbox
+        ;;
+    install-vscode)
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        brew tap ublue-os/tap
+        brew install --cask visual-studio-code-linux
+        ;;
+    install-vscodium)
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        brew tap ublue-os/tap
+        brew install --cask vscodium-linux
+        ;;
+    *)
+        echo "Unsupported Bazaar hook action: ${action}" >&2
+        exit 64
+        ;;
+esac
+
+echo 1>&2
+echo "------------------" 1>&2
+echo "Command completed. Press ENTER to finish!" 1>&2
+read -r _

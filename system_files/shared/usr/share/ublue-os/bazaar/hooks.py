@@ -1,29 +1,7 @@
 # See https://github.com/bazaar-org/bazaar/blob/main/docs/overview.md#hooks
 
 import os
-import shlex
-import shutil
 import sys
-
-# ---
-
-TERMINAL_EXECUTABLE = shutil.which("xdg-terminal-exec") or "/usr/bin/xdg-terminal-exec"
-ALLOWED_UJUST_SCRIPTS = {"install-jetbrains-toolbox"}
-ALLOWED_BREW_CASKS = {"visual-studio-code-linux", "vscodium-linux"}
-
-
-def make_shellcmd_argv(cmd):
-    return [
-        TERMINAL_EXECUTABLE,
-        '--app-id=io.github.kolunmi.Bazaar',
-        '--title=Bazaar',
-        '--',
-        'bash',
-        '--noprofile',
-        '--norc',
-        '-lc',
-        cmd
-    ]
 
 # ---
 
@@ -45,16 +23,10 @@ stage_idx = os.getenv('BAZAAR_HOOK_STAGE_IDX')
 
 # ---
 
-def brew_eval(args):
-    return f'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && {args}'
-
-def spawn_and_detach(args):
-    if not args or args[0] != TERMINAL_EXECUTABLE:
-        raise ValueError("Refusing to launch an unexpected command")
-
+def detach_child():
     pid = os.fork()
     if pid != 0:
-        return
+        return False
 
     os.setsid()
     with open(os.devnull, "rb", buffering=0) as devnull_in, \
@@ -63,40 +35,70 @@ def spawn_and_detach(args):
         os.dup2(devnull_out.fileno(), 1)
         os.dup2(devnull_out.fileno(), 2)
 
+    return True
+
+def spawn_jetbrains_toolbox():
+    if not detach_child():
+        return
+
     try:
-        os.execv(TERMINAL_EXECUTABLE, args)
+        os.execl(
+            "/usr/bin/xdg-terminal-exec",
+            "/usr/bin/xdg-terminal-exec",
+            '--app-id=io.github.kolunmi.Bazaar',
+            '--title=Bazaar',
+            '--',
+            'bash',
+            '--noprofile',
+            '--norc',
+            '/usr/share/ublue-os/bazaar/run-hook-action',
+            'install-jetbrains-toolbox',
+        )
     except OSError as error:
-        print(f"Failed to launch {TERMINAL_EXECUTABLE}: {error}", file=sys.stderr)
+        print(f"Failed to launch Bazaar hook action: {error}", file=sys.stderr)
         os._exit(127)
 
-def make_popup_terminal_shellcmd(cmd):
-    preview = cmd.replace('$', '\\$')
-    preview = preview.replace('(', '\\(')
-    preview = preview.replace(')', '\\)')
-    new_cmd =  f'{cmd} ; '
-    new_cmd +=  'echo 1>&2 ; '
-    new_cmd +=  'echo "------------------" 1>&2 ; '
-    new_cmd += f'echo "Command \'{preview}\' completed. Press ENTER to finish!" 1>&2 ; '
-    new_cmd +=  'read'
-    new_cmd = new_cmd.replace('"', '\\"')
-    return f'/bin/sh -c "{new_cmd}"'
+def spawn_vscode():
+    if not detach_child():
+        return
 
-def spawn_ujust(script):
-    if script not in ALLOWED_UJUST_SCRIPTS:
-        raise ValueError(f"Refusing unknown ujust script: {script}")
+    try:
+        os.execl(
+            "/usr/bin/xdg-terminal-exec",
+            "/usr/bin/xdg-terminal-exec",
+            '--app-id=io.github.kolunmi.Bazaar',
+            '--title=Bazaar',
+            '--',
+            'bash',
+            '--noprofile',
+            '--norc',
+            '/usr/share/ublue-os/bazaar/run-hook-action',
+            'install-vscode',
+        )
+    except OSError as error:
+        print(f"Failed to launch Bazaar hook action: {error}", file=sys.stderr)
+        os._exit(127)
 
-    cmd  = make_popup_terminal_shellcmd(f'ujust {script}')
-    args = make_shellcmd_argv(cmd)
-    spawn_and_detach(args)
+def spawn_vscodium():
+    if not detach_child():
+        return
 
-def spawn_brew_ublue(cask):
-    if cask not in ALLOWED_BREW_CASKS:
-        raise ValueError(f"Refusing unknown Homebrew cask: {cask}")
-
-    brew = brew_eval(f'brew tap ublue-os/tap && brew install --cask {shlex.quote(cask)}')
-    cmd  = make_popup_terminal_shellcmd(brew)
-    args = make_shellcmd_argv(cmd)
-    spawn_and_detach(args)
+    try:
+        os.execl(
+            "/usr/bin/xdg-terminal-exec",
+            "/usr/bin/xdg-terminal-exec",
+            '--app-id=io.github.kolunmi.Bazaar',
+            '--title=Bazaar',
+            '--',
+            'bash',
+            '--noprofile',
+            '--norc',
+            '/usr/share/ublue-os/bazaar/run-hook-action',
+            'install-vscodium',
+        )
+    except OSError as error:
+        print(f"Failed to launch Bazaar hook action: {error}", file=sys.stderr)
+        os._exit(127)
 
 def log_action_error(action, error):
     print(f"Bazaar hook action failed for {action}: {error}", file=sys.stderr)
@@ -125,7 +127,7 @@ def handle_jetbrains():
             return 'abort'
         case 'action':
             try:
-                spawn_ujust('install-jetbrains-toolbox')
+                spawn_jetbrains_toolbox()
             except Exception as error:
                 log_action_error('install-jetbrains-toolbox', error)
             return ''
@@ -154,7 +156,7 @@ def handle_vscode():
             return 'abort'
         case 'action':
             try:
-                spawn_brew_ublue('visual-studio-code-linux')
+                spawn_vscode()
             except Exception as error:
                 log_action_error('visual-studio-code-linux', error)
             return ''
@@ -183,7 +185,7 @@ def handle_vscodium():
             return 'abort'
         case 'action':
             try:
-                spawn_brew_ublue('vscodium-linux')
+                spawn_vscodium()
             except Exception as error:
                 log_action_error('vscodium-linux', error)
             return ''
