@@ -3,6 +3,7 @@ ARG FEDORA_VERSION=43
 ARG ARCH=x86_64
 ARG KERNEL_REF="ghcr.io/bazzite-org/kernel-bazzite:latest-f${FEDORA_VERSION}-${ARCH}"
 FROM ${KERNEL_REF} AS kernel
+FROM ghcr.io/bazzite-org/nvidia-drivers:latest-f${FEDORA_VERSION}-${ARCH} AS nvidia
 
 # Homebrew — provides /usr/share/homebrew.tar.zst and brew-setup.service
 # https://github.com/ublue-os/brew
@@ -10,16 +11,16 @@ FROM ${KERNEL_REF} AS kernel
 # avoiding the OCI layer-level /etc vs /usr/etc conflict (same pattern as Aurora).
 FROM ghcr.io/ublue-os/brew:latest AS brew
 
-# Build context: scripts live in build_files/, branding assets in system_files/assets/,
+# Build context: scripts live in build_files/, branding assets in assets/images/,
 # system files in system_files/shared/ (deployed via rsync in build.sh, same as Aurora)
 FROM scratch AS ctx
 COPY build_files /
-COPY system_files/assets /assets
+COPY assets/images /assets
 COPY system_files/shared /system_files/shared
 COPY --from=brew /system_files /system_files/shared
 
 # Base Image — Fedora Kinoite (KDE) with Universal Blue additions
-FROM quay.io/fedora-ostree-desktops/kinoite:43
+FROM quay.io/fedora-ostree-desktops/kinoite:43 AS caracal
 
 ### Kernel swap
 ## Replace the stock Fedora kernel with the Bazzite kernel.
@@ -55,3 +56,27 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 
 ### Lint
 RUN bootc container lint
+
+### NVIDIA image
+## Separate target for users who want to bootc switch to Caracal with NVIDIA
+## drivers preinstalled. Disk and ISO builds continue to use the regular image.
+FROM caracal AS caracal-nvidia
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=bind,from=nvidia,src=/rpms/nvidia,dst=/tmp/rpms/nvidia \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/install-nvidia
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/build-initramfs
+
+RUN bootc container lint
+
+FROM caracal AS final

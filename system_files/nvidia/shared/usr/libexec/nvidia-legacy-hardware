@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+# Returns true for legacy NVIDIA hardware older than Turing.
+
+if lspci -nn | grep -P "(VGA compatible|3D) controller .+G(K|M|P|V)\d{3}" >/dev/null; then
+  exit 0
+fi
+
+exit 1

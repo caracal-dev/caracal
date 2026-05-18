@@ -516,7 +516,7 @@ first-run:
     cp -rn -u /usr/lib64/vst/*  ~/.vst/  2>/dev/null || true
     cp -rn -u /usr/lib64/lv2/*  ~/.lv2/  2>/dev/null || true
     cp -rn -u /usr/lib64/clap/* ~/.clap/ 2>/dev/null || true
-    
+
     echo "Audio plugins have been moved to user folders"
 
     echo "Setting up shell"
@@ -524,7 +524,7 @@ first-run:
         echo 'Installing bling tools from Homebrew...'
         brew bundle --file /usr/share/ublue-os/homebrew/caracal-cli.Brewfile --verbose
     }
-    sh -c "KEEP_ZSHRC=yes CHSH=no $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    sh -c "KEEP_ZSHRC=yes $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     git clone https://github.com/zsh-users/zsh-autosuggestions.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
     git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting"
@@ -553,6 +553,8 @@ first-run:
         echo alias l1='eza -1'
     } >> ~/.zshrc
 
+    echo "Switch to ZSH if using a terminal emulator" 
+
     {
       echo 'if [[ $- == *i* ]]; then'
       echo '  exec zsh'
@@ -567,8 +569,8 @@ first-run:
 
 # Simply just syncs yabridge
 update-audio:
-  #!/usr/bin/env bash
-  yabridgectl sync
+    #!/usr/bin/env bash
+    yabridgectl sync
 
 # Set up yabridge Wine VST bridge for the current user
 setup-audio:
