@@ -23,21 +23,36 @@ stage_idx = os.getenv('BAZAAR_HOOK_STAGE_IDX')
 
 # ---
 
+ALLOWED_HOOK_ACTIONS = {
+    'install-jetbrains-toolbox',
+    'install-vscode',
+    'install-vscodium',
+}
+
+def log_child_error(message):
+    log_path = os.path.join(os.getenv('XDG_STATE_HOME', os.path.expanduser('~/.local/state')), 'bazaar-hook.log')
+    try:
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, 'a', encoding='utf-8') as log_file:
+            log_file.write(f'{message}\n')
+    except OSError:
+        pass
+
 def detach_child():
     pid = os.fork()
     if pid != 0:
         return False
 
     os.setsid()
-    with open(os.devnull, "rb", buffering=0) as devnull_in, \
-         open(os.devnull, "wb", buffering=0) as devnull_out:
+    with open(os.devnull, "rb", buffering=0) as devnull_in:
         os.dup2(devnull_in.fileno(), 0)
-        os.dup2(devnull_out.fileno(), 1)
-        os.dup2(devnull_out.fileno(), 2)
 
     return True
 
-def spawn_jetbrains_toolbox():
+def spawn_hook_action(action):
+    if action not in ALLOWED_HOOK_ACTIONS:
+        raise ValueError(f"Refusing unsupported Bazaar hook action: {action}")
+
     if not detach_child():
         return
 
@@ -52,52 +67,10 @@ def spawn_jetbrains_toolbox():
             '--noprofile',
             '--norc',
             '/usr/share/ublue-os/bazaar/run-hook-action',
-            'install-jetbrains-toolbox',
+            action,
         )
     except OSError as error:
-        print(f"Failed to launch Bazaar hook action: {error}", file=sys.stderr)
-        os._exit(127)
-
-def spawn_vscode():
-    if not detach_child():
-        return
-
-    try:
-        os.execl(
-            "/usr/bin/xdg-terminal-exec",
-            "/usr/bin/xdg-terminal-exec",
-            '--app-id=io.github.kolunmi.Bazaar',
-            '--title=Bazaar',
-            '--',
-            'bash',
-            '--noprofile',
-            '--norc',
-            '/usr/share/ublue-os/bazaar/run-hook-action',
-            'install-vscode',
-        )
-    except OSError as error:
-        print(f"Failed to launch Bazaar hook action: {error}", file=sys.stderr)
-        os._exit(127)
-
-def spawn_vscodium():
-    if not detach_child():
-        return
-
-    try:
-        os.execl(
-            "/usr/bin/xdg-terminal-exec",
-            "/usr/bin/xdg-terminal-exec",
-            '--app-id=io.github.kolunmi.Bazaar',
-            '--title=Bazaar',
-            '--',
-            'bash',
-            '--noprofile',
-            '--norc',
-            '/usr/share/ublue-os/bazaar/run-hook-action',
-            'install-vscodium',
-        )
-    except OSError as error:
-        print(f"Failed to launch Bazaar hook action: {error}", file=sys.stderr)
+        log_child_error(f"Failed to launch Bazaar hook action {action}: {error}")
         os._exit(127)
 
 def log_action_error(action, error):
@@ -127,7 +100,7 @@ def handle_jetbrains():
             return 'abort'
         case 'action':
             try:
-                spawn_jetbrains_toolbox()
+                spawn_hook_action('install-jetbrains-toolbox')
             except Exception as error:
                 log_action_error('install-jetbrains-toolbox', error)
             return ''
@@ -156,7 +129,7 @@ def handle_vscode():
             return 'abort'
         case 'action':
             try:
-                spawn_vscode()
+                spawn_hook_action('install-vscode')
             except Exception as error:
                 log_action_error('visual-studio-code-linux', error)
             return ''
@@ -185,7 +158,7 @@ def handle_vscodium():
             return 'abort'
         case 'action':
             try:
-                spawn_vscodium()
+                spawn_hook_action('install-vscodium')
             except Exception as error:
                 log_action_error('vscodium-linux', error)
             return ''
