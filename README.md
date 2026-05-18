@@ -121,6 +121,12 @@ If those folders do not exist yet, you might not have run the 'ujust first-run' 
 sudo bootc switch ghcr.io/caracal-dev/caracal:latest
 ```
 
+For NVIDIA systems using Turing or newer GPUs, switch to the NVIDIA image instead:
+
+```bash
+sudo bootc switch ghcr.io/caracal-dev/caracal-nvidia:latest
+```
+
 Reboot to apply. On first login, run the guided setup:
 
 ```bash

@@ -1,12 +1,20 @@
 # See https://github.com/bazaar-org/bazaar/blob/main/docs/overview.md#hooks
 
-import os, subprocess, sys
+import os
+import shlex
+import shutil
+import sys
 
 # ---
 
+TERMINAL_EXECUTABLE = shutil.which("xdg-terminal-exec") or "/usr/bin/xdg-terminal-exec"
+ALLOWED_UJUST_SCRIPTS = {"install-jetbrains-toolbox"}
+ALLOWED_BREW_CASKS = {"visual-studio-code-linux", "vscodium-linux"}
+
+
 def make_shellcmd_argv(cmd):
     return [
-        'xdg-terminal-exec',
+        TERMINAL_EXECUTABLE,
         '--app-id=io.github.kolunmi.Bazaar',
         '--title=Bazaar',
         '--',
@@ -37,24 +45,29 @@ stage_idx = os.getenv('BAZAAR_HOOK_STAGE_IDX')
 
 # ---
 
-temp_file = "/tmp/bazaar-hook-choice"
-
-def pick_action(action):
-    file = open(temp_file, "w")
-    file.write(action)
-    file.close()
-
-def find_action():
-    file = open(temp_file)
-    output = file.read()
-    file.close()
-    return output
-
 def brew_eval(args):
     return f'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && {args}'
 
 def spawn_and_detach(args):
-    subprocess.Popen(args, start_new_session=True, stdout=subprocess.DEVNULL)
+    if not args or args[0] != TERMINAL_EXECUTABLE:
+        raise ValueError("Refusing to launch an unexpected command")
+
+    pid = os.fork()
+    if pid != 0:
+        return
+
+    os.setsid()
+    with open(os.devnull, "rb", buffering=0) as devnull_in, \
+         open(os.devnull, "wb", buffering=0) as devnull_out:
+        os.dup2(devnull_in.fileno(), 0)
+        os.dup2(devnull_out.fileno(), 1)
+        os.dup2(devnull_out.fileno(), 2)
+
+    try:
+        os.execv(TERMINAL_EXECUTABLE, args)
+    except OSError as error:
+        print(f"Failed to launch {TERMINAL_EXECUTABLE}: {error}", file=sys.stderr)
+        os._exit(127)
 
 def make_popup_terminal_shellcmd(cmd):
     preview = cmd.replace('$', '\\$')
@@ -69,15 +82,24 @@ def make_popup_terminal_shellcmd(cmd):
     return f'/bin/sh -c "{new_cmd}"'
 
 def spawn_ujust(script):
+    if script not in ALLOWED_UJUST_SCRIPTS:
+        raise ValueError(f"Refusing unknown ujust script: {script}")
+
     cmd  = make_popup_terminal_shellcmd(f'ujust {script}')
     args = make_shellcmd_argv(cmd)
     spawn_and_detach(args)
 
 def spawn_brew_ublue(cask):
-    brew = brew_eval(f'brew tap ublue-os/tap && brew install --cask {cask}')
+    if cask not in ALLOWED_BREW_CASKS:
+        raise ValueError(f"Refusing unknown Homebrew cask: {cask}")
+
+    brew = brew_eval(f'brew tap ublue-os/tap && brew install --cask {shlex.quote(cask)}')
     cmd  = make_popup_terminal_shellcmd(brew)
     args = make_shellcmd_argv(cmd)
     spawn_and_detach(args)
+
+def log_action_error(action, error):
+    print(f"Bazaar hook action failed for {action}: {error}", file=sys.stderr)
 
 # ---
 
@@ -104,8 +126,8 @@ def handle_jetbrains():
         case 'action':
             try:
                 spawn_ujust('install-jetbrains-toolbox')
-            except:
-                pass
+            except Exception as error:
+                log_action_error('install-jetbrains-toolbox', error)
             return ''
         case 'teardown':
             return 'deny'
@@ -133,8 +155,8 @@ def handle_vscode():
         case 'action':
             try:
                 spawn_brew_ublue('visual-studio-code-linux')
-            except:
-                pass
+            except Exception as error:
+                log_action_error('visual-studio-code-linux', error)
             return ''
         case 'teardown':
             return 'deny'
@@ -162,8 +184,8 @@ def handle_vscodium():
         case 'action':
             try:
                 spawn_brew_ublue('vscodium-linux')
-            except:
-                pass
+            except Exception as error:
+                log_action_error('vscodium-linux', error)
             return ''
         case 'teardown':
             return 'deny'

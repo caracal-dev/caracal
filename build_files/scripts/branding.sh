@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Applies Caracal OS branding to the image.
-# Assets are available at /ctx/assets/ (bind-mounted from system_files/assets/).
+# Assets are available at /ctx/assets/ (copied from assets/images/).
 
 set -oue pipefail
 
@@ -83,7 +83,8 @@ rm -f /usr/share/plymouth/themes/spinner/animation-*.png
 rm -f /usr/share/plymouth/themes/spinner/throbber-*.png
 # Re-copy watermark after package installs — dnf may reinstall plymouth-theme-spinner
 # and overwrite the rsync'd file before dracut runs.
-cp /ctx/system_files/shared/usr/share/plymouth/themes/spinner/watermark.png \
+mkdir -p /usr/share/plymouth/themes/spinner
+cp /ctx/assets/logos/plymouth-watermark.png \
    /usr/share/plymouth/themes/spinner/watermark.png
 
 # Replace EFI boot picker icon with Caracal logo

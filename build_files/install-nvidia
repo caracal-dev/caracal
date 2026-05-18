@@ -1,0 +1,33 @@
+#!/bin/bash
+# Install NVIDIA userspace and prebuilt kernel modules for the Caracal NVIDIA
+# image variant. The driver RPM payload is provided by the nvidia build stage.
+
+set -ouex pipefail
+
+rsync -rvKlO /ctx/system_files/nvidia/shared/ /
+rsync -rvKlO /ctx/system_files/nvidia/kinoite/ /
+
+# The NVIDIA driver payload provides the same installer used by Universal Blue
+# images. Use the KDE base-image name so the installer selects KDE-compatible
+# defaults when it needs them.
+dnf5 config-manager unsetopt skip_if_unavailable || true
+dnf5 -y remove nvidia-gpu-firmware || true
+dnf5 config-manager setopt excludepkgs=golang-github-nvidia-container-toolkit || true
+
+IMAGE_NAME="kinoite" AKMODNV_PATH="/tmp/rpms/nvidia" MULTILIB=0 \
+  /tmp/rpms/nvidia/ublue-os/nvidia-install.sh
+
+rm -f /usr/share/vulkan/icd.d/nouveau_icd.*.json
+ln -sf libnvidia-ml.so.1 /usr/lib64/libnvidia-ml.so
+
+install -d /usr/lib/bootc/kargs.d
+cat >/usr/lib/bootc/kargs.d/00-nvidia.toml <<'EOF'
+kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-drm.modeset=1", "initcall_blacklist=simpledrm_platform_driver_init"]
+EOF
+
+if [ -f /etc/modprobe.d/nvidia-modeset.conf ]; then
+  cp /etc/modprobe.d/nvidia-modeset.conf /usr/lib/modprobe.d/nvidia-modeset.conf
+fi
+
+systemctl enable ublue-nvidia-flatpak-runtime-sync.service
+systemctl enable ublue-nvctk-cdi.service
