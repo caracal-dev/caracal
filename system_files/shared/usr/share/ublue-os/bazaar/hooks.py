@@ -1,21 +1,7 @@
 # See https://github.com/bazaar-org/bazaar/blob/main/docs/overview.md#hooks
 
-import os, subprocess, sys
-
-# ---
-
-def make_shellcmd_argv(cmd):
-    return [
-        'xdg-terminal-exec',
-        '--app-id=io.github.kolunmi.Bazaar',
-        '--title=Bazaar',
-        '--',
-        'bash',
-        '--noprofile',
-        '--norc',
-        '-lc',
-        cmd
-    ]
+import os
+import sys
 
 # ---
 
@@ -37,47 +23,58 @@ stage_idx = os.getenv('BAZAAR_HOOK_STAGE_IDX')
 
 # ---
 
-temp_file = "/tmp/bazaar-hook-choice"
+ALLOWED_HOOK_ACTIONS = {
+    'install-jetbrains-toolbox',
+    'install-vscode',
+    'install-vscodium',
+}
 
-def pick_action(action):
-    file = open(temp_file, "w")
-    file.write(action)
-    file.close()
+def log_child_error(message):
+    log_path = os.path.join(os.getenv('XDG_STATE_HOME', os.path.expanduser('~/.local/state')), 'bazaar-hook.log')
+    try:
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, 'a', encoding='utf-8') as log_file:
+            log_file.write(f'{message}\n')
+    except OSError:
+        pass
 
-def find_action():
-    file = open(temp_file)
-    output = file.read()
-    file.close()
-    return output
+def detach_child():
+    pid = os.fork()
+    if pid != 0:
+        return False
 
-def brew_eval(args):
-    return f'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && {args}'
+    os.setsid()
+    with open(os.devnull, "rb", buffering=0) as devnull_in:
+        os.dup2(devnull_in.fileno(), 0)
 
-def spawn_and_detach(args):
-    subprocess.Popen(args, start_new_session=True, stdout=subprocess.DEVNULL)
+    return True
 
-def make_popup_terminal_shellcmd(cmd):
-    preview = cmd.replace('$', '\\$')
-    preview = preview.replace('(', '\\(')
-    preview = preview.replace(')', '\\)')
-    new_cmd =  f'{cmd} ; '
-    new_cmd +=  'echo 1>&2 ; '
-    new_cmd +=  'echo "------------------" 1>&2 ; '
-    new_cmd += f'echo "Command \'{preview}\' completed. Press ENTER to finish!" 1>&2 ; '
-    new_cmd +=  'read'
-    new_cmd = new_cmd.replace('"', '\\"')
-    return f'/bin/sh -c "{new_cmd}"'
+def spawn_hook_action(action):
+    if action not in ALLOWED_HOOK_ACTIONS:
+        raise ValueError(f"Refusing unsupported Bazaar hook action: {action}")
 
-def spawn_ujust(script):
-    cmd  = make_popup_terminal_shellcmd(f'ujust {script}')
-    args = make_shellcmd_argv(cmd)
-    spawn_and_detach(args)
+    if not detach_child():
+        return
 
-def spawn_brew_ublue(cask):
-    brew = brew_eval(f'brew tap ublue-os/tap && brew install --cask {cask}')
-    cmd  = make_popup_terminal_shellcmd(brew)
-    args = make_shellcmd_argv(cmd)
-    spawn_and_detach(args)
+    try:
+        os.execl(
+            "/usr/bin/xdg-terminal-exec",
+            "/usr/bin/xdg-terminal-exec",
+            '--app-id=io.github.kolunmi.Bazaar',
+            '--title=Bazaar',
+            '--',
+            'bash',
+            '--noprofile',
+            '--norc',
+            '/usr/share/ublue-os/bazaar/run-hook-action',
+            action,
+        )
+    except OSError as error:
+        log_child_error(f"Failed to launch Bazaar hook action {action}: {error}")
+        os._exit(127)
+
+def log_action_error(action, error):
+    print(f"Bazaar hook action failed for {action}: {error}", file=sys.stderr)
 
 # ---
 
@@ -103,9 +100,9 @@ def handle_jetbrains():
             return 'abort'
         case 'action':
             try:
-                spawn_ujust('install-jetbrains-toolbox')
-            except:
-                pass
+                spawn_hook_action('install-jetbrains-toolbox')
+            except Exception as error:
+                log_action_error('install-jetbrains-toolbox', error)
             return ''
         case 'teardown':
             return 'deny'
@@ -132,9 +129,9 @@ def handle_vscode():
             return 'abort'
         case 'action':
             try:
-                spawn_brew_ublue('visual-studio-code-linux')
-            except:
-                pass
+                spawn_hook_action('install-vscode')
+            except Exception as error:
+                log_action_error('visual-studio-code-linux', error)
             return ''
         case 'teardown':
             return 'deny'
@@ -161,9 +158,9 @@ def handle_vscodium():
             return 'abort'
         case 'action':
             try:
-                spawn_brew_ublue('vscodium-linux')
-            except:
-                pass
+                spawn_hook_action('install-vscodium')
+            except Exception as error:
+                log_action_error('vscodium-linux', error)
             return ''
         case 'teardown':
             return 'deny'

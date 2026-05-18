@@ -1,0 +1,5 @@
+[General]
+LogoPath=/usr/share/pixmaps/system-logo-white.png
+Name=Caracal
+Website=https://github.com/caracal-dev/caracal
+Variant=NVIDIA Edition

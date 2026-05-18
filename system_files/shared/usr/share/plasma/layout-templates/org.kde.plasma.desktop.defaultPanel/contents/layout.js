@@ -1,3 +1,5 @@
+/* global Panel, gridUnit, languageId, panels, screenGeometry */
+
 var panel = new Panel
 var panelScreen = panel.screen
 
@@ -77,12 +79,10 @@ panel.addWidget("org.kde.plasma.showdesktop")
 
 const allPanels = panels();
 
-for (let i = 0; i < allPanels.length; ++i) {
-    const panel = allPanels[i];
+for (const panel of allPanels) {
     const widgets = panel.widgets();
 
-    for (let j = 0; j < widgets.length; ++j) {
-        const widget = widgets[j];
+    for (const widget of widgets) {
 
         if (widget.type === "org.kde.plasma.icontasks") {
             widget.currentConfigGroup = ["General"];

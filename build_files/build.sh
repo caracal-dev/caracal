@@ -102,7 +102,22 @@ dnf5 -y install "${copr_audio_packages[@]}"
 #  vst-DISTRHO-eqinox.x86_64 vst-DISTRHO-vitalium.x86_64
 
 # Bazaar app store
-dnf5 -y install krunner-bazaar
+# Bazaar itself is preinstalled as a Flatpak. The KRunner plugin comes from
+# ublue-os/packages COPR, which occasionally returns 504s; keep it best-effort
+# so a transient COPR outage does not break the entire image build.
+for attempt in 1 2 3; do
+  if dnf5 -y install krunner-bazaar; then
+    break
+  fi
+
+  if [[ "${attempt}" == "3" ]]; then
+    echo "WARNING: krunner-bazaar failed to install after ${attempt} attempts; continuing without the optional KRunner plugin." >&2
+    break
+  fi
+
+  echo "krunner-bazaar install failed; retrying (${attempt}/3)..." >&2
+  sleep $((attempt * 10))
+done
 
 dnf -y install ghostty
 
@@ -282,14 +297,11 @@ if systemctl cat gdm.service >/dev/null 2>&1; then
   systemctl disable gdm.service || true
 fi
 systemctl enable sddm.service
-systemctl enable caracal-fix-sddm-background.service
-systemctl enable usr-share-sddm-themes.mount
 
 chmod +x /usr/libexec/caracal-user-setup
 chmod +x /usr/libexec/caracal-cpu-performance
 chmod +x /usr/libexec/caracal-setup-launch
 chmod +x /usr/libexec/caracal-flatpak-setup
-chmod +x /usr/libexec/caracal-fix-sddm-background
 systemctl --global enable caracal-setup-launch.service
 systemctl --global enable caracal-user-setup.service
 systemctl --global enable caracal-user-post-setup.service

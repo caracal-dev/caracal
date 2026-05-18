@@ -1,3 +1,5 @@
+/* global panels */
+
 const desiredLaunchers = [
     "applications:app.zen_browser.zen.desktop",
     "applications:com.mitchellh.ghostty.desktop",
@@ -14,13 +16,11 @@ const legacyLaunchers = [
 
 const allPanels = panels();
 
-for (let i = 0; i < allPanels.length; ++i) {
-    const panel = allPanels[i];
+for (const panel of allPanels) {
     panel.floating = false;
 
     const widgets = panel.widgets();
-    for (let j = 0; j < widgets.length; ++j) {
-        const widget = widgets[j];
+    for (const widget of widgets) {
 
         if (widget.type === "org.kde.plasma.kickoff") {
             widget.currentConfigGroup = ["General"];

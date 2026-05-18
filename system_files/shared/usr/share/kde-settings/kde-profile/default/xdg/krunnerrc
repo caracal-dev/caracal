@@ -1,0 +1,7 @@
+[General]
+FreeFloating=true
+
+[Plugins]
+# Disable Discover, enable Bazaar search results when krunner-bazaar is present.
+krunner_appstreamEnabled=false
+bazaarrunnerEnabled=true
