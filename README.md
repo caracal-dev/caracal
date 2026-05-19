@@ -1,5 +1,4 @@
-[![bluebuild build badge](https://github.com/caracal-dev/caracal/actions/workflows/build.yml/badge.svg)](https://github.com/caracal-dev/caracal/actions/workflows/build.yml) 
-[![bluebuild build badge](https://github.com/caracal-dev/caracal/actions/workflows/build-disk.yml/badge.svg)](https://github.com/caracal-dev/caracal/actions/workflows/build-disk.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/7b8ddd4445ff4a9aab0672ecf7abf35f)](https://app.codacy.com/gh/caracal-dev/caracal/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)[![build_image badge](https://github.com/caracal-dev/caracal/actions/workflows/build.yml/badge.svg)](https://github.com/caracal-dev/caracal/actions/workflows/build.yml)[![build iso badge](https://github.com/caracal-dev/caracal/actions/workflows/build-disk.yml/badge.svg)](https://github.com/caracal-dev/caracal/actions/workflows/build-disk.yml)[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/caracal-dev/caracal)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/images/caracal-banner-dark.png">
