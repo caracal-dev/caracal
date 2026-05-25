@@ -20,7 +20,7 @@ COPY build_files /
 COPY assets/images /assets
 COPY system_files/shared /system_files/shared
 COPY --from=brew /system_files /system_files/shared
-COPY --from-akmods /rpms/kmod-evdi/*.rpm /tmp/akmods/
+COPY --from=akmods /rpms/kmod-evdi/*.rpm /tmp/akmods/
 
 # Base Image — Fedora Kinoite (KDE) with Universal Blue additions
 FROM quay.io/fedora-ostree-desktops/kinoite:43 AS caracal
