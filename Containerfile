@@ -1,3 +1,4 @@
+FROM ghcr.io/ublue-os/akmods:main-fedora-43 AS akmods
 # Bazzite kernel OCI — provides pre-built kernel RPMs
 ARG FEDORA_VERSION=43
 ARG ARCH=x86_64
@@ -11,6 +12,7 @@ FROM ghcr.io/bazzite-org/nvidia-drivers:latest-f${FEDORA_VERSION}-${ARCH} AS nvi
 # avoiding the OCI layer-level /etc vs /usr/etc conflict (same pattern as Aurora).
 FROM ghcr.io/ublue-os/brew:latest AS brew
 
+
 # Build context: scripts live in build_files/, branding assets in assets/images/,
 # system files in system_files/shared/ (deployed via rsync in build.sh, same as Aurora)
 FROM scratch AS ctx
@@ -18,6 +20,7 @@ COPY build_files /
 COPY assets/images /assets
 COPY system_files/shared /system_files/shared
 COPY --from=brew /system_files /system_files/shared
+COPY --from-akmods /rpms/kmod-evdi/*.rpm /tmp/akmods/
 
 # Base Image — Fedora Kinoite (KDE) with Universal Blue additions
 FROM quay.io/fedora-ostree-desktops/kinoite:43 AS caracal

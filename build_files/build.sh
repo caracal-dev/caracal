@@ -26,6 +26,7 @@ dnf5 -y copr enable timlau/audio
 dnf5 -y copr enable teervo/DISTRHO
 dnf5 -y copr enable ublue-os/packages
 dnf5 -y copr enable tumillanino/caracal-packages
+dnf5 config-manager addrepo --from-repofile=https://negativo17.org
 
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 # Fedora ostree images expose /opt through /var/opt. Materialize the backing
@@ -80,6 +81,11 @@ copr_audio_packages=(
   vst-DISTRHO-eqinox.x86_64 vst-DISTRHO-vitalium.x86_64
 )
 dnf5 -y install "${copr_audio_packages[@]}"
+
+# Layer precompiled EVDI kernel module
+# This is to ensure display compatibility with corporate docking stations
+dnf install -y /tmp/akmods/*.rpm
+
 # Disabled for image size:
 #  vst-DISTRHO-Arctican.x86_64
 #  vst-DISTRHO-EasySSP.x86_64
@@ -145,7 +151,7 @@ dnf5 -y install \
 # Virtual instruments
 dnf5 -y install hydrogen
 
-# Audio firmware
+# Audio and display firmware
 dnf -y install \
   alsa-firmware \
   alsa-sof-firmware \
@@ -159,7 +165,8 @@ dnf -y install \
   realtek-firmware \
   mt7xxx-firmware \
   nxpwireless-firmware \
-  tiwilink-firmware
+  tiwilink-firmware \
+  displaylink
 
 # Hardware compatibility and diagnostics
 dnf5 -y install \
@@ -245,7 +252,8 @@ dnf5 -y install \
   libXinerama \
   libXv \
   dpkg \
-  libbsd
+  libbsd \
+  fedora-workstation-repositories
 
 # Prereqs for WinBoat and nice to haves anyway
 dnf5 -y install \
@@ -305,6 +313,8 @@ chmod +x /usr/libexec/caracal-flatpak-setup
 systemctl --global enable caracal-setup-launch.service
 systemctl --global enable caracal-user-setup.service
 systemctl --global enable caracal-user-post-setup.service
+
+systemctl enable displaylink.service
 
 # Branding
 bash "${SCRIPTS_DIR}/branding.sh"
