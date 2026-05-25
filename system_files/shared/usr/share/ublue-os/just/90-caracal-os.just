@@ -567,7 +567,6 @@ first-run:
     cp -rn -u /usr/share/ublue-os/ghostty ~/.config/
 
     echo 'First-run setup complete. Reboot, or at minimum log out and back in, so group changes and session limits take effect.'
-    source ~/.zshrc
 
 # Simply just syncs yabridge
 update-audio:
@@ -681,6 +680,14 @@ software-installer:
 setup-neovim:
     #!/usr/bin/env bash
     set -euo pipefail
-    git clone https://github.com/LazyVim/starter ~/.config/nvim
-    rm -rf ~/.config/nvim/.git 
+    
+    if [ ! -d "$HOME/.config/nvim" ]; then
+      git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"
+      rm -rf "$HOME/.config/nvim/.git"
+    else
+      rm -r "$HOME/.config/nvim"
+      git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"
+      rm -rf "$HOME/.config/nvim/.git"
+    fi
+    
     nvim
