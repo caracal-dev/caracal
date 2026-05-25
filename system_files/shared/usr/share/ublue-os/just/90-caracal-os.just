@@ -691,7 +691,7 @@ setup-neovim:
       install_lazyvim
     else
       mv "$HOME/.config/nvim"{,.bak".$(date +%Y%m%d%H%M%S)"}
-      install_lazy
+      install_lazyvim
     fi
     
     nvim
