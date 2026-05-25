@@ -21,7 +21,8 @@ _ask-remove-ardour:
     fi
 
 # ── CLI bling ─────────────────────────────────────────────────────────────────
-
+# Adapted from Bazzite
+# Credit https://github/ublue-os/bazzite
 # Enable enhanced CLI tools (eza, atuin, zoxide, ugrep) in your shell
 caracal-cli:
     #!/usr/bin/env bash
@@ -566,6 +567,7 @@ first-run:
     cp -rn -u /usr/share/ublue-os/ghostty ~/.config/
 
     echo 'First-run setup complete. Reboot, or at minimum log out and back in, so group changes and session limits take effect.'
+    source ~/.zshrc
 
 # Simply just syncs yabridge
 update-audio:
@@ -675,3 +677,10 @@ software-installer:
     #!/usr/bin/env bash
     set -euo pipefail
     caracal-software-installer
+
+setup-neovim:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    git clone https://github.com/LazyVim/starter ~/.config/nvim
+    rm -rf ~/.config/nvim/.git 
+    nvim
