@@ -680,14 +680,18 @@ software-installer:
 setup-neovim:
     #!/usr/bin/env bash
     set -euo pipefail
+
+    install_lazyvim() {
+
+      git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"
+      rm -rf "$HOME/.config/nvim/.git"
+    }
     
     if [ ! -d "$HOME/.config/nvim" ]; then
-      git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"
-      rm -rf "$HOME/.config/nvim/.git"
+      install_lazyvim
     else
-      mv "$HOME/.config/nvim"{,.bak}
-      git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"
-      rm -rf "$HOME/.config/nvim/.git"
+      mv "$HOME/.config/nvim"{,.bak".$(date +%Y%m%d%H%M%S)"}
+      install_lazy
     fi
     
     nvim
