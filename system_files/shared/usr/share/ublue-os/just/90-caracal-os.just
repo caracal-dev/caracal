@@ -21,7 +21,8 @@ _ask-remove-ardour:
     fi
 
 # ── CLI bling ─────────────────────────────────────────────────────────────────
-
+# Adapted from Bazzite
+# Credit https://github/ublue-os/bazzite
 # Enable enhanced CLI tools (eza, atuin, zoxide, ugrep) in your shell
 caracal-cli:
     #!/usr/bin/env bash
@@ -675,3 +676,22 @@ software-installer:
     #!/usr/bin/env bash
     set -euo pipefail
     caracal-software-installer
+
+setup-neovim:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    install_lazyvim() {
+
+      git clone https://github.com/LazyVim/starter "$HOME/.config/nvim"
+      rm -rf "$HOME/.config/nvim/.git"
+    }
+    
+    if [ ! -d "$HOME/.config/nvim" ]; then
+      install_lazyvim
+    else
+      mv "$HOME/.config/nvim"{,.bak".$(date +%Y%m%d%H%M%S)"}
+      install_lazyvim
+    fi
+    
+    nvim
