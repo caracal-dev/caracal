@@ -38,12 +38,19 @@ concurrency:
 
 jobs:
   build:
-    name: Build disk images
+    name: Build ${{ matrix.disk-type }}${{ matrix.image-suffix }}
+    if: ${{ inputs.platform != 'arm64' || matrix.image-suffix != '-nvidia' }}
     runs-on: ${{ inputs.platform == 'amd64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     strategy:
       fail-fast: false
       matrix:
-        disk-type: ["qcow2", "installer-iso"]
+        include:
+          - disk-type: qcow2
+            image-suffix: ""
+          - disk-type: installer-iso
+            image-suffix: ""
+          - disk-type: installer-iso
+            image-suffix: "-nvidia"
     permissions:
       contents: read
       packages: read
@@ -56,18 +63,19 @@ jobs:
           USER_GID=$(id -g)
           IMAGE_REGISTRY_LOWER=${IMAGE_REGISTRY,,}
           IMAGE_NAME_LOWER=${IMAGE_NAME,,}
+          IMAGE_SUFFIX="${{ matrix.image-suffix }}"
           # Concatenate the types with a hyphen
           DISK_TYPE=$(echo "${{ matrix.disk-type }}" | tr ' ' '-')
           # Lowercase the image uri
           echo "IMAGE_REGISTRY=${IMAGE_REGISTRY_LOWER}" >> ${GITHUB_ENV}
-          echo "IMAGE_NAME=${IMAGE_NAME_LOWER}" >> ${GITHUB_ENV}
+          echo "IMAGE_NAME=${IMAGE_NAME_LOWER}${IMAGE_SUFFIX}" >> ${GITHUB_ENV}
           echo "DISK_TYPE=${DISK_TYPE}" >> ${GITHUB_ENV}
           echo "USER_UID=${USER_UID}" >> ${GITHUB_ENV}
           echo "USER_GID=${USER_GID}" >> ${GITHUB_ENV}
           if [ "${{ matrix.disk-type }}" = "installer-iso" ]; then
             echo "OUTPUT_DIR=${GITHUB_WORKSPACE}/output/installer" >> ${GITHUB_ENV}
-            echo "PAYLOAD_IMAGE=${IMAGE_REGISTRY_LOWER}/${IMAGE_NAME_LOWER}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
-            echo "LOCAL_PAYLOAD_IMAGE=localhost/${IMAGE_NAME_LOWER}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
+            echo "PAYLOAD_IMAGE=${IMAGE_REGISTRY_LOWER}/${IMAGE_NAME_LOWER}${IMAGE_SUFFIX}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
+            echo "LOCAL_PAYLOAD_IMAGE=localhost/${IMAGE_NAME_LOWER}${IMAGE_SUFFIX}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
             if [ "${{ inputs.platform }}" = "arm64" ]; then
               echo "ISO_ARCH=aarch64" >> ${GITHUB_ENV}
             else
