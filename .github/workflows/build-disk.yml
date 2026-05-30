@@ -39,17 +39,22 @@ concurrency:
 jobs:
   build:
     name: Build ${{ matrix.disk-type }}${{ matrix.image-suffix }}
-    if: ${{ inputs.platform != 'arm64' || matrix.image-suffix != '-nvidia' }}
-    runs-on: ${{ inputs.platform == 'amd64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ matrix.platform == 'amd64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     strategy:
       fail-fast: false
       matrix:
-        include:
+        platform:
+          - ${{ inputs.platform || 'amd64' }}
+        disk-type:
+          - qcow2
+          - installer-iso
+        image-suffix:
+          - ""
+          - "-nvidia"
+        exclude:
           - disk-type: qcow2
-            image-suffix: ""
-          - disk-type: installer-iso
-            image-suffix: ""
-          - disk-type: installer-iso
+            image-suffix: "-nvidia"
+          - platform: arm64
             image-suffix: "-nvidia"
     permissions:
       contents: read
@@ -76,7 +81,7 @@ jobs:
             echo "OUTPUT_DIR=${GITHUB_WORKSPACE}/output/installer" >> ${GITHUB_ENV}
             echo "PAYLOAD_IMAGE=${IMAGE_REGISTRY_LOWER}/${IMAGE_NAME_LOWER}${IMAGE_SUFFIX}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
             echo "LOCAL_PAYLOAD_IMAGE=localhost/${IMAGE_NAME_LOWER}${IMAGE_SUFFIX}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
-            if [ "${{ inputs.platform }}" = "arm64" ]; then
+            if [ "${{ matrix.platform }}" = "arm64" ]; then
               echo "ISO_ARCH=aarch64" >> ${GITHUB_ENV}
             else
               echo "ISO_ARCH=x86_64" >> ${GITHUB_ENV}
@@ -84,7 +89,7 @@ jobs:
           fi
 
       - name: Install dependencies
-        if: inputs.platform == 'arm64'
+        if: matrix.platform == 'arm64'
         run: |
           set -x
           sudo apt update -y
@@ -92,7 +97,7 @@ jobs:
             podman
 
       - name: Maximize build space
-        if: inputs.platform != 'arm64'
+        if: matrix.platform != 'arm64'
         uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
         with:
           remove-codeql: true
@@ -143,7 +148,7 @@ jobs:
             IMAGE_NAME="${IMAGE_NAME}" \
             IMAGE_REPO="localhost" \
             IMAGE_TAG="${DEFAULT_TAG}" \
-            ISO_NAME="build/${IMAGE_NAME}-${DEFAULT_TAG}-${{ inputs.platform || 'amd64' }}.iso" \
+            ISO_NAME="build/${IMAGE_NAME}-${DEFAULT_TAG}-${{ matrix.platform }}.iso" \
             VARIANT="${INSTALLER_VARIANT}" \
             VERSION="${FEDORA_VERSION}"
 
@@ -151,7 +156,7 @@ jobs:
         if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: ${{ env.IMAGE_NAME }}-${{ inputs.platform || 'amd64' }}-${{ matrix.disk-type }}
+          name: ${{ env.IMAGE_NAME }}-${{ matrix.platform }}-${{ matrix.disk-type }}
           path: ${{ matrix.disk-type == 'installer-iso' && './output/installer' || steps.build.outputs.output-directory }}
           if-no-files-found: error
           retention-days: 0
