@@ -6,7 +6,7 @@
   <img src="assets/images/caracal-banner-light.png" alt="Caracal OS">
 </picture>
 
-A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoite (KDE Plasma), tuned from the ground up for audio production. Caracal-OS delivers a fast, immutable Linux desktop with a practical core production stack ready on first boot, while a much larger catalog of DAWs, plugins, and utilities is delivered through the bundled Caracal Software Installer.
+A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoite (KDE Plasma), tuned from the ground up for audio production. Caracal-OS delivers a fast, immutable Linux desktop with a lean core production stack ready on first boot, while the larger DAW, plugin, instrument, and utility catalog is handled by the bundled Caracal Software Installer.
 
 ---
 
@@ -19,7 +19,7 @@ A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoi
 - **Realtime/memlock limits** — `@audio` and `@realtime` groups preconfigured with `rtprio 95` and unlimited memlock through both PAM and `systemd`
 - Preconfigured Wine/Yabridge compatibility for using Windows VST plugins
 
-### DAWs (included)
+### Core DAWs (included)
 
 | DAW | Notes |
 |-----|-------|
@@ -27,7 +27,7 @@ A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoi
 | Qtractor | MIDI/audio sequencer |
 | Carla | Plugin host / patchbay |
 
-**Also included:**
+**Also included in the base image:**
 
 - Hydrogen
 - QjackCtl
@@ -44,7 +44,7 @@ ujust uninstall-renoise
 ujust uninstall-bitwig
 ```
 
-For the broader optional catalog, launch the bundled Caracal Software Installer from the app launcher or run:
+For the broader optional catalog, launch the bundled Caracal Software Installer from the app launcher, or open the terminal UI with:
 
 ```bash
 ujust software-installer
@@ -52,7 +52,7 @@ ujust software-installer
 
 ### Plugins & Instruments
 
-Plugins are installed system-wide in LV2, VST3, and CLAP formats where available.
+Caracal now keeps the image smaller by preinstalling a focused plugin set and moving the larger plugin library into the Software Installer. Installer-managed plugins are installed in the user's home plugin folders where possible, so they survive image updates cleanly without rpm layering.
 
 **Included out of the box:**
 
@@ -60,19 +60,22 @@ Plugins are installed system-wide in LV2, VST3, and CLAP formats where available
 - Calf
 - Guitarix
 - Vitalium (Vital without the online stuff)
-- Dexed
-- Loopino
-- Crypt2
-- LostAndFoundPiano
-- Samplv1, Synthv1, Drumkv1
+- DISTRHO DrumSynth
+- DISTRHO EQuinox
 - Carla LV2 integration
 
-**Optional installs available through Caracal Software Installer:**
+### Caracal Software Installer
 
-- REAPER, Renoise, Bitwig Studio
-- Cardinal, Surge XT, Decent Sampler, Loopino
-- SunVox, Virtual ANS, TAL-Noisemaker, Wavetable
-- INTERSECT, Audio Assault plugins, RTCQS
+The Caracal Software Installer is the main way to expand the system after first boot. It provides a curated audio catalog with a desktop GUI, terminal UI, and CLI helpers, so Caracal can stay lean while still making common music-production installs easy.
+
+It can install and uninstall software across categories, queue multiple selections in one run, detect already-installed entries, and use the right install path for the package: `/opt` or `/usr/local` for system apps when needed, and user-local plugin folders such as `~/.vst3`, `~/.clap`, and `~/.lv2` for plugins that do not need system integration.
+
+**Optional installs available through Caracal Software Installer include:**
+
+- DAWs: REAPER, Renoise, Bitwig Studio, Mixbus, Zrythm, Helio, Stargate
+- Instruments: Cardinal, VCV Rack 2, Surge XT, Decent Sampler, SunVox, Virtual ANS, Dexed, Loopino, Odin2, OB-Xf, TAL-Noisemaker, Wavetable, Yoshimi
+- Effects: Dragonfly Reverb, BYOD, Neural Amp Modeler, AIDA-X, Audio Assault plugins, ChowDSP plugins, Zam Plugin Suite, DPF plugins, TAL plugins
+- Utilities: MuseScore Studio, BambooTracker, MilkyTracker, Declick, RTCQS
 
 **Windows VST support:**
 
@@ -101,9 +104,9 @@ If those folders do not exist yet, you might not have run the 'ujust first-run' 
 
 ### Shell & Tooling
 
-- Zsh + Oh My Zsh (pre-configured)
-- `eza`, `zoxide`, `fzf`, `ugrep`, `fd`
-- Neovim, Ghostty, 7zip, rsync
+- Zsh, Neovim, Ghostty, 7zip, Distrobox, Zenity
+- Oh My Zsh setup through `ujust first-run`
+- Homebrew-managed shell extras through `ujust first-run`: `atuin`, `eza`, `ugrep`, `zoxide`, and `bash-preexec`
 
 ---
 
