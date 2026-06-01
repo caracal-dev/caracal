@@ -131,7 +131,8 @@ dnf5 -y install \
   python3-tkinter \
   ublue-os-just \
   distrobox \
-  zenity
+  zenity \
+  alien
 
 # Virutal Machine Manager and dependencies
 dnf -y install @virtualization
