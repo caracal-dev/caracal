@@ -18,7 +18,7 @@ chmod +x 05-rpmostree.install 50-dracut.install
 popd
 
 # Remove the stock Fedora kernel RPMs
-for pkg in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-tools-libs kernel-tools; do
+for pkg in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-modules-akmods kernel-common kernel-tools-libs kernel-tools kernel-nvidia kernel-nvidia-closed-lts; do
     rpm --erase "${pkg}" --nodeps || true
 done
 
@@ -33,11 +33,20 @@ pkgs=(
     kernel-modules
     kernel-modules-core
     kernel-modules-extra
+    kernel-modules-akmods
     kernel-devel
     kernel-devel-matched
     kernel-tools
     kernel-tools-libs
+    kernel-common
 )
+
+image_name="${IMAGE_NAME:-caracal}"
+if [[ "${image_name}" == *"nvidia-open" || "${image_name}" == *"-deck-nvidia"* ]]; then
+    pkgs+=("kernel-nvidia")
+elif [[ "${image_name}" == *"nvidia"* ]]; then
+    pkgs+=("kernel-nvidia-closed-lts")
+fi
 
 PKG_PAT=()
 for pkg in "${pkgs[@]}"; do

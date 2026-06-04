@@ -2,8 +2,9 @@
 ARG FEDORA_VERSION=43
 ARG ARCH=x86_64
 ARG KERNEL_REF="ghcr.io/bazzite-org/kernel-bazzite:latest-f${FEDORA_VERSION}-${ARCH}"
+ARG NVIDIA_REF="ghcr.io/bazzite-org/nvidia-drivers:latest-f${FEDORA_VERSION}-${ARCH}"
 FROM ${KERNEL_REF} AS kernel
-FROM ghcr.io/bazzite-org/nvidia-drivers:latest-f${FEDORA_VERSION}-${ARCH} AS nvidia
+FROM ${NVIDIA_REF} AS nvidia
 
 # Homebrew — provides /usr/share/homebrew.tar.zst and brew-setup.service
 # https://github.com/ublue-os/brew
@@ -64,12 +65,14 @@ RUN bootc container lint
 FROM caracal AS caracal-nvidia
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=bind,from=nvidia,src=/rpms,dst=/tmp/rpms/nvidia \
+    --mount=type=bind,from=kernel,src=/,dst=/rpms/kernel \
+    --mount=type=bind,from=nvidia,src=/,dst=/rpms/nvidia \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=tmpfs,dst=/run \
-    /ctx/install-nvidia
+    IMAGE_NAME=caracal-nvidia /ctx/install-kernel && \
+    IMAGE_NAME=caracal-nvidia /ctx/install-nvidia
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache \

@@ -7,15 +7,11 @@ set -ouex pipefail
 rsync -rvKlO /ctx/system_files/nvidia/shared/ /
 rsync -rvKlO /ctx/system_files/nvidia/kinoite/ /
 
-# Use the KDE base-image name so the installer selects KDE-compatible defaults
-# when it needs them. The NVIDIA RPM payload no longer reliably ships the
-# Universal Blue installer script, so Caracal carries its own copy and points it
-# at the mounted payload.
 dnf5 config-manager unsetopt skip_if_unavailable || true
 dnf5 -y remove nvidia-gpu-firmware || true
 dnf5 config-manager setopt excludepkgs=golang-github-nvidia-container-toolkit || true
 
-IMAGE_NAME="kinoite" AKMODNV_PATH="/tmp/rpms/nvidia" MULTILIB=0 \
+IMAGE_NAME="kinoite" AKMODNV_PATH="/rpms/nvidia" MULTILIB=0 \
   /ctx/nvidia-install.sh
 
 rm -f /usr/share/vulkan/icd.d/nouveau_icd.*.json
@@ -30,5 +26,4 @@ if [ -f /etc/modprobe.d/nvidia-modeset.conf ]; then
   cp /etc/modprobe.d/nvidia-modeset.conf /usr/lib/modprobe.d/nvidia-modeset.conf
 fi
 
-systemctl enable ublue-nvidia-flatpak-runtime-sync.service
 systemctl enable ublue-nvctk-cdi.service
