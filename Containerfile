@@ -64,7 +64,7 @@ RUN bootc container lint
 FROM caracal AS caracal-nvidia
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=bind,from=nvidia,src=/rpms/nvidia,dst=/tmp/rpms/nvidia \
+    --mount=type=bind,from=nvidia,src=/rpms,dst=/tmp/rpms/nvidia \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
