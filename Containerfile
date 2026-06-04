@@ -17,6 +17,7 @@ FROM scratch AS ctx
 COPY build_files /
 COPY assets/images /assets
 COPY system_files/shared /system_files/shared
+COPY system_files/nvidia /system_files/nvidia
 COPY --from=brew /system_files /system_files/shared
 
 # Base Image — Fedora Kinoite (KDE) with Universal Blue additions
