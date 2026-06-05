@@ -79,8 +79,6 @@ jobs:
           echo "USER_GID=${USER_GID}" >> ${GITHUB_ENV}
           if [ "${{ matrix.disk-type }}" = "installer-iso" ]; then
             echo "OUTPUT_DIR=${GITHUB_WORKSPACE}/output/installer" >> ${GITHUB_ENV}
-            echo "PAYLOAD_IMAGE=${IMAGE_REGISTRY_LOWER}/${IMAGE_NAME_LOWER}${IMAGE_SUFFIX}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
-            echo "LOCAL_PAYLOAD_IMAGE=localhost/${IMAGE_NAME_LOWER}${IMAGE_SUFFIX}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
             if [ "${{ matrix.platform }}" = "arm64" ]; then
               echo "ISO_ARCH=aarch64" >> ${GITHUB_ENV}
             else
@@ -131,22 +129,26 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "${OUTPUT_DIR}"
-          docker pull "${PAYLOAD_IMAGE}"
-          docker tag "${PAYLOAD_IMAGE}" "${LOCAL_PAYLOAD_IMAGE}"
+          AUTHFILE="${HOME}/.docker/config.json"
+          if [ ! -f "${AUTHFILE}" ]; then
+            echo "Docker auth file was not found at ${AUTHFILE}." >&2
+            exit 1
+          fi
 
           # Adapted from ublue-os/bazzite just_scripts/build-iso.sh.
           docker run \
             --rm \
             --privileged \
-            --volume /var/run/docker.sock:/var/run/docker.sock \
+            --volume "${AUTHFILE}:/auth/config.json:ro" \
             --volume "${GITHUB_WORKSPACE}/installer/build-iso-makefile-patch:/build-container-installer/container/Makefile:ro" \
             --volume "${OUTPUT_DIR}:/build-container-installer/build" \
             "${ISO_BUILDER_IMAGE}" \
             ARCH="${ISO_ARCH}" \
+            AUTHFILE="/auth/config.json" \
             ENABLE_CACHE_DNF="false" \
             ENABLE_CACHE_SKOPEO="false" \
             IMAGE_NAME="${IMAGE_NAME}" \
-            IMAGE_REPO="localhost" \
+            IMAGE_REPO="${IMAGE_REGISTRY}" \
             IMAGE_TAG="${DEFAULT_TAG}" \
             ISO_NAME="build/${IMAGE_NAME}-${DEFAULT_TAG}-${{ matrix.platform }}.iso" \
             VARIANT="${INSTALLER_VARIANT}" \
