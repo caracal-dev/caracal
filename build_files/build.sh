@@ -21,7 +21,7 @@ echo "caracal" >/etc/hostname
 
 # COPR repositories
 
-dnf5 -y copr enable patrickl/wine-tkg
+dnf5 -y copr enable patrickl/wine-tkg-dev
 dnf5 -y copr enable timlau/audio
 dnf5 -y copr enable teervo/DISTRHO
 dnf5 -y copr enable ublue-os/packages
@@ -69,6 +69,7 @@ copr_audio_packages=(
   yabridge
   wine.x86_64
   winetricks
+  pipewire-wineasio
   libcurl-gnutls
   appimagelauncher
   #  Loopino-clap
