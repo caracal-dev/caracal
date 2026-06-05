@@ -1,7 +1,8 @@
 #!/bin/bash
-# Install NVIDIA userspace packages from a mounted Bazzite NVIDIA RPM payload.
+# Install NVIDIA userspace packages and prebuilt kmods from a mounted akmods
+# NVIDIA RPM payload.
 #
-# Adapted from ublue-os/bazzite build_files/install-nvidia (Apache 2.0).
+# Adapted from ublue-os/main build_files/nvidia-install.sh (Apache 2.0).
 
 set -ouex pipefail
 
@@ -22,6 +23,13 @@ if ! command -v dnf5 >/dev/null; then
   exit 1
 fi
 
+dnf5 install -y "${AKMODNV_PATH}"/ublue-os/ublue-os-nvidia-addons-*.rpm
+
+if dnf5 repolist --all | grep -q rpmfusion; then
+  dnf5 config-manager setopt "rpmfusion*".enabled=0
+fi
+dnf5 config-manager setopt fedora-cisco-openh264.enabled=0 || true
+
 if [[ "${MULTILIB}" != "0" ]]; then
   multilib_pkgs=(
     mesa-dri-drivers.i686
@@ -33,6 +41,14 @@ if [[ "${MULTILIB}" != "0" ]]; then
     mesa-vulkan-drivers.i686
   )
   dnf5 install -y "${multilib_pkgs[@]}"
+fi
+
+dnf5 config-manager setopt fedora-nvidia.enabled=1 nvidia-container-toolkit.enabled=1
+
+negativo17_mult_prev_enabled=N
+if dnf5 repolist --enabled | grep -q "fedora-multimedia"; then
+  negativo17_mult_prev_enabled=Y
+  dnf5 config-manager setopt fedora-multimedia.enabled=0
 fi
 
 # Enable ublue-os/staging for supergfxctl packages.
@@ -48,42 +64,24 @@ fi
 variant_pkgs=()
 case "${IMAGE_NAME}" in
   kinoite)
-    variant_pkgs=(supergfxctl)
+    variant_pkgs=(supergfxctl-plasmoid supergfxctl)
     ;;
   silverblue)
-    variant_pkgs=(supergfxctl)
+    variant_pkgs=(gnome-shell-extension-supergfxctl-gex supergfxctl)
     ;;
 esac
 
-shopt -s nullglob
-local_nvidia_rpms=(
-  "${AKMODNV_PATH}"/libnvidia-cfg-*.rpm
-  "${AKMODNV_PATH}"/libnvidia-fbc-*.rpm
-  "${AKMODNV_PATH}"/libnvidia-gpucomp-*.rpm
-  "${AKMODNV_PATH}"/libnvidia-ml-*.rpm
-  "${AKMODNV_PATH}"/nvidia-libXNVCtrl-5*.rpm
-  "${AKMODNV_PATH}"/nvidia-settings-5*.rpm
-  "${AKMODNV_PATH}"/nvidia-driver-*.rpm
-  "${AKMODNV_PATH}"/nvidia-kmod-common-*.rpm
-  "${AKMODNV_PATH}"/nvidia-modprobe-5*.rpm
-  "${AKMODNV_PATH}"/nvidia-persistenced-5*.rpm
-  "${AKMODNV_PATH}"/xorg-x11*.rpm
-  "${AKMODNV_PATH}"/nvidia-container-toolkit-1*.rpm
-  "${AKMODNV_PATH}"/nvidia-container-toolkit-base-1*.rpm
-  "${AKMODNV_PATH}"/libnvidia-container1-1*.rpm
-  "${AKMODNV_PATH}"/libnvidia-container-tools-1*.rpm
-)
-shopt -u nullglob
-
-if [[ "${#local_nvidia_rpms[@]}" -eq 0 ]]; then
-  echo "No NVIDIA RPMs found in ${AKMODNV_PATH}" >&2
-  exit 1
-fi
+source "${AKMODNV_PATH}"/kmods/nvidia-vars
 
 nvidia_pkgs=(
-  "${local_nvidia_rpms[@]}"
+  libnvidia-fbc
   libva-nvidia-driver
+  nvidia-driver
+  nvidia-driver-cuda
+  nvidia-settings
+  nvidia-container-toolkit
   "${variant_pkgs[@]}"
+  "${AKMODNV_PATH}"/kmods/kmod-nvidia-"${KERNEL_VERSION}"-"${NVIDIA_AKMOD_VERSION}"."${DIST_ARCH}".rpm
 )
 
 if [[ "${MULTILIB}" != "0" ]]; then
@@ -101,10 +99,23 @@ if ! rpm -q --whatprovides nvidia-kmod >/dev/null; then
   exit 1
 fi
 
+kmod_version="$(rpm -q --queryformat '%{VERSION}' kmod-nvidia)"
+driver_version="$(rpm -q --queryformat '%{VERSION}' nvidia-driver)"
+if [[ "${kmod_version}" != "${driver_version}" ]]; then
+  echo "Error: kmod-nvidia version (${kmod_version}) does not match nvidia-driver version (${driver_version})" >&2
+  exit 1
+fi
+
+dnf5 config-manager setopt fedora-nvidia.enabled=0 fedora-nvidia-lts.enabled=0 nvidia-container-toolkit.enabled=0
+
 if [[ -f /etc/yum.repos.d/_copr_ublue-os-staging.repo ]]; then
   sed -i 's@enabled=1@enabled=0@g' /etc/yum.repos.d/_copr_ublue-os-staging.repo
 elif [[ -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:ublue-os:staging.repo ]]; then
   sed -i 's@enabled=1@enabled=0@g' /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:ublue-os:staging.repo
+fi
+
+if [[ "${negativo17_mult_prev_enabled}" == "Y" ]]; then
+  dnf5 config-manager setopt fedora-multimedia.enabled=1
 fi
 
 systemctl enable ublue-nvctk-cdi.service

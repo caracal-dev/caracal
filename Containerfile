@@ -1,10 +1,11 @@
-# Bazzite kernel OCI — provides pre-built kernel RPMs
+# Universal Blue akmods OCI images provide pre-built kernel and kmod RPMs.
 ARG FEDORA_VERSION=44
 ARG ARCH=x86_64
-ARG KERNEL_REF="ghcr.io/bazzite-org/kernel-bazzite:latest-f${FEDORA_VERSION}-${ARCH}"
-ARG NVIDIA_REF="ghcr.io/bazzite-org/nvidia-drivers:latest-f${FEDORA_VERSION}-${ARCH}"
-FROM ${KERNEL_REF} AS kernel
-FROM ${NVIDIA_REF} AS nvidia
+ARG KERNEL_FLAVOR=ogc
+ARG KERNEL_REF="ghcr.io/ublue-os/akmods:${KERNEL_FLAVOR}-${FEDORA_VERSION}"
+ARG NVIDIA_REF="ghcr.io/ublue-os/akmods-nvidia-open:${KERNEL_FLAVOR}-${FEDORA_VERSION}"
+FROM ${KERNEL_REF} AS akmods
+FROM ${NVIDIA_REF} AS akmods-nvidia
 
 # Homebrew — provides /usr/share/homebrew.tar.zst and brew-setup.service
 # https://github.com/ublue-os/brew
@@ -28,7 +29,7 @@ FROM quay.io/fedora-ostree-desktops/kinoite:${FEDORA_VERSION} AS caracal
 ## Replace the stock Fedora kernel with the Bazzite kernel.
 ## Must run before build.sh so the correct kernel headers are in place.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=bind,from=kernel,src=/,dst=/rpms/kernel \
+    --mount=type=bind,from=akmods,src=/kernel-rpms,dst=/rpms/kernel \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
@@ -65,13 +66,11 @@ RUN bootc container lint
 FROM caracal AS caracal-nvidia
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=bind,from=kernel,src=/,dst=/rpms/kernel \
-    --mount=type=bind,from=nvidia,src=/,dst=/rpms/nvidia \
+    --mount=type=bind,from=akmods-nvidia,src=/rpms,dst=/rpms/nvidia \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=tmpfs,dst=/run \
-    IMAGE_NAME=caracal-nvidia /ctx/install-kernel && \
     IMAGE_NAME=caracal-nvidia /ctx/install-nvidia
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
