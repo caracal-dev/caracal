@@ -69,7 +69,7 @@ copr_audio_packages=(
   yabridge
   wine.x86_64
   winetricks
-  pipewire-wineasio
+  #  pipewire-wineasio
   libcurl-gnutls
   appimagelauncher
   #  Loopino-clap
