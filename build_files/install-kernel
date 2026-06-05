@@ -26,16 +26,16 @@ done
 rm -rf /usr/lib/modules
 
 # Install bazzite kernel RPMs from the mounted OCI image.
-# The glob pattern matches the versioned RPM filenames (all bazzite kernels start with 6.x).
+# The glob pattern matches versioned RPM filenames.
 required_pkgs=(
     kernel
     kernel-core
     kernel-modules
-    kernel-modules-core
     kernel-modules-extra
 )
 
 optional_pkgs=(
+    kernel-modules-core
     kernel-modules-akmods
     kernel-devel
     kernel-devel-matched
