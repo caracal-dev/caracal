@@ -8,7 +8,7 @@ set -oue pipefail
 sed -i 's|^PRETTY_NAME=.*|PRETTY_NAME="Caracal OS"|' /usr/lib/os-release
 sed -i 's|^NAME=.*|NAME="Caracal OS"|' /usr/lib/os-release
 # Keep Fedora's distro ID so bootc-image-builder can resolve the correct
-# manifest definitions (it keys off ID + VERSION_ID, e.g. fedora-43).
+# manifest definitions (it keys off ID + VERSION_ID, e.g. fedora-44).
 # Put the custom branding in variant fields instead.
 if ! grep -q '^ID_LIKE=' /usr/lib/os-release; then
   sed -i '/^ID=fedora$/a ID_LIKE=fedora' /usr/lib/os-release

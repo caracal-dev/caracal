@@ -1,5 +1,5 @@
 # Bazzite kernel OCI — provides pre-built kernel RPMs
-ARG FEDORA_VERSION=43
+ARG FEDORA_VERSION=44
 ARG ARCH=x86_64
 ARG KERNEL_REF="ghcr.io/bazzite-org/kernel-bazzite:latest-f${FEDORA_VERSION}-${ARCH}"
 ARG NVIDIA_REF="ghcr.io/bazzite-org/nvidia-drivers:latest-f${FEDORA_VERSION}-${ARCH}"
@@ -22,7 +22,7 @@ COPY system_files/nvidia /system_files/nvidia
 COPY --from=brew /system_files /system_files/shared
 
 # Base Image — Fedora Kinoite (KDE) with Universal Blue additions
-FROM quay.io/fedora-ostree-desktops/kinoite:43 AS caracal
+FROM quay.io/fedora-ostree-desktops/kinoite:44 AS caracal
 
 ### Kernel swap
 ## Replace the stock Fedora kernel with the Bazzite kernel.
