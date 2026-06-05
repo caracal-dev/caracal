@@ -27,7 +27,7 @@ env:
   IMAGE_NAME: ${{ github.event.repository.name }} # output of build.yml, keep in sync
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
   DEFAULT_TAG: "latest"
-  FEDORA_VERSION: "43" # keep in sync with Containerfile
+  FEDORA_VERSION: "44" # keep in sync with Containerfile
   INSTALLER_VARIANT: "Kinoite"
   BIB_IMAGE: "quay.io/centos-bootc/bootc-image-builder:latest"
   ISO_BUILDER_IMAGE: "ghcr.io/jasonn3/build-container-installer:latest"

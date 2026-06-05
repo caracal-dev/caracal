@@ -21,10 +21,11 @@ echo "caracal" >/etc/hostname
 
 # COPR repositories
 
-dnf5 -y copr enable patrickl/wine-tkg
+dnf5 -y copr enable patrickl/wine-tkg-dev
 dnf5 -y copr enable timlau/audio
 dnf5 -y copr enable teervo/DISTRHO
 dnf5 -y copr enable ublue-os/packages
+dnf5 -y copr enable ublue-os/staging
 dnf5 -y copr enable tumillanino/caracal-packages
 
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
@@ -69,6 +70,7 @@ copr_audio_packages=(
   yabridge
   wine.x86_64
   winetricks
+  #  pipewire-wineasio
   libcurl-gnutls
   appimagelauncher
   #  Loopino-clap
@@ -294,10 +296,19 @@ systemctl enable caracal-cpu-performance.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
-if systemctl cat gdm.service >/dev/null 2>&1; then
-  systemctl disable gdm.service || true
+for display_manager in gdm.service sddm.service; do
+  if systemctl cat "${display_manager}" >/dev/null 2>&1; then
+    systemctl disable "${display_manager}" || true
+  fi
+done
+if systemctl cat plasmalogin.service >/dev/null 2>&1; then
+  systemctl enable plasmalogin.service
+elif systemctl cat sddm.service >/dev/null 2>&1; then
+  systemctl enable sddm.service
+else
+  echo "ERROR: no supported display manager unit found (expected plasmalogin.service or sddm.service)" >&2
+  exit 1
 fi
-systemctl enable sddm.service
 
 chmod +x /usr/libexec/caracal-user-setup
 chmod +x /usr/libexec/caracal-cpu-performance

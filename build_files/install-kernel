@@ -1,7 +1,7 @@
 #!/usr/bin/bash
-# Replaces the stock Fedora kernel with the Bazzite kernel.
-# RPMs are provided by the bazzite-org/kernel-bazzite OCI image, mounted at
-# /rpms/kernel during the container build step.
+# Replaces the stock Fedora kernel with the OGC/Bazzite kernel.
+# RPMs are provided by the ublue-os/akmods OCI image's /kernel-rpms payload,
+# mounted at /rpms/kernel during the container build step.
 #
 # Adapted from https://github.com/ublue-os/bazzite (Apache 2.0)
 
@@ -18,34 +18,56 @@ chmod +x 05-rpmostree.install 50-dracut.install
 popd
 
 # Remove the stock Fedora kernel RPMs
-for pkg in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-tools-libs kernel-tools; do
+for pkg in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra kernel-modules-akmods kernel-common kernel-tools-libs kernel-tools kernel-nvidia kernel-nvidia-closed-lts; do
     rpm --erase "${pkg}" --nodeps || true
 done
 
 # Remove all kernel module directories so no orphaned versions remain
 rm -rf /usr/lib/modules
 
-# Install bazzite kernel RPMs from the mounted OCI image.
-# The glob pattern matches the versioned RPM filenames (all bazzite kernels start with 6.x).
-pkgs=(
+# Install kernel RPMs from the mounted OCI image.
+# The glob pattern matches versioned RPM filenames.
+required_pkgs=(
     kernel
     kernel-core
     kernel-modules
+)
+
+optional_pkgs=(
     kernel-modules-core
     kernel-modules-extra
+    kernel-modules-akmods
     kernel-devel
     kernel-devel-matched
     kernel-tools
     kernel-tools-libs
+    kernel-common
 )
 
 PKG_PAT=()
-for pkg in "${pkgs[@]}"; do
-    PKG_PAT+=("/rpms/kernel/${pkg}-6"*)
+installed_pkgs=()
+shopt -s nullglob
+for pkg in "${required_pkgs[@]}"; do
+    matches=("/rpms/kernel/${pkg}-"[0-9]*)
+    if [[ "${#matches[@]}" -eq 0 ]]; then
+        echo "Required kernel RPM not found: ${pkg}" >&2
+        exit 1
+    fi
+    PKG_PAT+=("${matches[@]}")
+    installed_pkgs+=("${pkg}")
 done
 
+for pkg in "${optional_pkgs[@]}"; do
+    matches=("/rpms/kernel/${pkg}-"[0-9]*)
+    if [[ "${#matches[@]}" -gt 0 ]]; then
+        PKG_PAT+=("${matches[@]}")
+        installed_pkgs+=("${pkg}")
+    fi
+done
+shopt -u nullglob
+
 dnf5 -y install "${PKG_PAT[@]}"
-dnf5 versionlock add "${pkgs[@]}"
+dnf5 versionlock add "${installed_pkgs[@]}"
 
 # Restore the original kernel-install hooks
 pushd /usr/lib/kernel/install.d

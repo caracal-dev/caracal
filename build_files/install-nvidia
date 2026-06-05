@@ -7,15 +7,12 @@ set -ouex pipefail
 rsync -rvKlO /ctx/system_files/nvidia/shared/ /
 rsync -rvKlO /ctx/system_files/nvidia/kinoite/ /
 
-# The NVIDIA driver payload provides the same installer used by Universal Blue
-# images. Use the KDE base-image name so the installer selects KDE-compatible
-# defaults when it needs them.
 dnf5 config-manager unsetopt skip_if_unavailable || true
 dnf5 -y remove nvidia-gpu-firmware || true
 dnf5 config-manager setopt excludepkgs=golang-github-nvidia-container-toolkit || true
 
-IMAGE_NAME="kinoite" AKMODNV_PATH="/tmp/rpms/nvidia" MULTILIB=0 \
-  /tmp/rpms/nvidia/ublue-os/nvidia-install.sh
+IMAGE_NAME="kinoite" AKMODNV_PATH="/rpms/nvidia" MULTILIB=0 \
+  /ctx/nvidia-install.sh
 
 rm -f /usr/share/vulkan/icd.d/nouveau_icd.*.json
 ln -sf libnvidia-ml.so.1 /usr/lib64/libnvidia-ml.so
@@ -29,5 +26,4 @@ if [ -f /etc/modprobe.d/nvidia-modeset.conf ]; then
   cp /etc/modprobe.d/nvidia-modeset.conf /usr/lib/modprobe.d/nvidia-modeset.conf
 fi
 
-systemctl enable ublue-nvidia-flatpak-runtime-sync.service
 systemctl enable ublue-nvctk-cdi.service
