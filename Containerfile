@@ -22,7 +22,7 @@ COPY system_files/nvidia /system_files/nvidia
 COPY --from=brew /system_files /system_files/shared
 
 # Base Image — Fedora Kinoite (KDE) with Universal Blue additions
-FROM quay.io/fedora-ostree-desktops/kinoite:44 AS caracal
+FROM quay.io/fedora-ostree-desktops/kinoite:${FEDORA_VERSION} AS caracal
 
 ### Kernel swap
 ## Replace the stock Fedora kernel with the Bazzite kernel.

@@ -42,15 +42,15 @@ pkgs=(
 )
 
 image_name="${IMAGE_NAME:-caracal}"
-if [[ "${image_name}" == *"nvidia-open" || "${image_name}" == *"-deck-nvidia"* ]]; then
+if [[ "${image_name}" == *"nvidia-open" ]]; then
+    pkgs+=("kernel-nvidia-open")
+elif [[ "${image_name}" == *"nvidia" || "${image_name}" == *"-deck-nvidia"* ]]; then
     pkgs+=("kernel-nvidia")
-elif [[ "${image_name}" == *"nvidia"* ]]; then
-    pkgs+=("kernel-nvidia-closed-lts")
 fi
 
 PKG_PAT=()
 for pkg in "${pkgs[@]}"; do
-    PKG_PAT+=("/rpms/kernel/${pkg}-6"*)
+    PKG_PAT+=("/rpms/kernel/${pkg}-"[0-9]*)
 done
 
 dnf5 -y install "${PKG_PAT[@]}"
