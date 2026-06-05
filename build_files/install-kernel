@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# Replaces the stock Fedora kernel with the Bazzite kernel.
+# Replaces the stock Fedora kernel with the OGC/Bazzite kernel.
 # RPMs are provided by the ublue-os/akmods OCI image's /kernel-rpms payload,
 # mounted at /rpms/kernel during the container build step.
 #
@@ -25,7 +25,7 @@ done
 # Remove all kernel module directories so no orphaned versions remain
 rm -rf /usr/lib/modules
 
-# Install bazzite kernel RPMs from the mounted OCI image.
+# Install kernel RPMs from the mounted OCI image.
 # The glob pattern matches versioned RPM filenames.
 required_pkgs=(
     kernel

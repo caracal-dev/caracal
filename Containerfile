@@ -26,7 +26,7 @@ COPY --from=brew /system_files /system_files/shared
 FROM quay.io/fedora-ostree-desktops/kinoite:${FEDORA_VERSION} AS caracal
 
 ### Kernel swap
-## Replace the stock Fedora kernel with the Bazzite kernel.
+## Replace the stock Fedora kernel with the OGC/Bazzite kernel from ublue akmods.
 ## Must run before build.sh so the correct kernel headers are in place.
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=bind,from=akmods,src=/kernel-rpms,dst=/rpms/kernel \
