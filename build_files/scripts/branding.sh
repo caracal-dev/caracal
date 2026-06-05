@@ -47,28 +47,43 @@ cp /etc/xdg/kcm-about-distrorc "$KDE_PROFILE_XDG/kcm-about-distrorc"
 mkdir -p /usr/share/wallpapers/caracal
 cp /ctx/assets/wallpapers/* /usr/share/wallpapers/caracal/
 
-# Build a dedicated Caracal greeter theme from Fedora KDE's known-good SDDM
-# theme, then apply our wallpaper override to that single theme.
-rm -rf /usr/share/sddm/themes/caracal
-cp -a /usr/share/sddm/themes/01-breeze-fedora /usr/share/sddm/themes/caracal
-# Patch theme.conf directly — SDDM reads this from the theme directory.
-# theme.conf.user at runtime is read from the sddm user's XDG data home
-# (/var/lib/sddm/.local/share/sddm/themes/caracal/), NOT from here; a
-# tmpfiles rule handles that deployment.
-sed -i \
-  -e 's|^background=.*|background=/usr/share/wallpapers/caracal/caracal-lake.png|' \
-  -e 's|^type=.*|type=image|' \
-  /usr/share/sddm/themes/caracal/theme.conf
-# Fail the build explicitly if the sed didn't match (silent no-op otherwise).
-grep -q '^background=/usr/share/wallpapers/caracal/caracal-lake.png' \
-  /usr/share/sddm/themes/caracal/theme.conf
-# Also write theme.conf.user into the theme dir for any SDDM builds that do
-# search there, and as the source file for the tmpfiles copy rule.
-cat > /usr/share/sddm/themes/caracal/theme.conf.user << 'EOF'
+# Fedora 44 KDE variants use Plasma Login Manager instead of SDDM. Keep the
+# wallpaper configured for both generations so older builds still brand SDDM.
+if [[ -d /usr/lib/plasmalogin || -e /usr/lib/systemd/system/plasmalogin.service ]]; then
+  install -d /etc
+  cat >/etc/plasmalogin.conf <<'EOF'
+[Greeter]
+WallpaperPluginId=org.kde.image
+
+[Greeter][Wallpaper][org.kde.image][General]
+Image=file:///usr/share/wallpapers/caracal/caracal-lake.png
+EOF
+fi
+
+if [[ -d /usr/share/sddm/themes/01-breeze-fedora ]]; then
+  # Build a dedicated Caracal greeter theme from Fedora KDE's known-good SDDM
+  # theme, then apply our wallpaper override to that single theme.
+  rm -rf /usr/share/sddm/themes/caracal
+  cp -a /usr/share/sddm/themes/01-breeze-fedora /usr/share/sddm/themes/caracal
+  # Patch theme.conf directly - SDDM reads this from the theme directory.
+  # theme.conf.user at runtime is read from the sddm user's XDG data home
+  # (/var/lib/sddm/.local/share/sddm/themes/caracal/), NOT from here; a
+  # tmpfiles rule handles that deployment.
+  sed -i \
+    -e 's|^background=.*|background=/usr/share/wallpapers/caracal/caracal-lake.png|' \
+    -e 's|^type=.*|type=image|' \
+    /usr/share/sddm/themes/caracal/theme.conf
+  # Fail the build explicitly if the sed didn't match (silent no-op otherwise).
+  grep -q '^background=/usr/share/wallpapers/caracal/caracal-lake.png' \
+    /usr/share/sddm/themes/caracal/theme.conf
+  # Also write theme.conf.user into the theme dir for any SDDM builds that do
+  # search there, and as the source file for the tmpfiles copy rule.
+  cat > /usr/share/sddm/themes/caracal/theme.conf.user << 'EOF'
 [General]
 type=image
 background=/usr/share/wallpapers/caracal/caracal-lake.png
 EOF
+fi
 
 # Install splash screen logo into the active Breeze Dark look-and-feel package.
 # Caracal now uses Breeze Dark as the only supported default and ships its own

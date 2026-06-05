@@ -295,10 +295,19 @@ systemctl enable caracal-cpu-performance.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
-if systemctl cat gdm.service >/dev/null 2>&1; then
-  systemctl disable gdm.service || true
+for display_manager in gdm.service sddm.service; do
+  if systemctl cat "${display_manager}" >/dev/null 2>&1; then
+    systemctl disable "${display_manager}" || true
+  fi
+done
+if systemctl cat plasmalogin.service >/dev/null 2>&1; then
+  systemctl enable plasmalogin.service
+elif systemctl cat sddm.service >/dev/null 2>&1; then
+  systemctl enable sddm.service
+else
+  echo "ERROR: no supported display manager unit found (expected plasmalogin.service or sddm.service)" >&2
+  exit 1
 fi
-systemctl enable sddm.service
 
 chmod +x /usr/libexec/caracal-user-setup
 chmod +x /usr/libexec/caracal-cpu-performance
