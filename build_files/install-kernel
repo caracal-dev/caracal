@@ -31,11 +31,11 @@ required_pkgs=(
     kernel
     kernel-core
     kernel-modules
-    kernel-modules-extra
 )
 
 optional_pkgs=(
     kernel-modules-core
+    kernel-modules-extra
     kernel-modules-akmods
     kernel-devel
     kernel-devel-matched
