@@ -25,6 +25,7 @@ dnf5 -y copr enable patrickl/wine-tkg-dev
 dnf5 -y copr enable timlau/audio
 dnf5 -y copr enable teervo/DISTRHO
 dnf5 -y copr enable ublue-os/packages
+dnf5 -y copr enable ublue-os/staging
 dnf5 -y copr enable tumillanino/caracal-packages
 
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release

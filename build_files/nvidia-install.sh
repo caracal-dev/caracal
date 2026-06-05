@@ -62,12 +62,15 @@ else
 fi
 
 variant_pkgs=()
+optional_variant_pkgs=()
 case "${IMAGE_NAME}" in
   kinoite)
-    variant_pkgs=(supergfxctl-plasmoid supergfxctl)
+    variant_pkgs=(supergfxctl)
+    optional_variant_pkgs=(supergfxctl-plasmoid)
     ;;
   silverblue)
-    variant_pkgs=(gnome-shell-extension-supergfxctl-gex supergfxctl)
+    variant_pkgs=(supergfxctl)
+    optional_variant_pkgs=(gnome-shell-extension-supergfxctl-gex)
     ;;
 esac
 
@@ -93,6 +96,12 @@ if [[ "${MULTILIB}" != "0" ]]; then
 fi
 
 dnf5 install -y "${nvidia_pkgs[@]}"
+
+if [[ "${#optional_variant_pkgs[@]}" -gt 0 ]]; then
+  if ! dnf5 install -y "${optional_variant_pkgs[@]}"; then
+    echo "WARNING: optional NVIDIA variant packages failed to install: ${optional_variant_pkgs[*]}" >&2
+  fi
+fi
 
 if ! rpm -q --whatprovides nvidia-kmod >/dev/null; then
   echo "Error: no installed package provides nvidia-kmod" >&2
