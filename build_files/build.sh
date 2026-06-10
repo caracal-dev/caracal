@@ -68,8 +68,10 @@ rpm --erase --nodeps --nodb generic-logos
 # names into standalone shell commands.
 copr_audio_packages=(
   yabridge
-  wine.x86_64
+  wine
   winetricks
+  wine-mono
+  wine-dxvk
   #  pipewire-wineasio
   libcurl-gnutls
   appimagelauncher
@@ -134,7 +136,8 @@ dnf5 -y install \
   ublue-os-just \
   distrobox \
   zenity \
-  alien
+  alien \
+  waydroid
 
 # Virutal Machine Manager and dependencies
 dnf -y install @virtualization
