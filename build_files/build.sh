@@ -20,13 +20,17 @@ rsync -rvKlO \
 echo "caracal" >/etc/hostname
 
 # COPR repositories
-
-dnf5 -y copr enable patrickl/wine-tkg-dev
-dnf5 -y copr enable timlau/audio
-dnf5 -y copr enable teervo/DISTRHO
-dnf5 -y copr enable ublue-os/packages
-dnf5 -y copr enable ublue-os/staging
-dnf5 -y copr enable tumillanino/caracal-packages
+copr_repos=(
+  patrickl/wine-tkg-dev
+  timlau/audio
+  teervo/DISTRHO
+  ublue-os/packages
+  ublue-os/staging
+  tumillanino/caracal-packages
+)
+for copr_repo in "${copr_repos[@]}"; do
+  dnf5 -y copr enable "${copr_repo}"
+done
 
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 # Fedora ostree images expose /opt through /var/opt. Materialize the backing
@@ -44,29 +48,28 @@ dnf5 -y install realtime-setup
 systemctl enable realtime-setup.service
 systemctl enable realtime-entsk.service
 
+default_packages_to_remove=(
+  zram-generator-defaults
+  nano
+  vim-minimal
+  firefox
+  firefox-langpacks
+  plasma-discover
+  plasma-discover-flatpak
+  plasma-discover-kns
+  plasma-discover-libs
+  plasma-discover-notifier
+  plasma-discover-rpm-ostree
+)
+
 # Remove unwanted defaults
-dnf5 -y remove \
-  zram-generator-defaults \
-  nano \
-  vim-minimal \
-  firefox \
-  firefox-langpacks \
-  \
-  plasma-discover \
-  plasma-discover-flatpak \
-  plasma-discover-kns \
-  plasma-discover-libs \
-  plasma-discover-notifier \
-  plasma-discover-rpm-ostree || true
+dnf5 -y remove "${default_packages_to_remove[@]}" || true
 
 dnf5 -y swap fedora-logos generic-logos
 rpm --erase --nodeps --nodb generic-logos
 
-# COPR audio backages
-# Keep disabled packages outside the install array. Inline comments inside a
-# backslash-continued command will terminate the command and turn later package
-# names into standalone shell commands.
-copr_audio_packages=(
+# COPR audio packages
+copr_audio_workflow_packages=(
   yabridge
   wine
   winetricks
@@ -75,40 +78,137 @@ copr_audio_packages=(
   #  pipewire-wineasio
   libcurl-gnutls
   appimagelauncher
-  #  Loopino-clap
-  #  dexed-clap
-  #  dexed-vst3
-  #  Crypt2-lv2
-  #  LostAndFoundPiano-lv2
   vst-DISTRHO-drumsynth.x86_64
   vst-DISTRHO-eqinox.x86_64 vst-DISTRHO-vitalium.x86_64
 )
-dnf5 -y install "${copr_audio_packages[@]}"
-# Disabled for image size:
-#  vst-DISTRHO-Arctican.x86_64
-#  vst-DISTRHO-EasySSP.x86_64
-#  vst-DISTRHO-HiReSam.x86_64
-#  vst-DISTRHO-JuceOPL.x86_64
-#  vst-DISTRHO-KlangFalter.x86_64
-#  vst-DISTRHO-LUFS.x86_64
-#  vst-DISTRHO-Luftikus.x86_64
-#  vst-DISTRHO-Obxd.x86_64
-#  vst-DISTRHO-PitchedDelay.x86_64
-#  vst-DISTRHO-ReFine.x86_64
-#  vst-DISTRHO-StereoSourceSeparation.x86_64
-#  vst-DISTRHO-SwankyAmp.x86_64
-#  vst-DISTRHO-TAL.x86_64
-#  vst-DISTRHO-Temper.x86_64
-#  vst-DISTRHO-Vex.x86_64
-#  vst-DISTRHO-Wolpertinger.x86_64
-#  vst-DISTRHO-dRowAudio.x86_64
-#  vst-DISTRHO-drumsynth.x86_64
-#  vst-DISTRHO-eqinox.x86_64 vst-DISTRHO-vitalium.x86_64
+
+base_system_packages=(
+  zsh
+  openssl
+  openssh
+  ghostty
+  7zip
+  neovim
+  python3-tkinter
+  ublue-os-just
+  distrobox
+  zenity
+)
+
+compatibility_tool_packages=(
+  alien
+  waydroid
+  freerdp
+  podman-compose
+)
+
+hardware_firmware_packages=(
+  alsa-firmware
+  alsa-sof-firmware
+  alsa-tools-firmware
+  atheros-firmware
+  brcmfmac-firmware
+  iwlegacy-firmware
+  iwlwifi-dvm-firmware
+  iwlwifi-mvm-firmware
+  realtek-firmware
+  mt7xxx-firmware
+  nxpwireless-firmware
+  tiwilink-firmware
+  midisport-firmware
+)
+
+hardware_diagnostic_packages=(
+  usbutils
+  pciutils
+  i2c-tools
+  ddcutil
+  evtest
+)
+
+audio_device_packages=(
+  alsa-utils
+  alsa-plugins-jack
+  a2jmidid
+  ffado
+  libusb1
+  hidapi
+  v4l-utils
+)
+
+audio_server_packages=(
+  pipewire-jack-audio-connection-kit
+  jack-audio-connection-kit-dbus
+  qjackctl
+  pavucontrol
+  pipewire-alsa
+  pipewire-utils
+  helvum
+  rtkit
+  tuned-profiles-realtime
+  wireplumber
+  easyeffects
+)
+
+media_codec_packages=(
+  lame
+  flac
+  libavcodec-freeworld
+  gstreamer1-plugins-bad-freeworld
+  gstreamer1-plugins-good
+  gstreamer1-plugins-ugly
+  gstreamer1-libav
+)
+
+audio_application_packages=(
+  ardour9
+  qtractor
+  carla
+  hydrogen
+)
+
+fedora_audio_plugin_packages=(
+  lsp-plugins-vst
+  lsp-plugins-clap
+  lsp-plugins-lv2
+  calf
+  guitarix
+  lv2-carla
+)
+
+daw_runtime_packages=(
+  kernel-tools
+  libX11
+  libXext
+  libXcursor
+  libXrandr
+  libXinerama
+  libXv
+  dpkg
+  libbsd
+)
+
+dnf5 -y install \
+  "${copr_audio_workflow_packages[@]}" \
+  "${base_system_packages[@]}" \
+  "${compatibility_tool_packages[@]}" \
+  "${hardware_firmware_packages[@]}" \
+  "${hardware_diagnostic_packages[@]}" \
+  "${audio_device_packages[@]}" \
+  "${audio_server_packages[@]}" \
+  "${media_codec_packages[@]}" \
+  "${audio_application_packages[@]}" \
+  "${fedora_audio_plugin_packages[@]}" \
+  "${daw_runtime_packages[@]}"
+
+# Virutal Machine Manager and dependencies
+dnf -y install @virtualization
+
+dnf -y swap 'ffmpeg-free' 'ffmpeg' --allowerasing
 
 # Bazaar app store
 # Bazaar itself is preinstalled as a Flatpak. The KRunner plugin comes from
-# ublue-os/packages COPR, which occasionally returns 504s; keep it best-effort
-# so a transient COPR outage does not break the entire image build.
+# ublue-os/packages COPR, which occasionally returns 504s
 for attempt in 1 2 3; do
   if dnf5 -y install krunner-bazaar; then
     break
@@ -122,143 +222,6 @@ for attempt in 1 2 3; do
   echo "krunner-bazaar install failed; retrying (${attempt}/3)..." >&2
   sleep $((attempt * 10))
 done
-
-dnf -y install ghostty
-
-# General tooling
-dnf5 -y install \
-  zsh \
-  openssl \
-  openssh \
-  7zip \
-  neovim \
-  python3-tkinter \
-  ublue-os-just \
-  distrobox \
-  zenity \
-  alien \
-  waydroid
-
-# Virutal Machine Manager and dependencies
-dnf -y install @virtualization
-
-# Open source DAWs
-dnf5 -y install \
-  ardour9 \
-  qtractor \
-  carla
-
-# Virtual instruments
-dnf5 -y install hydrogen
-
-# Audio firmware
-dnf -y install \
-  alsa-firmware \
-  alsa-sof-firmware \
-  alsa-tools-firmware \
-  intel-audio-firmware \
-  atheros-firmware \
-  brcmfmac-firmware \
-  iwlegacy-firmware \
-  iwlwifi-dvm-firmware \
-  iwlwifi-mvm-firmware \
-  realtek-firmware \
-  mt7xxx-firmware \
-  nxpwireless-firmware \
-  tiwilink-firmware
-
-# Hardware compatibility and diagnostics
-dnf5 -y install \
-  alsa-utils \
-  alsa-plugins-jack \
-  usbutils \
-  pciutils \
-  i2c-tools \
-  ddcutil \
-  evtest \
-  a2jmidid \
-  midisport-firmware
-
-# Audio compatibility
-dnf5 -y install \
-  pipewire-jack-audio-connection-kit \
-  jack-audio-connection-kit-dbus \
-  qjackctl \
-  ffado \
-  pavucontrol \
-  pipewire-alsa \
-  pipewire-utils \
-  helvum \
-  rtkit \
-  lame \
-  flac \
-  libavcodec-freeworld \
-  gstreamer1-plugins-bad-freeworld \
-  gstreamer1-plugins-good \
-  gstreamer1-plugins-ugly \
-  gstreamer1-libav \
-  tuned-profiles-realtime \
-  libusb1 \
-  hidapi \
-  v4l-utils \
-  wireplumber \
-  easyeffects
-
-# Midi
-# dnf5 -y install \
-#  qsynth \
-#  fluidsynth \
-#  fluid-soundfont-gm \
-#  timidity++ \
-#  qmidiarp \
-#  vmpk \
-#  harmonyseq
-
-# Audio plugins from official Fedora repos
-fedora_audio_plugin_packages=(
-  lsp-plugins-vst
-  lsp-plugins-clap
-  lsp-plugins-lv2
-  calf
-  guitarix
-  #  lv2-samplv1
-  #  lv2-synthv1
-  #  lv2-drumkv1
-  lv2-carla
-)
-dnf5 -y install "${fedora_audio_plugin_packages[@]}"
-# Disabled for image size:
-#  zam-plugins
-#  lv2-ll-plugins
-#  lv2-vocoder-plugins
-#  lv2-zynadd-plugins
-#  lv2dynparam
-#  lv2-abGate
-#  lv2-newtonator
-#  lv2-x42-plugins
-#  lv2-sorcer
-#  lv2-fabla
-
-# ── Packages required by native Linux DAWs and the ujust DAW installers ──────
-# kernel-tools / libX*: needed by Renoise (and other native apps)
-# dpkg + libbsd: needed by ujust install-bitwig (extracts the .deb at runtime)
-dnf5 -y install \
-  kernel-tools \
-  libX11 \
-  libXext \
-  libXcursor \
-  libXrandr \
-  libXinerama \
-  libXv \
-  dpkg \
-  libbsd
-
-# Prereqs for WinBoat and nice to haves anyway
-dnf5 -y install \
-  freerdp \
-  podman-compose
-
-dnf -y swap 'ffmpeg-free' 'ffmpeg' --allowerasing
 
 # System config
 sed -Ei "s/secure_path = (.*)/secure_path = \1:\/home\/linuxbrew\/.linuxbrew\/bin/" /etc/sudoers
