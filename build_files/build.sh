@@ -81,13 +81,12 @@ copr_audio_workflow_packages=(
   vst-DISTRHO-drumsynth.x86_64
   vst-DISTRHO-eqinox.x86_64 vst-DISTRHO-vitalium.x86_64
 )
-dnf5 -y install "${copr_audio_workflow_packages[@]}"
 
-dnf -y install ghostty
 base_system_packages=(
   zsh
   openssl
   openssh
+  ghostty
   7zip
   neovim
   python3-tkinter
@@ -190,6 +189,7 @@ daw_runtime_packages=(
 )
 
 dnf5 -y install \
+  "${copr_audio_workflow_packages[@]}" \
   "${base_system_packages[@]}" \
   "${compatibility_tool_packages[@]}" \
   "${hardware_firmware_packages[@]}" \
