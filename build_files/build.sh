@@ -201,6 +201,27 @@ dnf5 -y install \
   "${fedora_audio_plugin_packages[@]}" \
   "${daw_runtime_packages[@]}"
 
+kcm_build_packages=(
+  cmake
+  extra-cmake-modules
+  gcc-c++
+  kf6-kcmutils-devel
+  kf6-kcoreaddons-devel
+  kf6-ki18n-devel
+  ninja-build
+  qt6-qtbase-devel
+  qt6-qtdeclarative-devel
+)
+
+dnf5 -y install "${kcm_build_packages[@]}"
+cmake -S /ctx/kcm-caracal-audio -B /tmp/kcm-caracal-audio-build -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build /tmp/kcm-caracal-audio-build
+cmake --install /tmp/kcm-caracal-audio-build
+rm -rf /tmp/kcm-caracal-audio-build
+dnf5 -y remove "${kcm_build_packages[@]}" || true
+
 # Virutal Machine Manager and dependencies
 dnf -y install @virtualization
 

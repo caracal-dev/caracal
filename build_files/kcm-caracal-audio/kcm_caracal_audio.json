@@ -1,0 +1,19 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Caracal OS"
+            }
+        ],
+        "Description": "Run Caracal audio maintenance, routing, and plugin bridge actions",
+        "FormFactors": [
+            "desktop"
+        ],
+        "Icon": "preferences-desktop-sound",
+        "License": "GPL-2.0-or-later",
+        "Name": "Caracal Audio"
+    },
+    "X-KDE-Keywords": "Caracal,audio,PipeWire,JACK,MIDI,Bluetooth,yabridge,VST,JUCE,plugins,low latency,ujust",
+    "X-KDE-System-Settings-Parent-Category": "audio-and-video",
+    "X-KDE-Weight": 35
+}

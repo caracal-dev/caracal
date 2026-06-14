@@ -1,12 +1,8 @@
 [Desktop Entry]
-Type=Service
-X-KDE-ServiceTypes=KCModule
-X-KDE-Library=kcm_caracal_audio
-X-KDE-PluginInfo-Name=kcm_caracal_audio
-X-KDE-PluginInfo-Author=Caracal OS
-X-KDE-PluginInfo-License=GPL-2.0-or-later
-X-KDE-System-Settings-Parent-Category=audio-and-video
-X-KDE-Weight=35
+Type=Application
+NoDisplay=true
+X-KDE-AliasFor=systemsettings
+Exec=systemsettings kcm_caracal_audio
 Icon=preferences-desktop-sound
 Name=Caracal Audio
 Comment=Run Caracal audio maintenance, routing, and plugin bridge actions
