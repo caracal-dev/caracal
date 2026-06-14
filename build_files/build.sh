@@ -214,9 +214,11 @@ kcm_build_packages=(
 )
 
 dnf5 -y install "${kcm_build_packages[@]}"
+kcm_qt_plugin_dir="$(qtpaths6 --plugin-dir)"
 cmake -S /ctx/kcm-caracal-audio -B /tmp/kcm-caracal-audio-build -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX=/usr
+  -DCMAKE_INSTALL_PREFIX=/usr \
+  -DKDE_INSTALL_PLUGINDIR="${kcm_qt_plugin_dir}"
 cmake --build /tmp/kcm-caracal-audio-build
 cmake --install /tmp/kcm-caracal-audio-build
 rm -rf /tmp/kcm-caracal-audio-build
