@@ -23,82 +23,111 @@ KCM.SimpleKCM {
 
     Plasma5Support.DataSource {
         id: executable
-
         engine: "executable"
-
         onNewData: function (sourceName, data) {
             disconnectSource(sourceName);
+            refreshTimer.start();
         }
+    }
+
+    Timer {
+        id: refreshTimer
+        interval: 1000
+        onTriggered: kcm.refresh()
     }
 
     Kirigami.FormLayout {
         id: form
 
         QQC2.Label {
-            Kirigami.FormData.label: i18n("Engine")
+            Kirigami.FormData.label: i18n("System Performance")
             Kirigami.FormData.isSection: true
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("PipeWire:")
-
+            Kirigami.FormData.label: i18n("CPU Performance:")
+            
             QQC2.Button {
-                text: i18n("Restart Engine")
-                icon.name: "view-refresh"
-                onClicked: root.runUjust("restart-pipewire")
+                text: kcm.cpuPerformanceActive ? i18n("Active") : i18n("Enable")
+                icon.name: "cpu"
+                enabled: !kcm.cpuPerformanceActive
+                onClicked: root.runUjust("cpu-performance")
             }
 
-            QQC2.Button {
-                text: i18n("CPU Performance")
-                icon.name: "cpu"
-                onClicked: root.runUjust("cpu-performance")
+            Kirigami.ContextualHelpButton {
+                toolTipText: i18n("Sets CPU to maximum frequency. Recommended for low-latency recording to prevent audio glitches (xruns).")
             }
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Bluetooth:")
+            Kirigami.FormData.label: i18n("Bluetooth Quality:")
 
             QQC2.Button {
-                text: i18n("Toggle Headset Mic")
+                text: kcm.btMicMitigationActive ? i18n("Disable Mitigation") : i18n("Enable Mitigation")
                 icon.name: "preferences-system-bluetooth"
                 onClicked: root.runUjust("toggle-bt-mic")
+            }
+
+            Kirigami.ContextualHelpButton {
+                toolTipText: i18n("Prevents audio quality drop when using Bluetooth headsets, but disables the headset microphone.")
             }
         }
 
         QQC2.Label {
-            Kirigami.FormData.label: i18n("Routing")
+            Kirigami.FormData.label: i18n("Audio Routing")
             Kirigami.FormData.isSection: true
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Virtual channels:")
+            Kirigami.FormData.label: i18n("Virtual Channels:")
 
             QQC2.Button {
                 text: i18n("Create")
                 icon.name: "list-add"
+                visible: !kcm.virtualChannelsActive
                 onClicked: root.runUjust("setup-virtual-channels create")
             }
 
             QQC2.Button {
                 text: i18n("Remove")
                 icon.name: "list-remove"
+                visible: kcm.virtualChannelsActive
                 onClicked: root.runUjust("setup-virtual-channels remove")
+            }
+            
+            QQC2.Label {
+                text: kcm.virtualChannelsActive ? i18n("Configured") : i18n("Not present")
+                color: Kirigami.Theme.disabledTextColor
+            }
+
+            Kirigami.ContextualHelpButton {
+                toolTipText: i18n("Adds dedicated DAW, Monitoring, Recording, and System loopback sinks for complex routing.")
             }
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("JACK compatibility:")
+            Kirigami.FormData.label: i18n("JACK Compatibility:")
 
             QQC2.Button {
-                text: i18n("Enable")
-                icon.name: "media-playback-start"
+                text: kcm.jackDbusActive ? i18n("Restart") : i18n("Enable")
+                icon.name: kcm.jackDbusActive ? "view-refresh" : "media-playback-start"
                 onClicked: root.runUjust("use-legacy-audio start")
             }
 
             QQC2.Button {
-                text: i18n("Remove")
+                text: i18n("Disable")
                 icon.name: "edit-delete-remove"
+                visible: kcm.jackDbusActive
                 onClicked: root.runUjust("use-legacy-audio remove")
+            }
+
+            QQC2.Label {
+                text: kcm.jackDbusActive ? i18n("Running") : i18n("Inactive")
+                color: Kirigami.Theme.disabledTextColor
+            }
+
+            Kirigami.ContextualHelpButton {
+                toolTipText: i18n("Allows legacy JACK applications (like Carla or Cadence) to communicate with PipeWire via D-Bus.")
             }
         }
 
@@ -109,91 +138,80 @@ KCM.SimpleKCM {
                 text: i18n("ALSA to JACK")
                 icon.name: "network-connect"
                 onClicked: root.runUjust("add-legacy-channels a2j")
+                highlighted: kcm.midiBridgeType === 1
             }
 
             QQC2.Button {
-                text: i18n("Native")
+                text: i18n("Native Bridge")
                 icon.name: "network-wired"
                 onClicked: root.runUjust("add-legacy-channels native")
-            }
-
-            QQC2.Button {
-                text: i18n("Remove")
-                icon.name: "list-remove"
-                onClicked: root.runUjust("add-legacy-channels remove")
-            }
-        }
-
-        QQC2.Label {
-            Kirigami.FormData.label: i18n("Plugin Bridge")
-            Kirigami.FormData.isSection: true
-        }
-
-        RowLayout {
-            Kirigami.FormData.label: i18n("yabridge:")
-
-            QQC2.Button {
-                text: i18n("Set Up")
-                icon.name: "run-build"
-                onClicked: root.runUjust("setup-audio")
-            }
-
-            QQC2.Button {
-                text: i18n("Sync")
-                icon.name: "view-refresh"
-                onClicked: root.runUjust("update-audio")
-            }
-
-            QQC2.Button {
-                text: i18n("Route Plugins")
-                icon.name: "folder-sync"
-                onClicked: root.runUjust("route-plugins")
-            }
-        }
-
-        RowLayout {
-            Kirigami.FormData.label: i18n("Diagnostics:")
-
-            QQC2.Button {
-                text: i18n("Scan Plugins")
-                icon.name: "tools-report-bug"
-                onClicked: root.runUjust("plugin-diagnose")
-            }
-        }
-
-        QQC2.Label {
-            Kirigami.FormData.label: i18n("Windows VST Fixes")
-            Kirigami.FormData.isSection: true
-        }
-
-        RowLayout {
-            Kirigami.FormData.label: i18n("Process isolation:")
-
-            QQC2.Button {
-                text: i18n("Enable")
-                icon.name: "security-high"
-                onClicked: root.runUjust("vst-iso enable")
+                highlighted: kcm.midiBridgeType === 2
             }
 
             QQC2.Button {
                 text: i18n("Disable")
-                icon.name: "security-low"
-                onClicked: root.runUjust("vst-iso disable")
+                icon.name: "list-remove"
+                onClicked: root.runUjust("add-legacy-channels remove")
+                visible: kcm.midiBridgeType !== 0
+            }
+
+            Kirigami.ContextualHelpButton {
+                toolTipText: i18n("Bridges ALSA MIDI hardware to JACK or PipeWire for compatibility with older hardware/software.")
+            }
+        }
+
+        QQC2.Label {
+            Kirigami.FormData.label: i18n("Windows Plugin Compatibility")
+            Kirigami.FormData.isSection: true
+        }
+
+        RowLayout {
+            Kirigami.FormData.label: i18n("Performance Scan:")
+
+            QQC2.Button {
+                text: i18n("Scan and Optimize")
+                icon.name: "tools-report-bug"
+                onClicked: root.runUjust("plugin-diagnose")
+            }
+
+            Kirigami.ContextualHelpButton {
+                toolTipText: i18n("Scans your Windows VSTs for heavy license wrappers and applies Wine registry fixes to prevent deadlocks.")
             }
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("JUCE rendering:")
+            Kirigami.FormData.label: i18n("Process Isolation:")
+
+            QQC2.Button {
+                text: kcm.vstIsolationActive ? i18n("Disable") : i18n("Enable")
+                icon.name: kcm.vstIsolationActive ? "security-low" : "security-high"
+                onClicked: root.runUjust(kcm.vstIsolationActive ? "vst-iso disable" : "vst-iso enable")
+            }
+
+            QQC2.Label {
+                text: kcm.vstIsolationActive ? i18n("Active") : i18n("Standard")
+                color: Kirigami.Theme.disabledTextColor
+            }
+
+            Kirigami.ContextualHelpButton {
+                toolTipText: i18n("Runs Windows VSTs in separate processes in REAPER. Prevents a single plugin crash from taking down the whole DAW.")
+            }
+        }
+
+        RowLayout {
+            Kirigami.FormData.label: i18n("JUCE Rendering Fix:")
 
             QQC2.Button {
                 text: i18n("DXVK Clamp")
                 icon.name: "preferences-desktop-display"
+                highlighted: kcm.juceDxvkActive
                 onClicked: root.runUjust("juce-fix dxvk")
             }
 
             QQC2.Button {
                 text: i18n("Wine Desktop")
                 icon.name: "window"
+                highlighted: kcm.juceDesktopActive
                 onClicked: root.runUjust("juce-fix desktop")
             }
 
@@ -201,8 +219,33 @@ KCM.SimpleKCM {
                 text: i18n("Reset")
                 icon.name: "edit-undo"
                 onClicked: root.runUjust("juce-fix reset")
+                visible: kcm.juceDxvkActive || kcm.juceDesktopActive
+            }
+
+            Kirigami.ContextualHelpButton {
+                toolTipText: i18n("Fixes graphical glitches in plugins built with the JUCE framework. DXVK Clamp limits feature levels, while Wine Desktop runs them in a virtual window.")
             }
         }
+
+        QQC2.Label {
+            Kirigami.FormData.label: i18n("Maintenance")
+            Kirigami.FormData.isSection: true
+        }
+
+        RowLayout {
+            Kirigami.FormData.label: i18n("Audio Engine:")
+
+            QQC2.Button {
+                text: i18n("Restart PipeWire")
+                icon.name: "view-refresh"
+                onClicked: root.runUjust("restart-pipewire")
+            }
+
+            Kirigami.ContextualHelpButton {
+                toolTipText: i18n("Restarts the PipeWire audio server. Use this if audio becomes unstable or after applying certain configuration changes.")
+            }
+        }
+
 
         Kirigami.InlineMessage {
             Layout.fillWidth: true
