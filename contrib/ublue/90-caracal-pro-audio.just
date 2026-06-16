@@ -246,8 +246,13 @@ _pro-audio-audio-stack:
     packages=(
         # Wine VST bridge stack
         yabridge
-        wine.x86_64
         wine-core.x86_64
+        wine-alsa.x86_64
+        wine-cms.x86_64
+        wine-common.noarch
+        wine-desktop.noarch
+        wine-pulseaudio.x86_64
+        wine-winefonts.noarch
         winetricks
         wine-mono
         wine-dxvk
@@ -394,8 +399,16 @@ _pro-audio-cpu-performance:
 _pro-audio-yabridge:
     #!/usr/bin/env bash
     set -euo pipefail
-    if ! command -v wine >/dev/null 2>&1; then
-        echo "Wine is not installed yet. Run 'ujust pro-audio audio-stack',"
+    wine_loader="$(command -v wine || true)"
+    wine_boot="$(command -v wineboot || true)"
+    if [[ -z "${wine_loader}" && -x /usr/bin/wine ]]; then
+        wine_loader="/usr/bin/wine"
+    fi
+    if [[ -z "${wine_boot}" && -x /usr/bin/wineboot ]]; then
+        wine_boot="/usr/bin/wineboot"
+    fi
+    if [[ -z "${wine_loader}" || -z "${wine_boot}" ]]; then
+        echo "Wine is not installed yet. Install wine-core/wine-common with 'ujust pro-audio audio-stack',"
         echo "reboot, then come back and run this step."
         exit 1
     fi
@@ -404,8 +417,8 @@ _pro-audio-yabridge:
         echo "reboot, then come back and run this step."
         exit 1
     fi
-    export WINELOADER="$(command -v wine)"
-    wineboot -u
+    export WINELOADER="${wine_loader}"
+    "$wine_boot" -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
     mkdir -p "$vst3_dir" "$HOME/.vst3" "$HOME/.clap" "$HOME/.lv2" "$HOME/.vst"
     yabridgectl add "$vst3_dir"

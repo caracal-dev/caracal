@@ -95,8 +95,13 @@ rpm --erase --nodeps --nodb generic-logos
 # COPR audio packages
 copr_audio_workflow_packages=(
   yabridge
-  wine.x86_64
   wine-core.x86_64
+  wine-alsa.x86_64
+  wine-cms.x86_64
+  wine-common.noarch
+  wine-desktop.noarch
+  wine-pulseaudio.x86_64
+  wine-winefonts.noarch
   winetricks
   wine-mono
   wine-dxvk
@@ -226,8 +231,9 @@ dnf5 -y install \
   "${fedora_audio_plugin_packages[@]}" \
   "${daw_runtime_packages[@]}"
 
-rpm -q wine wine-core
+rpm -q wine-core
 command -v wine
+command -v wineboot
 
 kcm_build_packages=(
   cmake
