@@ -111,7 +111,7 @@ pro-audio-info:
     It will:
       * Enable the ${bold}tumillanino/caracal-packages${normal} COPR
         (publisher of caracal-software-installer / caracal-audio-controller).
-      * Enable the ${bold}patrickl/wine-tkg${normal} and ${bold}teervo/DISTRHO${normal} COPRs
+      * Enable the ${bold}patrickl/wine-11.8-vstgui-juce8${normal}, ${bold}patrickl/wine-tkg-dev${normal}, and ${bold}teervo/DISTRHO${normal} COPRs
         for yabridge + Windows VST support and the DISTRHO plugin set.
       * Layer the Caracal Software Installer and Audio Controller, plus a
         focused audio package set (yabridge, JACK / PipeWire bridges,
@@ -175,6 +175,8 @@ pro-audio-uninstall:
     sudo rm -f \
         /etc/yum.repos.d/_copr_tumillanino-caracal-packages.repo \
         /etc/yum.repos.d/_copr_patrickl-wine-tkg.repo \
+        /etc/yum.repos.d/_copr_patrickl-wine-11.8-vstgui-juce8.repo \
+        /etc/yum.repos.d/_copr_patrickl-wine-tkg-dev.repo \
         /etc/yum.repos.d/_copr_teervo-DISTRHO.repo \
         /etc/security/limits.d/audio.conf \
         /etc/systemd/system.conf.d/90-caracal-audio.conf \
@@ -195,14 +197,31 @@ _pro-audio-copr:
         local url="https://copr.fedorainfracloud.org/coprs/${owner}/${project}/repo/fedora-${fedora_release}/${owner}-${project}-fedora-${fedora_release}.repo"
         if [[ ! -f "/etc/yum.repos.d/${filename}" ]]; then
             echo "Enabling COPR ${owner}/${project}..."
-            sudo curl -fsSL "${url}" -o "/etc/yum.repos.d/${filename}"
+            sudo curl -fsSL "${url}" -o "/etc/yum.repos.d/${filename}" || return 1
         else
             echo "COPR ${owner}/${project} already enabled."
         fi
     }
+    set_copr_priority() {
+        local owner="$1" project="$2" priority="$3"
+        local repo_file="/etc/yum.repos.d/_copr_${owner}-${project}.repo"
+        [[ -f "$repo_file" ]] || return 0
+
+        if grep -q '^priority=' "$repo_file"; then
+            sudo sed -i "s/^priority=.*/priority=${priority}/" "$repo_file"
+        else
+            printf 'priority=%s\n' "$priority" | sudo tee -a "$repo_file" >/dev/null
+        fi
+    }
     add_copr tumillanino caracal-packages
-    add_copr patrickl    wine-tkg
+    if add_copr patrickl wine-11.8-vstgui-juce8; then
+        set_copr_priority patrickl wine-11.8-vstgui-juce8 80
+    else
+        echo "WARNING: failed to enable patrickl/wine-11.8-vstgui-juce8; falling back to patrickl/wine-tkg-dev." >&2
+    fi
+    add_copr patrickl    wine-tkg-dev
     add_copr teervo      DISTRHO
+    set_copr_priority patrickl wine-tkg-dev 90
     # rpmfusion-free is required for several multimedia codecs and ffmpeg.
     if ! rpm -q rpmfusion-free-release >/dev/null 2>&1; then
         sudo rpm-ostree install --idempotent \
@@ -228,7 +247,10 @@ _pro-audio-audio-stack:
         # Wine VST bridge stack
         yabridge
         wine.x86_64
+        wine-core.x86_64
         winetricks
+        wine-mono
+        wine-dxvk
         libcurl-gnutls
         # JACK + PipeWire compatibility
         pipewire-jack-audio-connection-kit
