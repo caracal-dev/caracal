@@ -399,10 +399,14 @@ _pro-audio-cpu-performance:
 _pro-audio-yabridge:
     #!/usr/bin/env bash
     set -euo pipefail
-    wine_loader="$(command -v wine || true)"
+    wine_loader="$(command -v wine || command -v wine64 || true)"
     wine_boot="$(command -v wineboot || true)"
-    if [[ -z "${wine_loader}" && -x /usr/bin/wine ]]; then
-        wine_loader="/usr/bin/wine"
+    if [[ -z "${wine_loader}" ]]; then
+        if [[ -x /usr/bin/wine ]]; then
+            wine_loader="/usr/bin/wine"
+        elif [[ -x /usr/bin/wine64 ]]; then
+            wine_loader="/usr/bin/wine64"
+        fi
     fi
     if [[ -z "${wine_boot}" && -x /usr/bin/wineboot ]]; then
         wine_boot="/usr/bin/wineboot"

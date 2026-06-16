@@ -650,16 +650,20 @@ first-run:
 
 
     # Set up Wine-native VST bridge
-    export WINELOADER="$(command -v wine || true)"
+    export WINELOADER="$(command -v wine || command -v wine64 || true)"
     WINEBOOT="$(command -v wineboot || true)"
-    if [[ -z "${WINELOADER}" && -x /usr/bin/wine ]]; then
-        WINELOADER="/usr/bin/wine"
+    if [[ -z "${WINELOADER}" ]]; then
+        if [[ -x /usr/bin/wine ]]; then
+            WINELOADER="/usr/bin/wine"
+        elif [[ -x /usr/bin/wine64 ]]; then
+            WINELOADER="/usr/bin/wine64"
+        fi
     fi
     if [[ -z "${WINEBOOT}" && -x /usr/bin/wineboot ]]; then
         WINEBOOT="/usr/bin/wineboot"
     fi
     if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
-        echo "Wine loader not found. The image is missing wine-core/wine-common, or you need to reboot after layering Wine." >&2
+        echo "Wine loader or wineboot not found. Ensure wine-core and wine-common are installed." >&2
         exit 1
     fi
     "$WINEBOOT" -u
@@ -736,16 +740,20 @@ update-audio:
 setup-audio:
     #!/usr/bin/env bash
     set -euo pipefail
-    export WINELOADER="$(command -v wine || true)"
+    export WINELOADER="$(command -v wine || command -v wine64 || true)"
     WINEBOOT="$(command -v wineboot || true)"
-    if [[ -z "${WINELOADER}" && -x /usr/bin/wine ]]; then
-        WINELOADER="/usr/bin/wine"
+    if [[ -z "${WINELOADER}" ]]; then
+        if [[ -x /usr/bin/wine ]]; then
+            WINELOADER="/usr/bin/wine"
+        elif [[ -x /usr/bin/wine64 ]]; then
+            WINELOADER="/usr/bin/wine64"
+        fi
     fi
     if [[ -z "${WINEBOOT}" && -x /usr/bin/wineboot ]]; then
         WINEBOOT="/usr/bin/wineboot"
     fi
     if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
-        echo "Wine loader not found. The image is missing wine-core/wine-common, or you need to reboot after layering Wine." >&2
+        echo "Wine loader or wineboot not found. Ensure wine-core and wine-common are installed." >&2
         exit 1
     fi
     "$WINEBOOT" -u
