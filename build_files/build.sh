@@ -19,9 +19,33 @@ rsync -rvKlO \
   /ctx/system_files/shared/ /
 echo "caracal" >/etc/hostname
 
+set_copr_priority() {
+  local owner="$1"
+  local project="$2"
+  local priority="$3"
+  local repo_file="/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:${owner}:${project}.repo"
+
+  [[ -f "${repo_file}" ]] || return 0
+
+  if grep -q '^priority=' "${repo_file}"; then
+    sed -i "s/^priority=.*/priority=${priority}/" "${repo_file}"
+  else
+    printf 'priority=%s\n' "${priority}" >>"${repo_file}"
+  fi
+}
+
+# Prefer the fixed JUCE/VSTGUI Wine COPR; keep -dev enabled as a fallback for
+# related packages that are not present in the fixed repo.
+if dnf5 -y copr enable patrickl/wine-11.8-vstgui-juce8; then
+  set_copr_priority patrickl wine-11.8-vstgui-juce8 80
+else
+  echo "WARNING: failed to enable patrickl/wine-11.8-vstgui-juce8; falling back to patrickl/wine-tkg-dev." >&2
+fi
+dnf5 -y copr enable patrickl/wine-tkg-dev
+set_copr_priority patrickl wine-tkg-dev 90
+
 # COPR repositories
 copr_repos=(
-  patrickl/wine-tkg-dev
   timlau/audio
   teervo/DISTRHO
   ublue-os/packages
@@ -71,7 +95,8 @@ rpm --erase --nodeps --nodb generic-logos
 # COPR audio packages
 copr_audio_workflow_packages=(
   yabridge
-  wine
+  wine.x86_64
+  wine-core.x86_64
   winetricks
   wine-mono
   wine-dxvk
@@ -200,6 +225,9 @@ dnf5 -y install \
   "${audio_application_packages[@]}" \
   "${fedora_audio_plugin_packages[@]}" \
   "${daw_runtime_packages[@]}"
+
+rpm -q wine wine-core
+command -v wine
 
 kcm_build_packages=(
   cmake
