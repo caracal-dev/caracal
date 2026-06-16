@@ -650,12 +650,19 @@ first-run:
 
 
     # Set up Wine-native VST bridge
-    export WINELOADER="$(command -v wine)"
-    if [[ -z "${WINELOADER}" ]]; then
-        echo "Wine is not installed or not on PATH." >&2
+    export WINELOADER="$(command -v wine || true)"
+    WINEBOOT="$(command -v wineboot || true)"
+    if [[ -z "${WINELOADER}" && -x /usr/bin/wine ]]; then
+        WINELOADER="/usr/bin/wine"
+    fi
+    if [[ -z "${WINEBOOT}" && -x /usr/bin/wineboot ]]; then
+        WINEBOOT="/usr/bin/wineboot"
+    fi
+    if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
+        echo "Wine loader not found. The image is missing wine-core/wine-common, or you need to reboot after layering Wine." >&2
         exit 1
     fi
-    wineboot -u
+    "$WINEBOOT" -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
     mkdir -p "$vst3_dir"
     yabridgectl add "$vst3_dir"
@@ -729,12 +736,19 @@ update-audio:
 setup-audio:
     #!/usr/bin/env bash
     set -euo pipefail
-    export WINELOADER="$(command -v wine)"
-    if [[ -z "${WINELOADER}" ]]; then
-        echo "Wine is not installed or not on PATH." >&2
+    export WINELOADER="$(command -v wine || true)"
+    WINEBOOT="$(command -v wineboot || true)"
+    if [[ -z "${WINELOADER}" && -x /usr/bin/wine ]]; then
+        WINELOADER="/usr/bin/wine"
+    fi
+    if [[ -z "${WINEBOOT}" && -x /usr/bin/wineboot ]]; then
+        WINEBOOT="/usr/bin/wineboot"
+    fi
+    if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
+        echo "Wine loader not found. The image is missing wine-core/wine-common, or you need to reboot after layering Wine." >&2
         exit 1
     fi
-    wineboot -u
+    "$WINEBOOT" -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
     mkdir -p "$vst3_dir"
     yabridgectl add "$vst3_dir"
