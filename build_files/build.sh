@@ -71,7 +71,7 @@ rpm --erase --nodeps --nodb generic-logos
 # COPR audio packages
 copr_audio_workflow_packages=(
   yabridge
-  wine
+  wine.x86_64
   winetricks
   wine-mono
   wine-dxvk

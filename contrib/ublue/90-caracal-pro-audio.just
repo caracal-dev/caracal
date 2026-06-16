@@ -227,7 +227,7 @@ _pro-audio-audio-stack:
     packages=(
         # Wine VST bridge stack
         yabridge
-        wine
+        wine.x86_64
         winetricks
         libcurl-gnutls
         # JACK + PipeWire compatibility
