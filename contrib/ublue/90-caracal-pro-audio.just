@@ -399,18 +399,27 @@ _pro-audio-cpu-performance:
 _pro-audio-yabridge:
     #!/usr/bin/env bash
     set -euo pipefail
-    wine_loader="$(command -v wine || command -v wine64 || true)"
-    wine_boot="$(command -v wineboot || true)"
-    if [[ -z "${wine_loader}" ]]; then
-        if [[ -x /usr/bin/wine ]]; then
-            wine_loader="/usr/bin/wine"
-        elif [[ -x /usr/bin/wine64 ]]; then
-            wine_loader="/usr/bin/wine64"
+    wine_loader=""
+    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64; do
+        if command -v "$loader" &>/dev/null; then
+            wine_loader="$(command -v "$loader")"
+            break
+        elif [[ -x "$loader" ]]; then
+            wine_loader="$loader"
+            break
         fi
-    fi
-    if [[ -z "${wine_boot}" && -x /usr/bin/wineboot ]]; then
-        wine_boot="/usr/bin/wineboot"
-    fi
+    done
+    wine_boot=""
+    for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot; do
+        if command -v "$boot" &>/dev/null; then
+            wine_boot="$(command -v "$boot")"
+            break
+        elif [[ -x "$boot" ]]; then
+            wine_boot="$boot"
+            break
+        fi
+    done
+
     if [[ -z "${wine_loader}" || -z "${wine_boot}" ]]; then
         echo "Wine is not installed yet. Install wine-core/wine-common with 'ujust pro-audio audio-stack',"
         echo "reboot, then come back and run this step."

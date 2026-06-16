@@ -233,9 +233,15 @@ dnf5 -y install \
   "${daw_runtime_packages[@]}"
 
 rpm -q wine wine-core wine-common
-command -v wine
-command -v wine64
-command -v wineboot
+dnf5 list installed "wine*" || true
+dnf5 list available "wine*" --showduplicates || true
+ls -l /usr/bin/wine* /usr/sbin/wine* || true
+which wine || true
+which wine64 || true
+which wineboot || true
+# Ensure at least one loader and wineboot exist
+[[ -x /usr/bin/wine || -x /usr/bin/wine64 || -x /usr/sbin/wine || -x /usr/sbin/wine64 ]]
+[[ -x /usr/bin/wineboot || -x /usr/sbin/wineboot ]]
 
 kcm_build_packages=(
   cmake
