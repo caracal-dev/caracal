@@ -650,16 +650,29 @@ first-run:
 
 
     # Set up Wine-native VST bridge
-    export WINELOADER="$(command -v wine || true)"
-    WINEBOOT="$(command -v wineboot || true)"
-    if [[ -z "${WINELOADER}" && -x /usr/bin/wine ]]; then
-        WINELOADER="/usr/bin/wine"
-    fi
-    if [[ -z "${WINEBOOT}" && -x /usr/bin/wineboot ]]; then
-        WINEBOOT="/usr/bin/wineboot"
-    fi
+    export WINELOADER=""
+    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64; do
+        if command -v "$loader" &>/dev/null; then
+            WINELOADER="$(command -v "$loader")"
+            break
+        elif [[ -x "$loader" ]]; then
+            WINELOADER="$loader"
+            break
+        fi
+    done
+    WINEBOOT=""
+    for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot; do
+        if command -v "$boot" &>/dev/null; then
+            WINEBOOT="$(command -v "$boot")"
+            break
+        elif [[ -x "$boot" ]]; then
+            WINEBOOT="$boot"
+            break
+        fi
+    done
+
     if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
-        echo "Wine loader not found. The image is missing wine-core/wine-common, or you need to reboot after layering Wine." >&2
+        echo "Wine loader or wineboot not found. Ensure wine-core and wine-common are installed." >&2
         exit 1
     fi
     "$WINEBOOT" -u
@@ -736,16 +749,29 @@ update-audio:
 setup-audio:
     #!/usr/bin/env bash
     set -euo pipefail
-    export WINELOADER="$(command -v wine || true)"
-    WINEBOOT="$(command -v wineboot || true)"
-    if [[ -z "${WINELOADER}" && -x /usr/bin/wine ]]; then
-        WINELOADER="/usr/bin/wine"
-    fi
-    if [[ -z "${WINEBOOT}" && -x /usr/bin/wineboot ]]; then
-        WINEBOOT="/usr/bin/wineboot"
-    fi
+    export WINELOADER=""
+    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64; do
+        if command -v "$loader" &>/dev/null; then
+            WINELOADER="$(command -v "$loader")"
+            break
+        elif [[ -x "$loader" ]]; then
+            WINELOADER="$loader"
+            break
+        fi
+    done
+    WINEBOOT=""
+    for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot; do
+        if command -v "$boot" &>/dev/null; then
+            WINEBOOT="$(command -v "$boot")"
+            break
+        elif [[ -x "$boot" ]]; then
+            WINEBOOT="$boot"
+            break
+        fi
+    done
+
     if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
-        echo "Wine loader not found. The image is missing wine-core/wine-common, or you need to reboot after layering Wine." >&2
+        echo "Wine loader or wineboot not found. Ensure wine-core and wine-common are installed." >&2
         exit 1
     fi
     "$WINEBOOT" -u
