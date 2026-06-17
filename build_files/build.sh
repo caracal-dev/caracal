@@ -34,6 +34,55 @@ set_copr_priority() {
   fi
 }
 
+validate_wine_stack() {
+  echo "Checking for mandatory Wine and Yabridge binaries..."
+  rpm -q wine-core wine-common yabridge winetricks || {
+    echo "CRITICAL ERROR: required Wine/Yabridge RPMs are missing!" >&2
+    dnf5 list installed "wine*" "yabridge*" "winetricks*" || true
+    exit 1
+  }
+
+  local wine_found=0
+  local bin
+  for bin in /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
+    if [[ -x "$bin" ]]; then
+      wine_found=1
+      echo "Found Wine at $bin"
+      break
+    fi
+  done
+
+  if [[ $wine_found -eq 0 ]]; then
+    echo "CRITICAL ERROR: Wine loader not found in expected locations!" >&2
+    dnf5 list installed "wine*" || true
+    ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
+    exit 1
+  fi
+
+  local wineboot_found=0
+  for bin in /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
+    if [[ -x "$bin" ]]; then
+      wineboot_found=1
+      echo "Found wineboot at $bin"
+      break
+    fi
+  done
+
+  if [[ $wineboot_found -eq 0 ]]; then
+    echo "CRITICAL ERROR: wineboot not found!" >&2
+    dnf5 list installed "wine*" || true
+    ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
+    exit 1
+  fi
+
+  if ! command -v yabridgectl &>/dev/null; then
+    echo "CRITICAL ERROR: yabridgectl not found!" >&2
+    exit 1
+  fi
+
+  echo "Wine and Yabridge validation successful."
+}
+
 # Prefer the fixed JUCE/VSTGUI Wine COPR; keep -dev enabled as a fallback for
 # related packages that are not present in the fixed repo.
 if dnf5 -y copr enable patrickl/wine-11.8-vstgui-juce8; then
@@ -93,7 +142,7 @@ dnf5 -y swap fedora-logos generic-logos
 rpm --erase --nodeps --nodb generic-logos
 
 # COPR audio packages
-copr_audio_workflow_packages=(
+wine_bridge_packages=(
   yabridge
   wine.x86_64
   wine-core.x86_64
@@ -107,6 +156,9 @@ copr_audio_workflow_packages=(
   wine-mono
   wine-dxvk
   #  pipewire-wineasio
+)
+
+copr_audio_workflow_packages=(
   libcurl-gnutls
   appimagelauncher
   vst-DISTRHO-drumsynth.x86_64
@@ -220,6 +272,7 @@ daw_runtime_packages=(
 )
 
 if ! dnf5 -y install \
+  "${wine_bridge_packages[@]}" \
   "${copr_audio_workflow_packages[@]}" \
   "${base_system_packages[@]}" \
   "${compatibility_tool_packages[@]}" \
@@ -237,7 +290,7 @@ if ! dnf5 -y install \
   dnf5 -y copr disable patrickl/wine-tkg-dev || true
 
   dnf5 -y install \
-    wine \
+    "${wine_bridge_packages[@]}" \
     "${copr_audio_workflow_packages[@]}" \
     "${base_system_packages[@]}" \
     "${compatibility_tool_packages[@]}" \
@@ -251,7 +304,7 @@ if ! dnf5 -y install \
     "${daw_runtime_packages[@]}"
 fi
 
-# Post-install check for Wine (handles the "0KiB" or "empty package" case)
+# Post-install check for Wine (handles the "0KiB" metapackage case)
 if ! command -v wine &>/dev/null && ! command -v wine64 &>/dev/null && ! [[ -x /opt/wine-tkg/bin/wine ]]; then
   echo "CRITICAL: Wine binaries missing after installation. Forcing fallback to Fedora Wine..."
   dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
@@ -260,46 +313,8 @@ if ! command -v wine &>/dev/null && ! command -v wine64 &>/dev/null && ! [[ -x /
   dnf5 -y --allowerasing install wine wine-core wine-common
 fi
 
-echo "Checking for mandatory Wine and Yabridge binaries..."
-rpm -q wine wine-core wine-common yabridge || echo "Some packages not found by RPM, checking binaries directly..."
-
-# Strict Validation: These must exist for a functional Caracal OS
-WINE_FOUND=0
-for bin in /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
-  if [[ -x "$bin" ]]; then
-    WINE_FOUND=1
-    echo "Found Wine at $bin"
-    break
-  fi
-done
-
-if [[ $WINE_FOUND -eq 0 ]]; then
-  echo "CRITICAL ERROR: Wine loader not found in expected locations!" >&2
-  dnf5 list installed "wine*" || true
-  ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
-  exit 1
-fi
-
-WINEBOOT_FOUND=0
-for bin in /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
-  if [[ -x "$bin" ]]; then
-    WINEBOOT_FOUND=1
-    echo "Found wineboot at $bin"
-    break
-  fi
-done
-
-if [[ $WINEBOOT_FOUND -eq 0 ]]; then
-  echo "CRITICAL ERROR: wineboot not found!" >&2
-  exit 1
-fi
-
-if ! command -v yabridgectl &>/dev/null; then
-  echo "CRITICAL ERROR: yabridgectl not found! Attempting last-minute install..."
-  dnf5 -y install yabridge || { echo "Failed to install yabridge"; exit 1; }
-fi
-
-echo "Wine and Yabridge validation successful."
+dnf5 -y mark user "${wine_bridge_packages[@]}" || true
+validate_wine_stack
 
 kcm_build_packages=(
   cmake
@@ -345,6 +360,8 @@ for attempt in 1 2 3; do
   echo "krunner-bazaar install failed; retrying (${attempt}/3)..." >&2
   sleep $((attempt * 10))
 done
+
+validate_wine_stack
 
 # System config
 sed -Ei "s/secure_path = (.*)/secure_path = \1:\/home\/linuxbrew\/.linuxbrew\/bin/" /etc/sudoers
