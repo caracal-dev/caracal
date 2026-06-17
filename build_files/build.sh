@@ -83,6 +83,23 @@ validate_wine_stack() {
   echo "Wine and Yabridge validation successful."
 }
 
+install_wine_stack() {
+  dnf5 -y install "${wine_bridge_packages[@]}"
+  dnf5 -y mark user \
+    wine \
+    wine-core \
+    wine-common \
+    wine-alsa \
+    wine-cms \
+    wine-desktop \
+    wine-pulseaudio \
+    wine-winefonts \
+    wine-mono \
+    wine-dxvk \
+    winetricks \
+    yabridge || true
+}
+
 # Prefer the fixed JUCE/VSTGUI Wine COPR; keep -dev enabled as a fallback for
 # related packages that are not present in the fixed repo.
 if dnf5 -y copr enable patrickl/wine-11.8-vstgui-juce8; then
@@ -313,7 +330,7 @@ if ! command -v wine &>/dev/null && ! command -v wine64 &>/dev/null && ! [[ -x /
   dnf5 -y --allowerasing install wine wine-core wine-common
 fi
 
-dnf5 -y mark user "${wine_bridge_packages[@]}" || true
+install_wine_stack
 validate_wine_stack
 
 kcm_build_packages=(
@@ -337,7 +354,7 @@ cmake -S /ctx/kcm-caracal-audio -B /tmp/kcm-caracal-audio-build -G Ninja \
 cmake --build /tmp/kcm-caracal-audio-build
 cmake --install /tmp/kcm-caracal-audio-build
 rm -rf /tmp/kcm-caracal-audio-build
-dnf5 -y remove "${kcm_build_packages[@]}" || true
+dnf5 -y remove --no-autoremove "${kcm_build_packages[@]}" || true
 
 # Virutal Machine Manager and dependencies
 dnf -y install @virtualization
@@ -361,6 +378,7 @@ for attempt in 1 2 3; do
   sleep $((attempt * 10))
 done
 
+install_wine_stack
 validate_wine_stack
 
 # System config
