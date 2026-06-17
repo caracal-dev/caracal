@@ -219,7 +219,7 @@ daw_runtime_packages=(
   libbsd
 )
 
-dnf5 -y install \
+if dnf5 -y install \
   "${copr_audio_workflow_packages[@]}" \
   "${base_system_packages[@]}" \
   "${compatibility_tool_packages[@]}" \
@@ -230,18 +230,60 @@ dnf5 -y install \
   "${media_codec_packages[@]}" \
   "${audio_application_packages[@]}" \
   "${fedora_audio_plugin_packages[@]}" \
-  "${daw_runtime_packages[@]}"
+  "${daw_runtime_packages[@]}"; then
 
-rpm -q wine wine-core wine-common
-dnf5 list installed "wine*" || true
-dnf5 list available "wine*" --showduplicates || true
-ls -l /usr/bin/wine* /usr/sbin/wine* || true
-which wine || true
-which wine64 || true
-which wineboot || true
-# Ensure at least one loader and wineboot exist
-[[ -x /usr/bin/wine || -x /usr/bin/wine64 || -x /usr/sbin/wine || -x /usr/sbin/wine64 ]]
-[[ -x /usr/bin/wineboot || -x /usr/sbin/wineboot ]]
+  echo "WARNING: Primary installation failed. Attempting fallback by disabling Patrickl COPRs..."
+  dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
+  dnf5 -y copr disable patrickl/wine-tkg-dev || true
+
+  dnf5 -y install \
+    wine \
+    "${copr_audio_workflow_packages[@]}" \
+    "${base_system_packages[@]}" \
+    "${compatibility_tool_packages[@]}" \
+    "${hardware_firmware_packages[@]}" \
+    "${hardware_diagnostic_packages[@]}" \
+    "${audio_device_packages[@]}" \
+    "${audio_server_packages[@]}" \
+    "${media_codec_packages[@]}" \
+    "${audio_application_packages[@]}" \
+    "${fedora_audio_plugin_packages[@]}" \
+    "${daw_runtime_packages[@]}"
+fi
+
+# Post-install check for Wine (handles the "0KiB" or "empty package" case)
+if ! command -v wine &>/dev/null && ! command -v wine64 &>/dev/null && ! [[ -x /opt/wine-tkg/bin/wine ]]; then
+  echo "CRITICAL: Wine binaries missing after installation. Forcing fallback to Fedora Wine..."
+  dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
+  dnf5 -y copr disable patrickl/wine-tkg-dev || true
+  # Use swap to replace any broken/dummy packages with the official ones
+  dnf5 -y swap "wine*" wine || dnf5 -y install wine
+fi
+
+echo "Checking for mandatory Wine and Yabridge binaries..."
+rpm -q wine wine-core wine-common yabridge || echo "Some packages not found by RPM, checking binaries directly..."
+
+dnf5 list installed "wine*" "yabridge*" || true
+ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
+ls -l /usr/bin/yabridgectl /usr/bin/yabridge-host* 2>/dev/null || true
+
+# Strict Validation: These must exist for a functional Caracal OS
+if ! [[ -x /usr/bin/wine || -x /usr/bin/wine64 || -x /usr/sbin/wine || -x /usr/sbin/wine64 || -x /opt/wine-tkg/bin/wine || -x /opt/wine-tkg/bin/wine64 ]]; then
+  echo "CRITICAL ERROR: Wine loader not found in expected locations!" >&2
+  exit 1
+fi
+
+if ! [[ -x /usr/bin/wineboot || -x /usr/sbin/wineboot || -x /opt/wine-tkg/bin/wineboot ]]; then
+  echo "CRITICAL ERROR: wineboot not found!" >&2
+  exit 1
+fi
+
+if ! command -v yabridgectl &>/dev/null; then
+  echo "CRITICAL ERROR: yabridgectl not found!" >&2
+  exit 1
+fi
+
+echo "Wine and Yabridge validation successful."
 
 kcm_build_packages=(
   cmake
