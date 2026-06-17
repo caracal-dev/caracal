@@ -219,7 +219,7 @@ daw_runtime_packages=(
   libbsd
 )
 
-if dnf5 -y install \
+if ! dnf5 -y install \
   "${copr_audio_workflow_packages[@]}" \
   "${base_system_packages[@]}" \
   "${compatibility_tool_packages[@]}" \
@@ -257,30 +257,46 @@ if ! command -v wine &>/dev/null && ! command -v wine64 &>/dev/null && ! [[ -x /
   dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
   dnf5 -y copr disable patrickl/wine-tkg-dev || true
   # Use swap to replace any broken/dummy packages with the official ones
-  dnf5 -y swap "wine*" wine || dnf5 -y install wine
+  dnf5 -y --allowerasing install wine wine-core wine-common
 fi
 
 echo "Checking for mandatory Wine and Yabridge binaries..."
 rpm -q wine wine-core wine-common yabridge || echo "Some packages not found by RPM, checking binaries directly..."
 
-dnf5 list installed "wine*" "yabridge*" || true
-ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
-ls -l /usr/bin/yabridgectl /usr/bin/yabridge-host* 2>/dev/null || true
-
 # Strict Validation: These must exist for a functional Caracal OS
-if ! [[ -x /usr/bin/wine || -x /usr/bin/wine64 || -x /usr/sbin/wine || -x /usr/sbin/wine64 || -x /opt/wine-tkg/bin/wine || -x /opt/wine-tkg/bin/wine64 ]]; then
+WINE_FOUND=0
+for bin in /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
+  if [[ -x "$bin" ]]; then
+    WINE_FOUND=1
+    echo "Found Wine at $bin"
+    break
+  fi
+done
+
+if [[ $WINE_FOUND -eq 0 ]]; then
   echo "CRITICAL ERROR: Wine loader not found in expected locations!" >&2
+  dnf5 list installed "wine*" || true
+  ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
   exit 1
 fi
 
-if ! [[ -x /usr/bin/wineboot || -x /usr/sbin/wineboot || -x /opt/wine-tkg/bin/wineboot ]]; then
+WINEBOOT_FOUND=0
+for bin in /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
+  if [[ -x "$bin" ]]; then
+    WINEBOOT_FOUND=1
+    echo "Found wineboot at $bin"
+    break
+  fi
+done
+
+if [[ $WINEBOOT_FOUND -eq 0 ]]; then
   echo "CRITICAL ERROR: wineboot not found!" >&2
   exit 1
 fi
 
 if ! command -v yabridgectl &>/dev/null; then
-  echo "CRITICAL ERROR: yabridgectl not found!" >&2
-  exit 1
+  echo "CRITICAL ERROR: yabridgectl not found! Attempting last-minute install..."
+  dnf5 -y install yabridge || { echo "Failed to install yabridge"; exit 1; }
 fi
 
 echo "Wine and Yabridge validation successful."
