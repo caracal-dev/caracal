@@ -662,6 +662,7 @@ first-run:
           if command -v "$boot" &>/dev/null; then
               WINEBOOT="$(command -v "$boot")"
               break
+          fi
       done
       
       if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
@@ -749,16 +750,6 @@ setup-audio:
     #!/usr/bin/env bash
     set -euo pipefail
     export WINELOADER=""
-    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64; do
-        if command -v "$loader" &>/dev/null; then
-            WINELOADER="$(command -v "$loader")"
-            break
-        elif [[ -x "$loader" ]]; then
-            WINELOADER="$loader"
-            break
-        fi
-    done
-    WINEBOOT=""
       for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
           if command -v "$loader" &>/dev/null; then
               WINELOADER="$(command -v "$loader")"
@@ -770,6 +761,7 @@ setup-audio:
           if command -v "$boot" &>/dev/null; then
               WINEBOOT="$(command -v "$boot")"
               break
+          fi
       done
       
       if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
