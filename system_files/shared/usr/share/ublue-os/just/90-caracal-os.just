@@ -651,35 +651,43 @@ first-run:
 
     # Set up Wine-native VST bridge
     export WINELOADER=""
-      for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
-          if command -v "$loader" &>/dev/null; then
-              WINELOADER="$(command -v "$loader")"
-              break
-          fi
-      done
-      WINEBOOT=""
-      for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
-          if command -v "$boot" &>/dev/null; then
-              WINEBOOT="$(command -v "$boot")"
-              break
-          fi
-      done
-      
-      if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
-          echo "Error: Wine loader or wineboot not found." >&2
-          echo "WINELOADER: '${WINELOADER:-not found}'" >&2
-          echo "WINEBOOT:   '${WINEBOOT:-not found}'" >&2
-          echo "Searched PATH: $PATH" >&2
-          echo "Checking common locations..." >&2
-          ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
-          echo "Ensure wine-core and wine-common are installed. You may need to reboot after a system update." >&2
+    for loader in wine wine64 wine-preloader wine64-preloader /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
+        if command -v "$loader" &>/dev/null; then
+            WINELOADER="$(command -v "$loader")"
+            break
+        fi
+    done
+    
+    WINEBOOT=""
+    for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
+        if command -v "$boot" &>/dev/null; then
+            WINEBOOT="$(command -v "$boot")"
+            break
+        fi
+    done
+    
+    if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
+        echo "Error: Wine loader or wineboot not found." >&2
+        echo "WINELOADER: '${WINELOADER:-not found}'" >&2
+        echo "WINEBOOT:   '${WINEBOOT:-not found}'" >&2
+        echo "Searched PATH: $PATH" >&2
+        echo "Checking common locations..." >&2
+        ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
+        echo "Tip: Ensure wine-core and wine-common are installed. On Caracal, these should be in the base image." >&2
+        echo "If you just updated, a reboot might be required to refresh the PATH and library links." >&2
         exit 1
     fi
+    echo "Using Wine loader: ${WINELOADER}"
     "$WINEBOOT" -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
     mkdir -p "$vst3_dir"
-    yabridgectl add "$vst3_dir"
-    yabridgectl sync
+    
+    if ! command -v yabridgectl &>/dev/null; then
+        echo "Error: yabridgectl not found. Skipping yabridge setup." >&2
+    else
+        yabridgectl add "$vst3_dir"
+        yabridgectl sync
+    fi
 
     echo "Added ${target_user} to audio and realtime."
 
