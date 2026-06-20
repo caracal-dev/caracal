@@ -683,10 +683,8 @@ first-run:
     if ! WINEARCH=win32 WINEPREFIX="$win32_prefix" WINEDEBUG=-all "$WINEBOOT" -u; then
         rm -rf "$win32_prefix"
         echo "Error: Wine cannot create a win32 prefix." >&2
-        echo "This system appears to have only the x86_64/new-WoW64 Wine runtime installed." >&2
-        echo "Install or rebuild Caracal with the i686 Wine runtime packages too:" >&2
-        echo "  wine.i686 wine-core.i686 wine-alsa.i686 wine-cms.i686 wine-pulseaudio.i686" >&2
-        echo "Without that, 32-bit Inno Setup installers can crash with syswow64/ntdll.dll map_image errors and stack overflows." >&2
+        echo "Caracal needs matching x86_64 and i686 Wine packages for 32-bit installer support." >&2
+        echo "Rebuild or update with the Fedora multilib Wine stack." >&2
         exit 1
     fi
     rm -rf "$win32_prefix"
@@ -799,8 +797,7 @@ setup-audio:
     if ! WINEARCH=win32 WINEPREFIX="$win32_prefix" WINEDEBUG=-all "$WINEBOOT" -u; then
         rm -rf "$win32_prefix"
         echo "Error: Wine cannot create a win32 prefix." >&2
-        echo "Install or rebuild Caracal with the i686 Wine runtime packages too:" >&2
-        echo "  wine.i686 wine-core.i686 wine-alsa.i686 wine-cms.i686 wine-pulseaudio.i686" >&2
+        echo "Caracal needs matching x86_64 and i686 Wine packages for 32-bit installer support." >&2
         exit 1
     fi
     rm -rf "$win32_prefix"
