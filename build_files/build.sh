@@ -60,9 +60,11 @@ validate_wine_stack() {
   fi
 
   local wineboot_found=0
+  local wineboot_bin=""
   for bin in /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
     if [[ -x "$bin" ]]; then
       wineboot_found=1
+      wineboot_bin="$bin"
       echo "Found wineboot at $bin"
       break
     fi
@@ -80,11 +82,27 @@ validate_wine_stack() {
     exit 1
   fi
 
+  echo "Checking for real 32-bit Wine prefix support..."
+  local win32_prefix
+  win32_prefix="$(mktemp -d /tmp/caracal-wine32-check.XXXXXX)"
+  if ! WINEARCH=win32 WINEPREFIX="${win32_prefix}" WINEDEBUG=-all "${wineboot_bin}" -u; then
+    rm -rf "${win32_prefix}"
+    echo "CRITICAL ERROR: Wine cannot create a win32 prefix." >&2
+    echo "This usually means only the x86_64/new-WoW64 Wine stack is installed." >&2
+    echo "Install the i686 Wine runtime too, otherwise 32-bit Inno Setup installers can crash with:" >&2
+    echo "  map_image_into_view failed ... syswow64/ntdll.dll ... noexec filesystem?" >&2
+    echo "  virtual_setup_exception stack overflow" >&2
+    dnf5 list installed "wine*" || true
+    exit 1
+  fi
+  rm -rf "${win32_prefix}"
+
   echo "Wine and Yabridge validation successful."
 }
 
 install_wine_stack() {
   dnf5 -y install "${wine_bridge_packages[@]}"
+  dnf5 -y install "${wine_multilib_packages[@]}"
   dnf5 -y mark user \
     wine \
     wine-core \
@@ -96,6 +114,11 @@ install_wine_stack() {
     wine-winefonts \
     wine-mono \
     wine-dxvk \
+    wine.i686 \
+    wine-core.i686 \
+    wine-alsa.i686 \
+    wine-cms.i686 \
+    wine-pulseaudio.i686 \
     winetricks \
     yabridge || true
 }
@@ -173,6 +196,14 @@ wine_bridge_packages=(
   wine-mono
   wine-dxvk
   #  pipewire-wineasio
+)
+
+wine_multilib_packages=(
+  wine.i686
+  wine-core.i686
+  wine-alsa.i686
+  wine-cms.i686
+  wine-pulseaudio.i686
 )
 
 copr_audio_workflow_packages=(
@@ -290,6 +321,7 @@ daw_runtime_packages=(
 
 if ! dnf5 -y install \
   "${wine_bridge_packages[@]}" \
+  "${wine_multilib_packages[@]}" \
   "${copr_audio_workflow_packages[@]}" \
   "${base_system_packages[@]}" \
   "${compatibility_tool_packages[@]}" \
@@ -308,6 +340,7 @@ if ! dnf5 -y install \
 
   dnf5 -y install \
     "${wine_bridge_packages[@]}" \
+    "${wine_multilib_packages[@]}" \
     "${copr_audio_workflow_packages[@]}" \
     "${base_system_packages[@]}" \
     "${compatibility_tool_packages[@]}" \
