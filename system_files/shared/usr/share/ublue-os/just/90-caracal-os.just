@@ -679,17 +679,14 @@ first-run:
     fi
     echo "Using Wine loader: ${WINELOADER}"
 
-    win32_prefix="$(mktemp -d "${TMPDIR:-/tmp}/caracal-wine32-check.XXXXXX")"
-    if ! WINEARCH=win32 WINEPREFIX="$win32_prefix" WINEDEBUG=-all "$WINEBOOT" -u; then
-        rm -rf "$win32_prefix"
-        echo "Error: Wine cannot create a win32 prefix." >&2
-        echo "This system appears to have only the x86_64/new-WoW64 Wine runtime installed." >&2
-        echo "Install or rebuild Caracal with the i686 Wine runtime packages too:" >&2
-        echo "  wine.i686 wine-core.i686 wine-alsa.i686 wine-cms.i686 wine-pulseaudio.i686" >&2
-        echo "Without that, 32-bit Inno Setup installers can crash with syswow64/ntdll.dll map_image errors and stack overflows." >&2
+    wow64_prefix="$(mktemp -d "${TMPDIR:-/tmp}/caracal-wow64-check.XXXXXX")"
+    if ! WINEPREFIX="$wow64_prefix" WINEDEBUG=-all "$WINEBOOT" -u; then
+        rm -rf "$wow64_prefix"
+        echo "Error: Wine cannot initialize a temporary WoW64 prefix." >&2
+        echo "Rebuild or update with the Fedora multilib Wine stack." >&2
         exit 1
     fi
-    rm -rf "$win32_prefix"
+    rm -rf "$wow64_prefix"
 
     "$WINEBOOT" -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
@@ -795,15 +792,13 @@ setup-audio:
         echo "Ensure wine-core and wine-common are installed. You may need to reboot after a system update." >&2
         exit 1
     fi
-    win32_prefix="$(mktemp -d "${TMPDIR:-/tmp}/caracal-wine32-check.XXXXXX")"
-    if ! WINEARCH=win32 WINEPREFIX="$win32_prefix" WINEDEBUG=-all "$WINEBOOT" -u; then
-        rm -rf "$win32_prefix"
-        echo "Error: Wine cannot create a win32 prefix." >&2
-        echo "Install or rebuild Caracal with the i686 Wine runtime packages too:" >&2
-        echo "  wine.i686 wine-core.i686 wine-alsa.i686 wine-cms.i686 wine-pulseaudio.i686" >&2
+    wow64_prefix="$(mktemp -d "${TMPDIR:-/tmp}/caracal-wow64-check.XXXXXX")"
+    if ! WINEPREFIX="$wow64_prefix" WINEDEBUG=-all "$WINEBOOT" -u; then
+        rm -rf "$wow64_prefix"
+        echo "Error: Wine cannot initialize a temporary WoW64 prefix." >&2
         exit 1
     fi
-    rm -rf "$win32_prefix"
+    rm -rf "$wow64_prefix"
     "$WINEBOOT" -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
     mkdir -p "$vst3_dir"

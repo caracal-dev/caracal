@@ -4,6 +4,7 @@
 set -ouex pipefail
 
 SCRIPTS_DIR="/ctx/scripts"
+YABRIDGE_VERSION="5.1.1"
 
 # System files
 rsync -rvKlO \
@@ -36,17 +37,19 @@ set_copr_priority() {
 
 validate_wine_stack() {
   echo "Checking for mandatory Wine and Yabridge binaries..."
-  rpm -q wine-core wine-common yabridge winetricks || {
-    echo "CRITICAL ERROR: required Wine/Yabridge RPMs are missing!" >&2
+  rpm -q wine-core wine-common winetricks || {
+    echo "CRITICAL ERROR: required Wine RPMs are missing!" >&2
     dnf5 list installed "wine*" "yabridge*" "winetricks*" || true
     exit 1
   }
 
   local wine_found=0
+  local wine_bin=""
   local bin
   for bin in /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
     if [[ -x "$bin" ]]; then
       wine_found=1
+      wine_bin="$bin"
       echo "Found Wine at $bin"
       break
     fi
@@ -82,27 +85,59 @@ validate_wine_stack() {
     exit 1
   fi
 
-  echo "Checking for real 32-bit Wine prefix support..."
-  local win32_prefix
-  win32_prefix="$(mktemp -d /tmp/caracal-wine32-check.XXXXXX)"
-  if ! WINEARCH=win32 WINEPREFIX="${win32_prefix}" WINEDEBUG=-all "${wineboot_bin}" -u; then
-    rm -rf "${win32_prefix}"
-    echo "CRITICAL ERROR: Wine cannot create a win32 prefix." >&2
-    echo "This usually means only the x86_64/new-WoW64 Wine stack is installed." >&2
-    echo "Install the i686 Wine runtime too, otherwise 32-bit Inno Setup installers can crash with:" >&2
-    echo "  map_image_into_view failed ... syswow64/ntdll.dll ... noexec filesystem?" >&2
-    echo "  virtual_setup_exception stack overflow" >&2
+  echo "Checking for 32-bit Windows support through Wine WoW64..."
+  local wow64_prefix
+  wow64_prefix="$(mktemp -d /tmp/caracal-wow64-check.XXXXXX)"
+  if ! WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wineboot_bin}" -u; then
+    rm -rf "${wow64_prefix}"
+    echo "CRITICAL ERROR: Wine cannot initialize a temporary WoW64 prefix." >&2
     dnf5 list installed "wine*" || true
     exit 1
   fi
-  rm -rf "${win32_prefix}"
+  local wine_i386_cmd=""
+  for bin in \
+    /usr/lib64/wine-wow64/wine/i386-windows/cmd.exe \
+    /usr/lib/wine/i386-windows/cmd.exe \
+    /usr/lib64/wine/i386-windows/cmd.exe; do
+    if [[ -f "$bin" ]]; then
+      wine_i386_cmd="$bin"
+      break
+    fi
+  done
+  if [[ -z "${wine_i386_cmd}" ]] || ! WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wine_bin}" "${wine_i386_cmd}" /c ver >/dev/null; then
+    rm -rf "${wow64_prefix}"
+    echo "CRITICAL ERROR: Wine cannot run its bundled 32-bit cmd.exe through WoW64." >&2
+    echo "Install the matching Fedora x86_64 and i686 Wine packages together." >&2
+    dnf5 list installed "wine*" || true
+    exit 1
+  fi
+  rm -rf "${wow64_prefix}"
 
   echo "Wine and Yabridge validation successful."
 }
 
+install_yabridge_release() {
+  local tmpdir
+  tmpdir="$(mktemp -d /tmp/caracal-yabridge.XXXXXX)"
+  curl -fL \
+    "https://github.com/robbert-vdh/yabridge/releases/download/${YABRIDGE_VERSION}/yabridge-${YABRIDGE_VERSION}.tar.gz" \
+    -o "${tmpdir}/yabridge.tar.gz"
+  tar -C "${tmpdir}" -xzf "${tmpdir}/yabridge.tar.gz"
+  install -d /usr/libexec/yabridge
+  cp -a "${tmpdir}/yabridge/." /usr/libexec/yabridge/
+  local doc
+  for doc in README.md CHANGELOG.md; do
+    if [[ -f "${tmpdir}/yabridge/${doc}" ]]; then
+      install -Dm0644 "${tmpdir}/yabridge/${doc}" "/usr/share/doc/yabridge/${doc}"
+    fi
+  done
+  ln -sf /usr/libexec/yabridge/yabridgectl /usr/bin/yabridgectl
+  rm -rf "${tmpdir}"
+}
+
 install_wine_stack() {
-  dnf5 -y install "${wine_bridge_packages[@]}"
-  dnf5 -y install "${wine_multilib_packages[@]}"
+  dnf5 -y install "${wine_bridge_packages[@]}" "${wine_multilib_packages[@]}"
+  install_yabridge_release
   dnf5 -y mark user \
     wine \
     wine-core \
@@ -120,18 +155,14 @@ install_wine_stack() {
     wine-cms.i686 \
     wine-pulseaudio.i686 \
     winetricks \
-    yabridge || true
+    || true
 }
 
-# Prefer the fixed JUCE/VSTGUI Wine COPR; keep -dev enabled as a fallback for
-# related packages that are not present in the fixed repo.
-if dnf5 -y copr enable patrickl/wine-11.8-vstgui-juce8; then
-  set_copr_priority patrickl wine-11.8-vstgui-juce8 80
-else
-  echo "WARNING: failed to enable patrickl/wine-11.8-vstgui-juce8; falling back to patrickl/wine-tkg-dev." >&2
-fi
-dnf5 -y copr enable patrickl/wine-tkg-dev
-set_copr_priority patrickl wine-tkg-dev 90
+# Use Fedora Wine as one matched multilib set. Patrickl's Wine COPRs currently
+# provide newer x86_64/noarch Wine packages but no matching i686 packages, so
+# enabling them prevents win32 installer support.
+dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
+dnf5 -y copr disable patrickl/wine-tkg-dev || true
 
 # COPR repositories
 copr_repos=(
@@ -183,7 +214,6 @@ rpm --erase --nodeps --nodb generic-logos
 
 # COPR audio packages
 wine_bridge_packages=(
-  yabridge
   wine.x86_64
   wine-core.x86_64
   wine-alsa.x86_64
@@ -207,10 +237,13 @@ wine_multilib_packages=(
 )
 
 copr_audio_workflow_packages=(
-  libcurl-gnutls
   appimagelauncher
   vst-DISTRHO-drumsynth.x86_64
   vst-DISTRHO-eqinox.x86_64 vst-DISTRHO-vitalium.x86_64
+)
+
+optional_audio_workflow_packages=(
+  libcurl-gnutls
 )
 
 base_system_packages=(
@@ -354,13 +387,19 @@ if ! dnf5 -y install \
     "${daw_runtime_packages[@]}"
 fi
 
+for optional_package in "${optional_audio_workflow_packages[@]}"; do
+  dnf5 -y install "${optional_package}" || {
+    echo "WARNING: optional package '${optional_package}' is unavailable; continuing." >&2
+  }
+done
+
 # Post-install check for Wine (handles the "0KiB" metapackage case)
 if ! command -v wine &>/dev/null && ! command -v wine64 &>/dev/null && ! [[ -x /opt/wine-tkg/bin/wine ]]; then
   echo "CRITICAL: Wine binaries missing after installation. Forcing fallback to Fedora Wine..."
   dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
   dnf5 -y copr disable patrickl/wine-tkg-dev || true
   # Use swap to replace any broken/dummy packages with the official ones
-  dnf5 -y --allowerasing install wine wine-core wine-common
+  dnf5 -y --allowerasing install wine wine-core wine-common wine.i686 wine-core.i686
 fi
 
 install_wine_stack
