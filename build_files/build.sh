@@ -44,10 +44,12 @@ validate_wine_stack() {
   }
 
   local wine_found=0
+  local wine_bin=""
   local bin
   for bin in /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
     if [[ -x "$bin" ]]; then
       wine_found=1
+      wine_bin="$bin"
       echo "Found Wine at $bin"
       break
     fi
@@ -83,17 +85,33 @@ validate_wine_stack() {
     exit 1
   fi
 
-  echo "Checking for real 32-bit Wine prefix support..."
-  local win32_prefix
-  win32_prefix="$(mktemp -d /tmp/caracal-wine32-check.XXXXXX)"
-  if ! WINEARCH=win32 WINEPREFIX="${win32_prefix}" WINEDEBUG=-all "${wineboot_bin}" -u; then
-    rm -rf "${win32_prefix}"
-    echo "CRITICAL ERROR: Wine cannot create a win32 prefix." >&2
+  echo "Checking for 32-bit Windows support through Wine WoW64..."
+  local wow64_prefix
+  wow64_prefix="$(mktemp -d /tmp/caracal-wow64-check.XXXXXX)"
+  if ! WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wineboot_bin}" -u; then
+    rm -rf "${wow64_prefix}"
+    echo "CRITICAL ERROR: Wine cannot initialize a temporary WoW64 prefix." >&2
+    dnf5 list installed "wine*" || true
+    exit 1
+  fi
+  local wine_i386_cmd=""
+  for bin in \
+    /usr/lib64/wine-wow64/wine/i386-windows/cmd.exe \
+    /usr/lib/wine/i386-windows/cmd.exe \
+    /usr/lib64/wine/i386-windows/cmd.exe; do
+    if [[ -f "$bin" ]]; then
+      wine_i386_cmd="$bin"
+      break
+    fi
+  done
+  if [[ -z "${wine_i386_cmd}" ]] || ! WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wine_bin}" "${wine_i386_cmd}" /c ver >/dev/null; then
+    rm -rf "${wow64_prefix}"
+    echo "CRITICAL ERROR: Wine cannot run its bundled 32-bit cmd.exe through WoW64." >&2
     echo "Install the matching Fedora x86_64 and i686 Wine packages together." >&2
     dnf5 list installed "wine*" || true
     exit 1
   fi
-  rm -rf "${win32_prefix}"
+  rm -rf "${wow64_prefix}"
 
   echo "Wine and Yabridge validation successful."
 }
