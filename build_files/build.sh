@@ -219,10 +219,13 @@ wine_multilib_packages=(
 )
 
 copr_audio_workflow_packages=(
-  libcurl-gnutls
   appimagelauncher
   vst-DISTRHO-drumsynth.x86_64
   vst-DISTRHO-eqinox.x86_64 vst-DISTRHO-vitalium.x86_64
+)
+
+optional_audio_workflow_packages=(
+  libcurl-gnutls
 )
 
 base_system_packages=(
@@ -365,6 +368,12 @@ if ! dnf5 -y install \
     "${fedora_audio_plugin_packages[@]}" \
     "${daw_runtime_packages[@]}"
 fi
+
+for optional_package in "${optional_audio_workflow_packages[@]}"; do
+  dnf5 -y install "${optional_package}" || {
+    echo "WARNING: optional package '${optional_package}' is unavailable; continuing." >&2
+  }
+done
 
 # Post-install check for Wine (handles the "0KiB" metapackage case)
 if ! command -v wine &>/dev/null && ! command -v wine64 &>/dev/null && ! [[ -x /opt/wine-tkg/bin/wine ]]; then
