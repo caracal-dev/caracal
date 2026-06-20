@@ -651,13 +651,13 @@ first-run:
 
     # Set up Wine-native VST bridge
     export WINELOADER=""
-    for loader in wine wine64 wine-preloader wine64-preloader /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
+    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
         if command -v "$loader" &>/dev/null; then
             WINELOADER="$(command -v "$loader")"
             break
         fi
     done
-    
+
     WINEBOOT=""
     for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
         if command -v "$boot" &>/dev/null; then
@@ -665,7 +665,7 @@ first-run:
             break
         fi
     done
-    
+
     if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
         echo "Error: Wine loader or wineboot not found." >&2
         echo "WINELOADER: '${WINELOADER:-not found}'" >&2
@@ -678,6 +678,19 @@ first-run:
         exit 1
     fi
     echo "Using Wine loader: ${WINELOADER}"
+
+    win32_prefix="$(mktemp -d "${TMPDIR:-/tmp}/caracal-wine32-check.XXXXXX")"
+    if ! WINEARCH=win32 WINEPREFIX="$win32_prefix" WINEDEBUG=-all "$WINEBOOT" -u; then
+        rm -rf "$win32_prefix"
+        echo "Error: Wine cannot create a win32 prefix." >&2
+        echo "This system appears to have only the x86_64/new-WoW64 Wine runtime installed." >&2
+        echo "Install or rebuild Caracal with the i686 Wine runtime packages too:" >&2
+        echo "  wine.i686 wine-core.i686 wine-alsa.i686 wine-cms.i686 wine-pulseaudio.i686" >&2
+        echo "Without that, 32-bit Inno Setup installers can crash with syswow64/ntdll.dll map_image errors and stack overflows." >&2
+        exit 1
+    fi
+    rm -rf "$win32_prefix"
+
     "$WINEBOOT" -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
     mkdir -p "$vst3_dir"
@@ -758,30 +771,39 @@ setup-audio:
     #!/usr/bin/env bash
     set -euo pipefail
     export WINELOADER=""
-      for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
-          if command -v "$loader" &>/dev/null; then
-              WINELOADER="$(command -v "$loader")"
-              break
-          fi
-      done
-      WINEBOOT=""
-      for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
-          if command -v "$boot" &>/dev/null; then
-              WINEBOOT="$(command -v "$boot")"
-              break
-          fi
-      done
-      
-      if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
-          echo "Error: Wine loader or wineboot not found." >&2
-          echo "WINELOADER: '${WINELOADER:-not found}'" >&2
-          echo "WINEBOOT:   '${WINEBOOT:-not found}'" >&2
-          echo "Searched PATH: $PATH" >&2
-          echo "Checking common locations..." >&2
-          ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
-          echo "Ensure wine-core and wine-common are installed. You may need to reboot after a system update." >&2
+    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
+        if command -v "$loader" &>/dev/null; then
+            WINELOADER="$(command -v "$loader")"
+            break
+        fi
+    done
+    WINEBOOT=""
+    for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
+        if command -v "$boot" &>/dev/null; then
+            WINEBOOT="$(command -v "$boot")"
+            break
+        fi
+    done
+
+    if [[ -z "${WINELOADER}" || -z "${WINEBOOT}" ]]; then
+        echo "Error: Wine loader or wineboot not found." >&2
+        echo "WINELOADER: '${WINELOADER:-not found}'" >&2
+        echo "WINEBOOT:   '${WINEBOOT:-not found}'" >&2
+        echo "Searched PATH: $PATH" >&2
+        echo "Checking common locations..." >&2
+        ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
+        echo "Ensure wine-core and wine-common are installed. You may need to reboot after a system update." >&2
         exit 1
     fi
+    win32_prefix="$(mktemp -d "${TMPDIR:-/tmp}/caracal-wine32-check.XXXXXX")"
+    if ! WINEARCH=win32 WINEPREFIX="$win32_prefix" WINEDEBUG=-all "$WINEBOOT" -u; then
+        rm -rf "$win32_prefix"
+        echo "Error: Wine cannot create a win32 prefix." >&2
+        echo "Install or rebuild Caracal with the i686 Wine runtime packages too:" >&2
+        echo "  wine.i686 wine-core.i686 wine-alsa.i686 wine-cms.i686 wine-pulseaudio.i686" >&2
+        exit 1
+    fi
+    rm -rf "$win32_prefix"
     "$WINEBOOT" -u
     vst3_dir="$HOME/.wine/drive_c/Program Files/Common Files/VST3"
     mkdir -p "$vst3_dir"
