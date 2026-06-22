@@ -37,7 +37,15 @@ set_copr_priority() {
 
 validate_wine_stack() {
   echo "Checking for mandatory Wine and Yabridge binaries..."
-  rpm -q wine-core wine-common winetricks || {
+  rpm -q \
+    wine-core.x86_64 \
+    wine-common.noarch \
+    wine.i686 \
+    wine-core.i686 \
+    wine-alsa.i686 \
+    wine-cms.i686 \
+    wine-pulseaudio.i686 \
+    winetricks || {
     echo "CRITICAL ERROR: required Wine RPMs are missing!" >&2
     dnf5 list installed "wine*" "yabridge*" "winetricks*" || true
     exit 1
