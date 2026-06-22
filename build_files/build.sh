@@ -129,7 +129,7 @@ validate_wine_stack() {
 }
 
 install_wine_stack() {
-  dnf5 -y --allowerasing install "${wine_bridge_packages[@]}"
+  dnf5 -y install --allowerasing "${wine_bridge_packages[@]}"
   dnf5 -y mark user \
     wine \
     wine-core \
