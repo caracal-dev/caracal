@@ -686,6 +686,22 @@ first-run:
         echo "Rebuild or update with the Fedora multilib Wine stack." >&2
         exit 1
     fi
+    wine_i386_cmd=""
+    for bin in \
+        /usr/lib64/wine-wow64/wine/i386-windows/cmd.exe \
+        /usr/lib/wine/i386-windows/cmd.exe \
+        /usr/lib64/wine/i386-windows/cmd.exe; do
+        if [[ -f "$bin" ]]; then
+            wine_i386_cmd="$bin"
+            break
+        fi
+    done
+    if [[ -z "${wine_i386_cmd}" ]] || ! WINEPREFIX="$wow64_prefix" WINEDEBUG=-all "$WINELOADER" "$wine_i386_cmd" /c ver >/dev/null; then
+        rm -rf "$wow64_prefix"
+        echo "Error: Wine cannot run 32-bit Windows programs through WoW64." >&2
+        echo "Rebuild or update with the matching Fedora x86_64 and i686 Wine packages." >&2
+        exit 1
+    fi
     rm -rf "$wow64_prefix"
 
     "$WINEBOOT" -u
@@ -796,6 +812,22 @@ setup-audio:
     if ! WINEPREFIX="$wow64_prefix" WINEDEBUG=-all "$WINEBOOT" -u; then
         rm -rf "$wow64_prefix"
         echo "Error: Wine cannot initialize a temporary WoW64 prefix." >&2
+        exit 1
+    fi
+    wine_i386_cmd=""
+    for bin in \
+        /usr/lib64/wine-wow64/wine/i386-windows/cmd.exe \
+        /usr/lib/wine/i386-windows/cmd.exe \
+        /usr/lib64/wine/i386-windows/cmd.exe; do
+        if [[ -f "$bin" ]]; then
+            wine_i386_cmd="$bin"
+            break
+        fi
+    done
+    if [[ -z "${wine_i386_cmd}" ]] || ! WINEPREFIX="$wow64_prefix" WINEDEBUG=-all "$WINELOADER" "$wine_i386_cmd" /c ver >/dev/null; then
+        rm -rf "$wow64_prefix"
+        echo "Error: Wine cannot run 32-bit Windows programs through WoW64." >&2
+        echo "Rebuild or update with the matching Fedora x86_64 and i686 Wine packages." >&2
         exit 1
     fi
     rm -rf "$wow64_prefix"
