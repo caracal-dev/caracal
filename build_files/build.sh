@@ -91,8 +91,9 @@ validate_wine_stack() {
   local wine_version=""
   wine_version="$("${wine_bin}" --version 2>/dev/null || true)"
   echo "Wine version: ${wine_version:-unknown}"
-  if [[ "${wine_version}" == wine-11.0* || "${wine_version}" != wine-11.* ]]; then
-    echo "CRITICAL ERROR: expected Patrickl's Juce 8 Wine 11.8+ stack, got '${wine_version:-unknown}'." >&2
+  if [[ "${wine_version}" != wine-11.8* ]]; then
+    echo "CRITICAL ERROR: expected Patrickl's Juce 8 Wine 11.8 stack, got '${wine_version:-unknown}'." >&2
+    echo "Wine 11.10 currently fails PE32 WoW64 execution on Caracal; keep the Wine stack pinned to Wine 11.8." >&2
     dnf5 list installed "wine*" "yabridge*" "winetricks*" || true
     exit 1
   fi
@@ -101,6 +102,7 @@ validate_wine_stack() {
   local wow64_prefix
   wow64_prefix="$(mktemp -d /tmp/caracal-wow64-check.XXXXXX)"
   if ! WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wineboot_bin}" -u; then
+    WINEPREFIX="${wow64_prefix}" wineserver -w 2>/dev/null || true
     rm -rf "${wow64_prefix}"
     echo "CRITICAL ERROR: Wine cannot initialize a temporary WoW64 prefix." >&2
     dnf5 list installed "wine*" || true
@@ -117,12 +119,14 @@ validate_wine_stack() {
     fi
   done
   if [[ -z "${wine_i386_cmd}" ]] || ! WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wine_bin}" "${wine_i386_cmd}" /c ver >/dev/null; then
+    WINEPREFIX="${wow64_prefix}" wineserver -w 2>/dev/null || true
     rm -rf "${wow64_prefix}"
     echo "CRITICAL ERROR: Wine cannot run PE32 Windows programs through WoW64." >&2
-    echo "Install or update Patrickl's wine-11.8-vstgui-juce8 packages; Fedora Wine 11.0 fails 32-bit installers on current Caracal." >&2
+    echo "Use Patrickl's wine-11.8-vstgui-juce8 packages pinned to Wine 11.8; Fedora Wine 11.0 and Wine 11.10 fail 32-bit installers on current Caracal." >&2
     dnf5 list installed "wine*" || true
     exit 1
   fi
+  WINEPREFIX="${wow64_prefix}" wineserver -w 2>/dev/null || true
   rm -rf "${wow64_prefix}"
 
   echo "Wine and Yabridge validation successful."
@@ -210,14 +214,14 @@ rpm --erase --nodeps --nodb generic-logos
 # COPR audio packages
 wine_bridge_packages=(
   yabridge
-  wine.x86_64
-  wine-core.x86_64
-  wine-alsa.x86_64
-  wine-cms.x86_64
-  wine-common.noarch
-  wine-desktop.noarch
-  wine-pulseaudio.x86_64
-  wine-winefonts.noarch
+  wine-11.8-300.fc44.x86_64
+  wine-core-11.8-300.fc44.x86_64
+  wine-alsa-11.8-300.fc44.x86_64
+  wine-cms-11.8-300.fc44.x86_64
+  wine-common-11.8-300.fc44.noarch
+  wine-desktop-11.8-300.fc44.noarch
+  wine-pulseaudio-11.8-300.fc44.x86_64
+  wine-winefonts-11.8-300.fc44.noarch
   winetricks
   wine-mono
   wine-dxvk
