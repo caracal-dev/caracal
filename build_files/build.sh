@@ -4,7 +4,6 @@
 set -ouex pipefail
 
 SCRIPTS_DIR="/ctx/scripts"
-YABRIDGE_VERSION="5.1.1"
 
 # System files
 rsync -rvKlO \
@@ -40,11 +39,7 @@ validate_wine_stack() {
   rpm -q \
     wine-core.x86_64 \
     wine-common.noarch \
-    wine.i686 \
-    wine-core.i686 \
-    wine-alsa.i686 \
-    wine-cms.i686 \
-    wine-pulseaudio.i686 \
+    yabridge.x86_64 \
     winetricks || {
     echo "CRITICAL ERROR: required Wine RPMs are missing!" >&2
     dnf5 list installed "wine*" "yabridge*" "winetricks*" || true
@@ -93,6 +88,15 @@ validate_wine_stack() {
     exit 1
   fi
 
+  local wine_version=""
+  wine_version="$("${wine_bin}" --version 2>/dev/null || true)"
+  echo "Wine version: ${wine_version:-unknown}"
+  if [[ "${wine_version}" == wine-11.0* || "${wine_version}" != wine-11.* ]]; then
+    echo "CRITICAL ERROR: expected Patrickl's Juce 8 Wine 11.8+ stack, got '${wine_version:-unknown}'." >&2
+    dnf5 list installed "wine*" "yabridge*" "winetricks*" || true
+    exit 1
+  fi
+
   echo "Checking for 32-bit Windows support through Wine WoW64..."
   local wow64_prefix
   wow64_prefix="$(mktemp -d /tmp/caracal-wow64-check.XXXXXX)"
@@ -114,8 +118,8 @@ validate_wine_stack() {
   done
   if [[ -z "${wine_i386_cmd}" ]] || ! WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wine_bin}" "${wine_i386_cmd}" /c ver >/dev/null; then
     rm -rf "${wow64_prefix}"
-    echo "CRITICAL ERROR: Wine cannot run its bundled 32-bit cmd.exe through WoW64." >&2
-    echo "Install the matching Fedora x86_64 and i686 Wine packages together." >&2
+    echo "CRITICAL ERROR: Wine cannot run PE32 Windows programs through WoW64." >&2
+    echo "Install or update Patrickl's wine-11.8-vstgui-juce8 packages; Fedora Wine 11.0 fails 32-bit installers on current Caracal." >&2
     dnf5 list installed "wine*" || true
     exit 1
   fi
@@ -124,28 +128,8 @@ validate_wine_stack() {
   echo "Wine and Yabridge validation successful."
 }
 
-install_yabridge_release() {
-  local tmpdir
-  tmpdir="$(mktemp -d /tmp/caracal-yabridge.XXXXXX)"
-  curl -fL \
-    "https://github.com/robbert-vdh/yabridge/releases/download/${YABRIDGE_VERSION}/yabridge-${YABRIDGE_VERSION}.tar.gz" \
-    -o "${tmpdir}/yabridge.tar.gz"
-  tar -C "${tmpdir}" -xzf "${tmpdir}/yabridge.tar.gz"
-  install -d /usr/libexec/yabridge
-  cp -a "${tmpdir}/yabridge/." /usr/libexec/yabridge/
-  local doc
-  for doc in README.md CHANGELOG.md; do
-    if [[ -f "${tmpdir}/yabridge/${doc}" ]]; then
-      install -Dm0644 "${tmpdir}/yabridge/${doc}" "/usr/share/doc/yabridge/${doc}"
-    fi
-  done
-  ln -sf /usr/libexec/yabridge/yabridgectl /usr/bin/yabridgectl
-  rm -rf "${tmpdir}"
-}
-
 install_wine_stack() {
-  dnf5 -y install "${wine_bridge_packages[@]}" "${wine_multilib_packages[@]}"
-  install_yabridge_release
+  dnf5 -y --allowerasing install "${wine_bridge_packages[@]}"
   dnf5 -y mark user \
     wine \
     wine-core \
@@ -157,20 +141,23 @@ install_wine_stack() {
     wine-winefonts \
     wine-mono \
     wine-dxvk \
-    wine.i686 \
-    wine-core.i686 \
-    wine-alsa.i686 \
-    wine-cms.i686 \
-    wine-pulseaudio.i686 \
     winetricks \
+    yabridge \
+    ntsync-autoload \
+    pipewire-wineasio \
     || true
 }
 
-# Use Fedora Wine as one matched multilib set. Patrickl's Wine COPRs currently
-# provide newer x86_64/noarch Wine packages but no matching i686 packages, so
-# enabling them prevents win32 installer support.
-dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
-dnf5 -y copr disable patrickl/wine-tkg-dev || true
+# Prefer Patrickl's Juce 8/VSTGUI Wine build for Windows audio installers and
+# yabridge workflows. It is a new-WoW64 x86_64/noarch stack, so do not require
+# Fedora's i686 Wine packages when this repo is active.
+if dnf5 -y copr enable patrickl/wine-11.8-vstgui-juce8; then
+  set_copr_priority patrickl wine-11.8-vstgui-juce8 80
+else
+  echo "WARNING: failed to enable patrickl/wine-11.8-vstgui-juce8; falling back to patrickl/wine-tkg-dev." >&2
+fi
+dnf5 -y copr enable patrickl/wine-tkg-dev
+set_copr_priority patrickl wine-tkg-dev 90
 
 # COPR repositories
 copr_repos=(
@@ -222,6 +209,7 @@ rpm --erase --nodeps --nodb generic-logos
 
 # COPR audio packages
 wine_bridge_packages=(
+  yabridge
   wine.x86_64
   wine-core.x86_64
   wine-alsa.x86_64
@@ -233,15 +221,8 @@ wine_bridge_packages=(
   winetricks
   wine-mono
   wine-dxvk
-  #  pipewire-wineasio
-)
-
-wine_multilib_packages=(
-  wine.i686
-  wine-core.i686
-  wine-alsa.i686
-  wine-cms.i686
-  wine-pulseaudio.i686
+  ntsync-autoload
+  pipewire-wineasio
 )
 
 copr_audio_workflow_packages=(
@@ -362,7 +343,6 @@ daw_runtime_packages=(
 
 if ! dnf5 -y install \
   "${wine_bridge_packages[@]}" \
-  "${wine_multilib_packages[@]}" \
   "${copr_audio_workflow_packages[@]}" \
   "${base_system_packages[@]}" \
   "${compatibility_tool_packages[@]}" \
@@ -375,13 +355,10 @@ if ! dnf5 -y install \
   "${fedora_audio_plugin_packages[@]}" \
   "${daw_runtime_packages[@]}"; then
 
-  echo "WARNING: Primary installation failed. Attempting fallback by disabling Patrickl COPRs..."
-  dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
-  dnf5 -y copr disable patrickl/wine-tkg-dev || true
+  echo "WARNING: Primary installation failed. Retrying with Patrickl Wine COPRs still enabled..."
 
   dnf5 -y install \
     "${wine_bridge_packages[@]}" \
-    "${wine_multilib_packages[@]}" \
     "${copr_audio_workflow_packages[@]}" \
     "${base_system_packages[@]}" \
     "${compatibility_tool_packages[@]}" \
@@ -403,11 +380,8 @@ done
 
 # Post-install check for Wine (handles the "0KiB" metapackage case)
 if ! command -v wine &>/dev/null && ! command -v wine64 &>/dev/null && ! [[ -x /opt/wine-tkg/bin/wine ]]; then
-  echo "CRITICAL: Wine binaries missing after installation. Forcing fallback to Fedora Wine..."
-  dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
-  dnf5 -y copr disable patrickl/wine-tkg-dev || true
-  # Use swap to replace any broken/dummy packages with the official ones
-  dnf5 -y --allowerasing install wine wine-core wine-common wine.i686 wine-core.i686
+  echo "CRITICAL: Wine binaries missing after installation. Reinstalling Patrickl Wine stack..."
+  install_wine_stack
 fi
 
 install_wine_stack

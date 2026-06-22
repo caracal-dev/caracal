@@ -678,12 +678,20 @@ first-run:
         exit 1
     fi
     echo "Using Wine loader: ${WINELOADER}"
+    wine_version="$("$WINELOADER" --version 2>/dev/null || true)"
+    echo "Wine version: ${wine_version:-unknown}"
+    if [[ "${wine_version}" == wine-11.0* || "${wine_version}" != wine-11.* ]]; then
+        echo "Error: expected Patrickl's Juce 8 Wine 11.8+ stack, got '${wine_version:-unknown}'." >&2
+        echo "Rebuild or update Caracal with patrickl/wine-11.8-vstgui-juce8 active." >&2
+        rpm -q wine wine-core wine-common yabridge winetricks 2>/dev/null || true
+        exit 1
+    fi
 
     wow64_prefix="$(mktemp -d "${TMPDIR:-/tmp}/caracal-wow64-check.XXXXXX")"
     if ! WINEPREFIX="$wow64_prefix" WINEDEBUG=-all "$WINEBOOT" -u; then
         rm -rf "$wow64_prefix"
         echo "Error: Wine cannot initialize a temporary WoW64 prefix." >&2
-        echo "Rebuild or update with the Fedora multilib Wine stack." >&2
+        echo "Rebuild or update Caracal with Patrickl's Juce 8 Wine stack." >&2
         exit 1
     fi
     wine_i386_cmd=""
@@ -698,8 +706,9 @@ first-run:
     done
     if [[ -z "${wine_i386_cmd}" ]] || ! WINEPREFIX="$wow64_prefix" WINEDEBUG=-all "$WINELOADER" "$wine_i386_cmd" /c ver >/dev/null; then
         rm -rf "$wow64_prefix"
-        echo "Error: Wine cannot run 32-bit Windows programs through WoW64." >&2
-        echo "Rebuild or update with the matching Fedora x86_64 and i686 Wine packages." >&2
+        echo "Error: Wine cannot run PE32 Windows programs through WoW64." >&2
+        echo "Rebuild or update Caracal with patrickl/wine-11.8-vstgui-juce8 active." >&2
+        rpm -q wine wine-core wine-common yabridge winetricks 2>/dev/null || true
         exit 1
     fi
     rm -rf "$wow64_prefix"
@@ -808,10 +817,19 @@ setup-audio:
         echo "Ensure wine-core and wine-common are installed. You may need to reboot after a system update." >&2
         exit 1
     fi
+    wine_version="$("$WINELOADER" --version 2>/dev/null || true)"
+    echo "Wine version: ${wine_version:-unknown}"
+    if [[ "${wine_version}" == wine-11.0* || "${wine_version}" != wine-11.* ]]; then
+        echo "Error: expected Patrickl's Juce 8 Wine 11.8+ stack, got '${wine_version:-unknown}'." >&2
+        echo "Rebuild or update Caracal with patrickl/wine-11.8-vstgui-juce8 active." >&2
+        rpm -q wine wine-core wine-common yabridge winetricks 2>/dev/null || true
+        exit 1
+    fi
     wow64_prefix="$(mktemp -d "${TMPDIR:-/tmp}/caracal-wow64-check.XXXXXX")"
     if ! WINEPREFIX="$wow64_prefix" WINEDEBUG=-all "$WINEBOOT" -u; then
         rm -rf "$wow64_prefix"
         echo "Error: Wine cannot initialize a temporary WoW64 prefix." >&2
+        echo "Rebuild or update Caracal with Patrickl's Juce 8 Wine stack." >&2
         exit 1
     fi
     wine_i386_cmd=""
@@ -826,8 +844,9 @@ setup-audio:
     done
     if [[ -z "${wine_i386_cmd}" ]] || ! WINEPREFIX="$wow64_prefix" WINEDEBUG=-all "$WINELOADER" "$wine_i386_cmd" /c ver >/dev/null; then
         rm -rf "$wow64_prefix"
-        echo "Error: Wine cannot run 32-bit Windows programs through WoW64." >&2
-        echo "Rebuild or update with the matching Fedora x86_64 and i686 Wine packages." >&2
+        echo "Error: Wine cannot run PE32 Windows programs through WoW64." >&2
+        echo "Rebuild or update Caracal with patrickl/wine-11.8-vstgui-juce8 active." >&2
+        rpm -q wine wine-core wine-common yabridge winetricks 2>/dev/null || true
         exit 1
     fi
     rm -rf "$wow64_prefix"
