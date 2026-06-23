@@ -22,6 +22,9 @@ on:
       - './disk_config/disk.toml'
       - './.github/workflows/build-disk.yml'
       - './installer/build-iso-makefile-patch'
+      - './Containerfile'
+      - './build_files/build-stage.sh'
+      - './system_files/stage/**'
 
 env:
   IMAGE_NAME: ${{ github.event.repository.name }} # output of build.yml, keep in sync
@@ -50,6 +53,7 @@ jobs:
           - installer-iso
         image-suffix:
           - ""
+          - "-stage"
           - "-nvidia"
         exclude:
           - disk-type: qcow2
@@ -200,3 +204,47 @@ jobs:
           rclone copyto "${ISO_PATH}" "R2:${BUCKET_NAME}/$(basename "${ISO_PATH}")"
 
           rclone copyto "${CHECKSUM_PATH}" "R2:${BUCKET_NAME}/$(basename "${CHECKSUM_PATH}")"
+
+      - name: Upload disk image to Cloudflare R2
+        if: inputs.upload-to-s3 == true && github.event_name != 'pull_request' && matrix.disk-type != 'installer-iso'
+        shell: bash
+        env:
+          RCLONE_CONFIG_R2_TYPE: s3
+          RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY }}
+          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.SECRET_S3_ACCESS_KEY }}
+          RCLONE_CONFIG_R2_REGION: auto
+          RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.S3_ENDPOINT_DEFAULT }}
+          BUCKET_NAME: ${{ vars.R2_BUCKET_NAME || secrets.S3_BUCKET_NAME }}
+          DISK_OUTPUT_DIR: ${{ steps.build.outputs.output-directory }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y rclone
+          if [ -z "${BUCKET_NAME}" ]; then
+            echo "Set repository variable R2_BUCKET_NAME or secret S3_BUCKET_NAME before enabling upload-to-s3." >&2
+            exit 1
+          fi
+
+          if [ -z "${DISK_OUTPUT_DIR}" ] || [ ! -d "${DISK_OUTPUT_DIR}" ]; then
+            echo "Disk output directory was not found: '${DISK_OUTPUT_DIR}'." >&2
+            exit 1
+          fi
+
+          DISK_PATH=$(find "${DISK_OUTPUT_DIR}" -type f -name '*.qcow2' | head -n 1)
+          if [ -z "${DISK_PATH}" ]; then
+            echo "No qcow2 disk image was found in ${DISK_OUTPUT_DIR}." >&2
+            find "${DISK_OUTPUT_DIR}" -maxdepth 4 -type f -print >&2 || true
+            exit 1
+          fi
+
+          STAGING_DIR="$(mktemp -d)"
+          QCOW_NAME="${IMAGE_NAME}-${DEFAULT_TAG}-${{ matrix.platform }}.qcow2"
+          cp "${DISK_PATH}" "${STAGING_DIR}/${QCOW_NAME}"
+          (
+            cd "${STAGING_DIR}"
+            sha256sum "${QCOW_NAME}" > "${QCOW_NAME}.sha256sum"
+          )
+
+          rclone copyto "${STAGING_DIR}/${QCOW_NAME}" "R2:${BUCKET_NAME}/${QCOW_NAME}"
+          rclone copyto "${STAGING_DIR}/${QCOW_NAME}.sha256sum" "R2:${BUCKET_NAME}/${QCOW_NAME}.sha256sum"

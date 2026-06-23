@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Caracal Stage
+Comment=Wayfire session for live Carla performance rigs
+Exec=caracal-stage-session
+Type=Application
+DesktopNames=Caracal-Stage;Wayfire

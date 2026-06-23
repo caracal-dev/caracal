@@ -129,13 +129,19 @@ For NVIDIA systems using Turing or newer GPUs, switch to the NVIDIA image instea
 sudo bootc switch ghcr.io/caracal-dev/caracal-nvidia:latest
 ```
 
+For stage rigs that should boot to a stripped-down console-first Carla session:
+
+```bash
+sudo bootc switch ghcr.io/caracal-dev/caracal-stage:latest
+```
+
 Reboot to apply. On first login, run the guided setup:
 
 ```bash
 ujust first-run
 ```
 
-That recipe adds you to the `audio` and `realtime` groups, installs the shell extras, and sets up yabridge.
+On the main image that recipe adds you to the `audio` and `realtime` groups, installs the shell extras, and sets up yabridge. On `caracal-stage`, it runs a smaller stage setup for the audio/realtime groups, Wine/Yabridge, and local plugin folders.
 
 Or do the group step manually:
 
@@ -154,6 +160,9 @@ Requires [just](https://just.systems/) and Podman.
 ```bash
 # Build the container image
 just build
+
+# Build the stage performance image
+just build-stage
 
 # Build a bootable QCOW2 (for testing in a VM)
 just build-qcow2

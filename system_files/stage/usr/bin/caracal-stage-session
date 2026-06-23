@@ -1,0 +1,16 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+  exec dbus-run-session -- "$0" "$@"
+fi
+
+export XDG_CURRENT_DESKTOP=Wayfire
+export XDG_SESSION_DESKTOP=caracal-stage
+export XDG_SESSION_TYPE=wayland
+export QT_QPA_PLATFORM=wayland
+export GDK_BACKEND=wayland,x11
+export SDL_VIDEODRIVER=wayland
+export CLUTTER_BACKEND=wayland
+
+exec wayfire --config /etc/xdg/wayfire/caracal-stage.ini
