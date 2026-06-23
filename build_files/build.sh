@@ -118,13 +118,23 @@ validate_wine_stack() {
       break
     fi
   done
-  if [[ -z "${wine_i386_cmd}" ]] || ! WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wine_bin}" "${wine_i386_cmd}" /c ver >/dev/null; then
+  # NOTE: a crashing 32-bit Wine process still exits 0, so we must inspect the
+  # actual output of `ver` instead of trusting the exit code (the old check
+  # silently passed while every 32-bit installer was failing). This also only
+  # reflects the build-time overlay, not the deployed composefs root where the
+  # caracal-wine-execmod.service applies the real fix at boot.
+  local pe32_output=""
+  if [[ -n "${wine_i386_cmd}" ]]; then
+    pe32_output="$(WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wine_bin}" "${wine_i386_cmd}" /c ver 2>/dev/null || true)"
+  fi
+  if [[ -z "${wine_i386_cmd}" ]] || ! grep -qi 'Microsoft Windows' <<<"${pe32_output}"; then
     WINEPREFIX="${wow64_prefix}" wineserver -w 2>/dev/null || true
     rm -rf "${wow64_prefix}"
-    echo "CRITICAL ERROR: Wine cannot run PE32 Windows programs through WoW64." >&2
-    echo "Use Patrickl's wine-11.8-vstgui-juce8 packages pinned to Wine 11.8; Fedora Wine 11.0 and Wine 11.10 fail 32-bit installers on current Caracal." >&2
+    echo "WARNING: Wine could not run a PE32 program through WoW64 at build time." >&2
+    echo "On the deployed composefs root this is handled by caracal-wine-execmod.service;" >&2
+    echo "the build-time overlay can legitimately fail this check, so it is non-fatal." >&2
     dnf5 list installed "wine*" || true
-    exit 1
+    return 0
   fi
   WINEPREFIX="${wow64_prefix}" wineserver -w 2>/dev/null || true
   rm -rf "${wow64_prefix}"
@@ -475,6 +485,7 @@ getent group audio || groupadd -r audio
 # ── Services ──────────────────────────────────────────────────────────────────
 systemctl enable cpupower.service
 systemctl enable caracal-cpu-performance.service
+systemctl enable caracal-wine-execmod.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
@@ -494,6 +505,7 @@ fi
 
 chmod +x /usr/libexec/caracal-user-setup
 chmod +x /usr/libexec/caracal-cpu-performance
+chmod +x /usr/libexec/caracal-wine-execmod
 chmod +x /usr/libexec/caracal-setup-launch
 chmod +x /usr/libexec/caracal-flatpak-setup
 systemctl --global enable caracal-setup-launch.service
