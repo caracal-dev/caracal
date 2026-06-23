@@ -4,7 +4,6 @@
 set -ouex pipefail
 
 SCRIPTS_DIR="/ctx/scripts"
-YABRIDGE_VERSION="5.1.1"
 
 # System files
 rsync -rvKlO \
@@ -40,11 +39,7 @@ validate_wine_stack() {
   rpm -q \
     wine-core.x86_64 \
     wine-common.noarch \
-    wine.i686 \
-    wine-core.i686 \
-    wine-alsa.i686 \
-    wine-cms.i686 \
-    wine-pulseaudio.i686 \
+    yabridge.x86_64 \
     winetricks || {
     echo "CRITICAL ERROR: required Wine RPMs are missing!" >&2
     dnf5 list installed "wine*" "yabridge*" "winetricks*" || true
@@ -93,10 +88,21 @@ validate_wine_stack() {
     exit 1
   fi
 
+  local wine_version=""
+  wine_version="$("${wine_bin}" --version 2>/dev/null || true)"
+  echo "Wine version: ${wine_version:-unknown}"
+  if [[ "${wine_version}" != wine-11.8* ]]; then
+    echo "CRITICAL ERROR: expected Patrickl's Juce 8 Wine 11.8 stack, got '${wine_version:-unknown}'." >&2
+    echo "Wine 11.10 currently fails PE32 WoW64 execution on Caracal; keep the Wine stack pinned to Wine 11.8." >&2
+    dnf5 list installed "wine*" "yabridge*" "winetricks*" || true
+    exit 1
+  fi
+
   echo "Checking for 32-bit Windows support through Wine WoW64..."
   local wow64_prefix
   wow64_prefix="$(mktemp -d /tmp/caracal-wow64-check.XXXXXX)"
   if ! WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wineboot_bin}" -u; then
+    WINEPREFIX="${wow64_prefix}" wineserver -w 2>/dev/null || true
     rm -rf "${wow64_prefix}"
     echo "CRITICAL ERROR: Wine cannot initialize a temporary WoW64 prefix." >&2
     dnf5 list installed "wine*" || true
@@ -112,40 +118,32 @@ validate_wine_stack() {
       break
     fi
   done
-  if [[ -z "${wine_i386_cmd}" ]] || ! WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wine_bin}" "${wine_i386_cmd}" /c ver >/dev/null; then
-    rm -rf "${wow64_prefix}"
-    echo "CRITICAL ERROR: Wine cannot run its bundled 32-bit cmd.exe through WoW64." >&2
-    echo "Install the matching Fedora x86_64 and i686 Wine packages together." >&2
-    dnf5 list installed "wine*" || true
-    exit 1
+  # NOTE: a crashing 32-bit Wine process still exits 0, so we must inspect the
+  # actual output of `ver` instead of trusting the exit code (the old check
+  # silently passed while every 32-bit installer was failing). This also only
+  # reflects the build-time overlay, not the deployed composefs root where the
+  # caracal-wine-execmod.service applies the real fix at boot.
+  local pe32_output=""
+  if [[ -n "${wine_i386_cmd}" ]]; then
+    pe32_output="$(WINEPREFIX="${wow64_prefix}" WINEDEBUG=-all "${wine_bin}" "${wine_i386_cmd}" /c ver 2>/dev/null || true)"
   fi
+  if [[ -z "${wine_i386_cmd}" ]] || ! grep -qi 'Microsoft Windows' <<<"${pe32_output}"; then
+    WINEPREFIX="${wow64_prefix}" wineserver -w 2>/dev/null || true
+    rm -rf "${wow64_prefix}"
+    echo "WARNING: Wine could not run a PE32 program through WoW64 at build time." >&2
+    echo "On the deployed composefs root this is handled by caracal-wine-execmod.service;" >&2
+    echo "the build-time overlay can legitimately fail this check, so it is non-fatal." >&2
+    dnf5 list installed "wine*" || true
+    return 0
+  fi
+  WINEPREFIX="${wow64_prefix}" wineserver -w 2>/dev/null || true
   rm -rf "${wow64_prefix}"
 
   echo "Wine and Yabridge validation successful."
 }
 
-install_yabridge_release() {
-  local tmpdir
-  tmpdir="$(mktemp -d /tmp/caracal-yabridge.XXXXXX)"
-  curl -fL \
-    "https://github.com/robbert-vdh/yabridge/releases/download/${YABRIDGE_VERSION}/yabridge-${YABRIDGE_VERSION}.tar.gz" \
-    -o "${tmpdir}/yabridge.tar.gz"
-  tar -C "${tmpdir}" -xzf "${tmpdir}/yabridge.tar.gz"
-  install -d /usr/libexec/yabridge
-  cp -a "${tmpdir}/yabridge/." /usr/libexec/yabridge/
-  local doc
-  for doc in README.md CHANGELOG.md; do
-    if [[ -f "${tmpdir}/yabridge/${doc}" ]]; then
-      install -Dm0644 "${tmpdir}/yabridge/${doc}" "/usr/share/doc/yabridge/${doc}"
-    fi
-  done
-  ln -sf /usr/libexec/yabridge/yabridgectl /usr/bin/yabridgectl
-  rm -rf "${tmpdir}"
-}
-
 install_wine_stack() {
-  dnf5 -y install "${wine_bridge_packages[@]}" "${wine_multilib_packages[@]}"
-  install_yabridge_release
+  dnf5 -y install --allowerasing "${wine_bridge_packages[@]}"
   dnf5 -y mark user \
     wine \
     wine-core \
@@ -157,20 +155,23 @@ install_wine_stack() {
     wine-winefonts \
     wine-mono \
     wine-dxvk \
-    wine.i686 \
-    wine-core.i686 \
-    wine-alsa.i686 \
-    wine-cms.i686 \
-    wine-pulseaudio.i686 \
     winetricks \
+    yabridge \
+    ntsync-autoload \
+    pipewire-wineasio \
     || true
 }
 
-# Use Fedora Wine as one matched multilib set. Patrickl's Wine COPRs currently
-# provide newer x86_64/noarch Wine packages but no matching i686 packages, so
-# enabling them prevents win32 installer support.
-dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
-dnf5 -y copr disable patrickl/wine-tkg-dev || true
+# Prefer Patrickl's Juce 8/VSTGUI Wine build for Windows audio installers and
+# yabridge workflows. It is a new-WoW64 x86_64/noarch stack, so do not require
+# Fedora's i686 Wine packages when this repo is active.
+if dnf5 -y copr enable patrickl/wine-11.8-vstgui-juce8; then
+  set_copr_priority patrickl wine-11.8-vstgui-juce8 80
+else
+  echo "WARNING: failed to enable patrickl/wine-11.8-vstgui-juce8; falling back to patrickl/wine-tkg-dev." >&2
+fi
+dnf5 -y copr enable patrickl/wine-tkg-dev
+set_copr_priority patrickl wine-tkg-dev 90
 
 # COPR repositories
 copr_repos=(
@@ -222,26 +223,20 @@ rpm --erase --nodeps --nodb generic-logos
 
 # COPR audio packages
 wine_bridge_packages=(
-  wine.x86_64
-  wine-core.x86_64
-  wine-alsa.x86_64
-  wine-cms.x86_64
-  wine-common.noarch
-  wine-desktop.noarch
-  wine-pulseaudio.x86_64
-  wine-winefonts.noarch
+  yabridge
+  wine-11.8-300.fc44.x86_64
+  wine-core-11.8-300.fc44.x86_64
+  wine-alsa-11.8-300.fc44.x86_64
+  wine-cms-11.8-300.fc44.x86_64
+  wine-common-11.8-300.fc44.noarch
+  wine-desktop-11.8-300.fc44.noarch
+  wine-pulseaudio-11.8-300.fc44.x86_64
+  wine-winefonts-11.8-300.fc44.noarch
   winetricks
   wine-mono
   wine-dxvk
-  #  pipewire-wineasio
-)
-
-wine_multilib_packages=(
-  wine.i686
-  wine-core.i686
-  wine-alsa.i686
-  wine-cms.i686
-  wine-pulseaudio.i686
+  ntsync-autoload
+  pipewire-wineasio
 )
 
 copr_audio_workflow_packages=(
@@ -362,7 +357,6 @@ daw_runtime_packages=(
 
 if ! dnf5 -y install \
   "${wine_bridge_packages[@]}" \
-  "${wine_multilib_packages[@]}" \
   "${copr_audio_workflow_packages[@]}" \
   "${base_system_packages[@]}" \
   "${compatibility_tool_packages[@]}" \
@@ -375,13 +369,10 @@ if ! dnf5 -y install \
   "${fedora_audio_plugin_packages[@]}" \
   "${daw_runtime_packages[@]}"; then
 
-  echo "WARNING: Primary installation failed. Attempting fallback by disabling Patrickl COPRs..."
-  dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
-  dnf5 -y copr disable patrickl/wine-tkg-dev || true
+  echo "WARNING: Primary installation failed. Retrying with Patrickl Wine COPRs still enabled..."
 
   dnf5 -y install \
     "${wine_bridge_packages[@]}" \
-    "${wine_multilib_packages[@]}" \
     "${copr_audio_workflow_packages[@]}" \
     "${base_system_packages[@]}" \
     "${compatibility_tool_packages[@]}" \
@@ -403,11 +394,8 @@ done
 
 # Post-install check for Wine (handles the "0KiB" metapackage case)
 if ! command -v wine &>/dev/null && ! command -v wine64 &>/dev/null && ! [[ -x /opt/wine-tkg/bin/wine ]]; then
-  echo "CRITICAL: Wine binaries missing after installation. Forcing fallback to Fedora Wine..."
-  dnf5 -y copr disable patrickl/wine-11.8-vstgui-juce8 || true
-  dnf5 -y copr disable patrickl/wine-tkg-dev || true
-  # Use swap to replace any broken/dummy packages with the official ones
-  dnf5 -y --allowerasing install wine wine-core wine-common wine.i686 wine-core.i686
+  echo "CRITICAL: Wine binaries missing after installation. Reinstalling Patrickl Wine stack..."
+  install_wine_stack
 fi
 
 install_wine_stack
@@ -497,6 +485,7 @@ getent group audio || groupadd -r audio
 # ── Services ──────────────────────────────────────────────────────────────────
 systemctl enable cpupower.service
 systemctl enable caracal-cpu-performance.service
+systemctl enable caracal-wine-execmod.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
@@ -516,6 +505,7 @@ fi
 
 chmod +x /usr/libexec/caracal-user-setup
 chmod +x /usr/libexec/caracal-cpu-performance
+chmod +x /usr/libexec/caracal-wine-execmod
 chmod +x /usr/libexec/caracal-setup-launch
 chmod +x /usr/libexec/caracal-flatpak-setup
 systemctl --global enable caracal-setup-launch.service
