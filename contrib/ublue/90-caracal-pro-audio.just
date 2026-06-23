@@ -246,13 +246,14 @@ _pro-audio-audio-stack:
     packages=(
         # Wine VST bridge stack
         yabridge
-        wine-core.x86_64
-        wine-alsa.x86_64
-        wine-cms.x86_64
-        wine-common.noarch
-        wine-desktop.noarch
-        wine-pulseaudio.x86_64
-        wine-winefonts.noarch
+        wine-11.8-300.fc44.x86_64
+        wine-core-11.8-300.fc44.x86_64
+        wine-alsa-11.8-300.fc44.x86_64
+        wine-cms-11.8-300.fc44.x86_64
+        wine-common-11.8-300.fc44.noarch
+        wine-desktop-11.8-300.fc44.noarch
+        wine-pulseaudio-11.8-300.fc44.x86_64
+        wine-winefonts-11.8-300.fc44.noarch
         winetricks
         wine-mono
         wine-dxvk

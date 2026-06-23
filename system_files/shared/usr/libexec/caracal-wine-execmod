@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Caracal OS: make Wine's 32-bit PE libraries executable on a composefs root.
+
+set -euo pipefail
+
+WINE_DIR="/usr/lib64/wine-wow64/wine/i386-windows"
+STORE_ROOT="/var/lib/caracal-wine"
+STORE_DIR="${STORE_ROOT}/i386-windows"
+STAMP="${STORE_ROOT}/.wine-version"
+
+if [[ ! -d "${WINE_DIR}" ]]; then
+  echo "caracal-wine-execmod: ${WINE_DIR} not present; nothing to do."
+  exit 0
+fi
+
+# Identify the current Wine version so the /var copy is rebuilt after updates.
+current_version="$(rpm -q --qf '%{evr}' wine-core 2>/dev/null || true)"
+[[ -n "${current_version}" ]] || current_version="unknown"
+
+stored_version=""
+[[ -f "${STAMP}" ]] && stored_version="$(cat "${STAMP}" 2>/dev/null || true)"
+
+need_sync=0
+[[ ! -d "${STORE_DIR}" ]] && need_sync=1
+[[ "${stored_version}" != "${current_version}" ]] && need_sync=1
+
+if [[ "${need_sync}" -eq 1 ]]; then
+  # If an old copy is already bound over WINE_DIR, drop it first so we rsync from the real (current) /usr deployment, not from the stale copy.
+  if mountpoint -q "${WINE_DIR}"; then
+    umount "${WINE_DIR}"
+  fi
+
+  echo "caracal-wine-execmod: syncing 32-bit Wine PE libraries to ${STORE_DIR} (wine-core ${current_version})..."
+  mkdir -p "${STORE_DIR}"
+  # -X preserves SELinux contexts (security.selinux), so the btrfs copy keeps the original lib_t labels.
+  rsync -aHAX --delete "${WINE_DIR}/" "${STORE_DIR}/"
+  printf '%s\n' "${current_version}" >"${STAMP}"
+fi
+
+# Bind the writable copy over the loader's hard-coded path (idempotent).
+if ! mountpoint -q "${WINE_DIR}"; then
+  echo "caracal-wine-execmod: bind-mounting ${STORE_DIR} over ${WINE_DIR}."
+  mount --bind "${STORE_DIR}" "${WINE_DIR}"
+fi

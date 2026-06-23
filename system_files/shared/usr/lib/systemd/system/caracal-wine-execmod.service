@@ -1,0 +1,14 @@
+[Unit]
+Description=Back Wine 32-bit PE libraries with a writable filesystem (composefs execmod workaround)
+Documentation=https://github.com/caracal-dev/caracal
+After=local-fs.target
+ConditionPathIsDirectory=/usr/lib64/wine-wow64/wine/i386-windows
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/caracal-wine-execmod
+ExecStop=/usr/bin/sh -c '/usr/bin/mountpoint -q /usr/lib64/wine-wow64/wine/i386-windows && /usr/bin/umount /usr/lib64/wine-wow64/wine/i386-windows || true'
+
+[Install]
+WantedBy=multi-user.target
