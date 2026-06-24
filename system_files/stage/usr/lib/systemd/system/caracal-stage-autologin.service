@@ -1,0 +1,12 @@
+[Unit]
+Description=Configure greetd autologin for Caracal Stage
+After=systemd-user-sessions.service
+Before=greetd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/caracal-stage-autologin
+
+[Install]
+WantedBy=graphical.target

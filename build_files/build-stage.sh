@@ -254,6 +254,7 @@ stage_shell_packages=(
 )
 
 stage_wayland_packages=(
+  greetd
   wayfire
   wf-shell
   wlr-randr
@@ -430,17 +431,21 @@ getent group audio || groupadd -r audio
 systemctl enable cpupower.service
 systemctl enable caracal-cpu-performance.service
 systemctl enable caracal-wine-execmod.service
-systemctl set-default multi-user.target
 
+# Boot straight into the Wayfire/Carla session via greetd autologin. Disable the
+# heavier desktop display managers first so they do not fight greetd over a VT.
 for display_manager in gdm.service sddm.service plasmalogin.service; do
   if systemctl cat "${display_manager}" >/dev/null 2>&1; then
     systemctl disable "${display_manager}" || true
   fi
 done
+systemctl enable greetd.service
+systemctl set-default graphical.target
 
 chmod +x /usr/libexec/caracal-user-setup
 chmod +x /usr/libexec/caracal-cpu-performance
 chmod +x /usr/libexec/caracal-wine-execmod
+chmod +x /usr/libexec/caracal-stage-autologin
 
 chmod +x /usr/bin/caracal-stage
 chmod +x /usr/bin/caracal-stage-session
