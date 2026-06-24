@@ -1,11 +1,5 @@
 #!/usr/bin/bash
-# Configure greetd to autologin the primary (uid 1000) user directly into the
-# Caracal Stage Wayfire/Carla session.
-#
-# The device user is created by the installer, so its name is not known at
-# image build time. Resolve it here and regenerate the greetd config before
-# greetd starts. If no uid-1000 user exists yet, greetd keeps the agreety text
-# greeter (still launches the stage session on manual login).
+# Configure greetd to autologin the primary (uid 1000) user directly into the Caracal Stage Wayfire/Carla session.
 set -euo pipefail
 
 CONFIG=/etc/greetd/config.toml

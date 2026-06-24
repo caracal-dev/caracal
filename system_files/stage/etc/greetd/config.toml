@@ -1,11 +1,6 @@
 # Caracal Stage greetd configuration.
 #
-# This file is regenerated on every boot by caracal-stage-autologin.service,
-# which resolves the installer-created uid-1000 user (unknown at image build
-# time) and writes the [initial_session] autologin block below it.
-#
-# If autologin cannot be configured, greetd falls back to the agreety text
-# greeter, which still launches the Caracal Stage session on login.
+# If autologin cannot be configured, greetd falls back to the agreety text greeter which still launches the Caracal Stage session.
 
 [terminal]
 vt = 1
