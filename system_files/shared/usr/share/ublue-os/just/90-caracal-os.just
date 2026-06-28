@@ -899,6 +899,7 @@ reinstall-flatpaks:
     set -euo pipefail
     echo "Installing Caracal OS recommended flatpaks..."
     flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+    flatpak update --user --appstream -y || true
     flatpak install --user -y flathub \
         io.github.kolunmi.Bazaar \
         org.tenacityaudio.Tenacity \
@@ -911,6 +912,7 @@ reinstall-flatpaks:
     # Remove any legacy Firefox flatpak; Zen Browser is the default browser.
     flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true
     sudo flatpak uninstall -y org.mozilla.firefox 2>/dev/null || true
+    flatpak update --user --appstream -y
     echo "Flatpaks installed."
 
 # ── DAW installation ──────────────────────────────────────────────────────────

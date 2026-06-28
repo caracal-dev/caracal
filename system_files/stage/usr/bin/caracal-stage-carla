@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+for _ in {1..50}; do
+  if [[ -n "${WAYLAND_DISPLAY:-}" || -n "${DISPLAY:-}" ]]; then
+    break
+  fi
+  sleep 0.1
+done
+
+exec carla "$@"
