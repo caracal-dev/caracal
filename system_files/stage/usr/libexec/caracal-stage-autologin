@@ -5,8 +5,27 @@ set -euo pipefail
 CONFIG=/etc/greetd/config.toml
 SESSION=/usr/bin/caracal-stage-session
 
+ensure_greeter_user() {
+  if ! getent group greeter >/dev/null; then
+    groupadd --system greeter
+  fi
+
+  if ! getent passwd greeter >/dev/null; then
+    useradd --system --no-create-home --home-dir /var/lib/greetd \
+      --shell /usr/sbin/nologin --comment "greetd greeter" \
+      --gid greeter greeter
+  fi
+
+  if getent group video >/dev/null; then
+    usermod -aG video greeter
+  fi
+
+  install -d -o greeter -g greeter -m 0755 /var/lib/greetd
+}
+
 user="$(id -nu 1000 2>/dev/null || true)"
 
+ensure_greeter_user
 mkdir -p "$(dirname "${CONFIG}")"
 
 {
