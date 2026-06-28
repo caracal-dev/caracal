@@ -161,8 +161,8 @@ install_wine_stack() {
     winetricks \
     yabridge \
     ntsync-autoload \
-    pipewire-wineasio \
-    || true
+    pipewire-wineasio ||
+    true
 }
 
 if dnf5 -y copr enable patrickl/wine-11.8-vstgui-juce8; then
@@ -439,6 +439,14 @@ for display_manager in gdm.service sddm.service plasmalogin.service; do
     systemctl disable "${display_manager}" || true
   fi
 done
+# greetd validates default_session.user at startup and Fedora's greetd RPM does not create the greeter account
+if ! getent passwd greeter >/dev/null; then
+  useradd --system --no-create-home --home-dir /var/lib/greetd \
+    --shell /usr/sbin/nologin --comment "greetd greeter" --user-group greeter
+fi
+getent group video >/dev/null && usermod -aG video greeter || true
+install -d -o greeter -g greeter -m 0755 /var/lib/greetd
+
 systemctl enable greetd.service
 systemctl set-default graphical.target
 
