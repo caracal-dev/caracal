@@ -19,6 +19,7 @@ FROM scratch AS ctx
 COPY build_files /
 COPY assets/images /assets
 COPY system_files/shared /system_files/shared
+COPY system_files/stage /system_files/stage
 COPY system_files/nvidia /system_files/nvidia
 COPY --from=brew /system_files /system_files/shared
 
@@ -58,6 +59,36 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     /ctx/build-initramfs
 
 ### Lint
+RUN bootc container lint
+
+### Stage image
+## Minimal performance image for live stage rigs. It keeps the Caracal kernel,
+## audio tuning, and Windows-plugin compatibility stack, but replaces the full
+## Plasma desktop workflow with a Wayfire console session focused on Carla.
+FROM quay.io/fedora-ostree-desktops/kinoite:${FEDORA_VERSION} AS caracal-stage
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=bind,from=akmods,src=/kernel-rpms,dst=/rpms/kernel \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/install-kernel
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/build-stage.sh
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/build-initramfs
+
 RUN bootc container lint
 
 ### NVIDIA image

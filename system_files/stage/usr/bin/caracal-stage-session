@@ -1,0 +1,31 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+# Prefer the systemd --user session bus that logind sets up on login: PipeWire,
+# WirePlumber and the desktop portals are activated on that bus. A private
+# dbus-run-session bus would isolate Wayfire from them and break audio, so only
+# fall back to it when logind did not provide a user bus.
+if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+  if [[ -n "${XDG_RUNTIME_DIR:-}" && -S "${XDG_RUNTIME_DIR}/bus" ]]; then
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
+  else
+    exec dbus-run-session -- "$0" "$@"
+  fi
+fi
+
+export XDG_CURRENT_DESKTOP=Wayfire
+export XDG_SESSION_DESKTOP=caracal-stage
+export XDG_SESSION_TYPE=wayland
+export QT_QPA_PLATFORM=wayland
+export GDK_BACKEND=wayland,x11
+export SDL_VIDEODRIVER=wayland
+export CLUTTER_BACKEND=wayland
+
+# Make the session environment visible to user services and portals.
+if command -v dbus-update-activation-environment >/dev/null; then
+  dbus-update-activation-environment --systemd \
+    XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE \
+    QT_QPA_PLATFORM GDK_BACKEND SDL_VIDEODRIVER CLUTTER_BACKEND 2>/dev/null || true
+fi
+
+exec wayfire --config /etc/xdg/wayfire/caracal-stage.ini

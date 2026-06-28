@@ -35,6 +35,8 @@ jobs:
         include:
           - image-suffix: ""
             target: caracal
+          - image-suffix: "-stage"
+            target: caracal-stage
           - image-suffix: "-nvidia"
             target: caracal-nvidia
 

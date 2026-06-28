@@ -175,7 +175,7 @@ run_post_session_setup() {
 # Bump this when user-config migrations need re-application across rebases.
 PRE_SESSION_SETUP_VER=30
 POST_SESSION_SETUP_VER=29
-DEFAULT_FLATPAK_SETUP_VER=1
+DEFAULT_FLATPAK_SETUP_VER=2
 
 launch_default_flatpak_setup
 

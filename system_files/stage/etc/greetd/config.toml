@@ -1,0 +1,10 @@
+# Caracal Stage greetd configuration.
+#
+# If autologin cannot be configured, greetd falls back to the agreety text greeter which still launches the Caracal Stage session.
+
+[terminal]
+vt = 1
+
+[default_session]
+command = "agreety --cmd /usr/bin/caracal-stage-session"
+user = "greeter"

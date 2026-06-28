@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+set -euo pipefail
+
+if [[ -n "${WAYLAND_DISPLAY:-}" || -n "${DISPLAY:-}" ]]; then
+  exec caracal-stage-carla
+fi
+
+exec dbus-run-session -- caracal-stage-session
