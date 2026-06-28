@@ -21,11 +21,11 @@ A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoi
 
 ### Core DAWs (included)
 
-| DAW | Notes |
-|-----|-------|
+| DAW      | Notes                          |
+| -------- | ------------------------------ |
 | Ardour 9 | Full-featured professional DAW |
-| Qtractor | MIDI/audio sequencer |
-| Carla | Plugin host / patchbay |
+| Qtractor | MIDI/audio sequencer           |
+| Carla    | Plugin host / patchbay         |
 
 **Also included in the base image:**
 
@@ -111,6 +111,53 @@ If those folders do not exist yet, you might not have run the 'ujust first-run' 
 ---
 
 ## Installation
+
+### Prerequisites
+
+You will need a flash drive with at least 8GB of space. 16GB is best.
+
+ISO files can be downloaded from [our website](https://caracal-os.org/#install) for both AMD/Intel and NVIDIA images.
+
+If the download stalls or is too slow, you can use something like [motrix](https://motrix.app/).
+
+You will also need something to write the ISO to the flash drive (or you can use the dd command if you are already on Linux).
+
+For this we recommend using one of the following:
+
+- (Fedora Media Writer)[https://github.com/FedoraQt/MediaWriter/releases/tag/5.3.1] is the best option for Windows, Mac, and Linux.
+- (Rufus)[https://rufus.ie/en/] for Windows.
+- (Ventoy)[https://www.ventoy.net/en/download.html] for Windows and Linux.
+
+### Installtion Steps
+
+This guide assumes you are using Fedora Media Writer but it is basically the same for all the options mentioned above.
+
+Writing to the flash drive
+
+- Download the Image: Grab the latest early-access ISO matching your graphics hardware directly from the Caracal OS website.
+- Launch the Tool: Open Fedora Media Writer.Select the File: Click on the option to Select .iso file and navigate to the Caracal ISO you just downloaded.
+- Choose your USB: Insert an 8GB (or larger) USB flash drive and select it from the dropdown list.
+- Write: Click Write. Note: This will erase all data currently on your USB drive. Wait for the tool to complete and verify the installation media.
+
+Installing from the flash drive:
+
+- Restart your PC: Leave the USB plugged in and reboot your computer.
+- Open the Boot Menu: While your computer is turning on, continuously press the designated Boot Menu Key (commonly F12, F11, F8, or Esc, depending on your motherboard).
+- Select USB: Use the arrow keys to highlight your USB flash drive and press Enter.
+- Test: You will be greeted by the GRUB boot menu. Select the option to test or launch the Live Environment.
+
+Navigating the installer:
+
+- Launch Installer: Once loaded into the Live Environment, look for the installer shortcut (often titled Install to Hard Drive).
+- Configure Settings: Follow the on-screen prompts to select your language, keyboard layout, and time zone.
+- Partitioning: Navigate to the Installation Destination screen. Choose your primary hard drive. If you want a fresh system, select Automatic Partitioning and choose to Erase the entire disk.Begin Installation: Click Begin Installation. The system will take a few minutes to copy the Caracal image to your drive.
+- Restart: Once it finishes, restart your computer, remove the USB flash drive when prompted, and boot into your fresh Caracal OS system.
+
+### Post-installtion
+
+When you boot in for the first time, the Caracal Setup app will appear. Make sure you have a working internet connection and select 'Run' to configure your system.
+
+## Rebasing from bootc-compatible image
 
 ### Prerequisites
 
@@ -234,7 +281,6 @@ If you want a new feature, improvement, or package added, open a [feature reques
 - Whether there is an existing Linux package, plugin, or project we should integrate
 - Any tradeoffs, risks, or compatibility concerns you already know about
 
-
 ---
 
 ## Image Verification
@@ -254,6 +300,7 @@ cosign verify --key cosign.pub ghcr.io/caracal-dev/caracal:latest
 - [Universal Blue akmods](https://github.com/ublue-os/akmods)
 
 ## Special Thanks to:
+
 - Fedora Kinoite - The base this image is built on
 - Universal Blue - for making this type of project possible
 - [Bazzite](https://github.com/ublue-os/bazzite) - for the many performance enhancements

@@ -190,7 +190,7 @@ dnf -y install "https://github.com/TheAssassin/AppImageLauncher/releases/downloa
 dnf -y install "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 dnf -y install "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
 
-dnf5 -y install caracal-audio-controller realtime-setup
+dnf5 -y install caracal-audio-controller realtime-setup caracal-software-installer
 
 systemctl enable realtime-setup.service
 systemctl enable realtime-entsk.service
