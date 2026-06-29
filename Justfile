@@ -117,6 +117,38 @@ build-nvidia $target_image=(image_name + "-nvidia") $tag=default_tag:
         --tag "${target_image}:${tag}" \
         .
 
+# Build the Developer Experience image variant for local testing.
+build-dx $target_image=(image_name + "-dx") $tag=default_tag:
+    #!/usr/bin/env bash
+
+    BUILD_ARGS=()
+    if [[ -z "$(git status -s)" ]]; then
+        BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
+    fi
+
+    podman build \
+        "${BUILD_ARGS[@]}" \
+        --pull=newer \
+        --target caracal-dx \
+        --tag "${target_image}:${tag}" \
+        .
+
+# Build the NVIDIA Developer Experience image variant for local testing.
+build-dx-nvidia $target_image=(image_name + "-dx-nvidia") $tag=default_tag:
+    #!/usr/bin/env bash
+
+    BUILD_ARGS=()
+    if [[ -z "$(git status -s)" ]]; then
+        BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
+    fi
+
+    podman build \
+        "${BUILD_ARGS[@]}" \
+        --pull=newer \
+        --target caracal-dx-nvidia \
+        --tag "${target_image}:${tag}" \
+        .
+
 # Build the stripped-down Wayfire/Carla stage image for local testing.
 build-stage $target_image=(image_name + "-stage") $tag=default_tag:
     #!/usr/bin/env bash
