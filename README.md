@@ -124,9 +124,9 @@ You will also need something to write the ISO to the flash drive (or you can use
 
 For this we recommend using one of the following:
 
-- (Fedora Media Writer)[https://github.com/FedoraQt/MediaWriter/releases/tag/5.3.1] is the best option for Windows, Mac, and Linux.
-- (Rufus)[https://rufus.ie/en/] for Windows.
-- (Ventoy)[https://www.ventoy.net/en/download.html] for Windows and Linux.
+- [Fedora Media Writer](https://github.com/FedoraQt/MediaWriter/releases/tag/5.3.1) is the best option for Windows, Mac, and Linux.
+- [Rufus](https://rufus.ie/en/) for Windows.
+- [Ventoy](https://www.ventoy.net/en/download.html) for Windows and Linux.
 
 ### Installtion Steps
 
