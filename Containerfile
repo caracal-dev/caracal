@@ -61,6 +61,21 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 ### Lint
 RUN bootc container lint
 
+### DX image
+## Developer workstation variant, similar to Aurora/Bazzite DX. It keeps the
+## Caracal audio stack and adds Docker, VSCodium, libvirt/QEMU tooling, Cockpit,
+## flatpak-builder, tracing/profiling tools, and container/VM workflow helpers.
+FROM caracal AS caracal-dx
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    IMAGE_NAME=caracal-dx /usr/bin/bash /ctx/build-dx.sh
+
+RUN bootc container lint
+
 ### Stage image
 ## Minimal performance image for live stage rigs. It keeps the Caracal kernel,
 ## audio tuning, and Windows-plugin compatibility stack, but replaces the full
@@ -110,6 +125,20 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=tmpfs,dst=/run \
     /ctx/build-initramfs
+
+RUN bootc container lint
+
+### DX NVIDIA image
+## NVIDIA variant of Caracal DX. Built from caracal-nvidia so the proprietary
+## driver stack is installed before the developer workstation additions.
+FROM caracal-nvidia AS caracal-dx-nvidia
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    IMAGE_NAME=caracal-dx-nvidia /usr/bin/bash /ctx/build-dx.sh
 
 RUN bootc container lint
 

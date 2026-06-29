@@ -108,6 +108,18 @@ If those folders do not exist yet, you might not have run the 'ujust first-run' 
 - Oh My Zsh setup through `ujust first-run`
 - Homebrew-managed shell extras through `ujust first-run`: `atuin`, `eza`, `ugrep`, `zoxide`, and `bash-preexec`
 
+### Developer Experience Image
+
+Caracal also publishes a heavier DX variant for development workstations. It keeps the audio-production base image and adds Docker CE, VSCodium, flatpak-builder, Cockpit, libvirt/QEMU tooling, Incus/LXC, Podman extras, tracing/profiling tools, and common VM/container helpers.
+
+After switching to a DX image, run:
+
+```bash
+ujust dx-group
+```
+
+Then reboot, or log out and back in, so Docker, Incus, libvirt, and serial-device group membership applies.
+
 ---
 
 ## Installation
@@ -124,9 +136,9 @@ You will also need something to write the ISO to the flash drive (or you can use
 
 For this we recommend using one of the following:
 
-- (Fedora Media Writer)[https://github.com/FedoraQt/MediaWriter/releases/tag/5.3.1] is the best option for Windows, Mac, and Linux.
-- (Rufus)[https://rufus.ie/en/] for Windows.
-- (Ventoy)[https://www.ventoy.net/en/download.html] for Windows and Linux.
+- [Fedora Media Writer](https://github.com/FedoraQt/MediaWriter/releases/tag/5.3.1) is the best option for Windows, Mac, and Linux.
+- [Rufus](https://rufus.ie/en/) for Windows.
+- [Ventoy](https://www.ventoy.net/en/download.html) for Windows and Linux.
 
 ### Installtion Steps
 
@@ -176,6 +188,18 @@ For NVIDIA systems using Turing or newer GPUs, switch to the NVIDIA image instea
 sudo bootc switch ghcr.io/caracal-dev/caracal-nvidia:latest
 ```
 
+For the Developer Experience image:
+
+```bash
+sudo bootc switch ghcr.io/caracal-dev/caracal-dx:latest
+```
+
+For the NVIDIA Developer Experience image:
+
+```bash
+sudo bootc switch ghcr.io/caracal-dev/caracal-dx-nvidia:latest
+```
+
 For stage rigs that should boot to a stripped-down console-first Carla session:
 
 ```bash
@@ -210,6 +234,12 @@ just build
 
 # Build the stage performance image
 just build-stage
+
+# Build the Developer Experience image
+just build-dx
+
+# Build the NVIDIA Developer Experience image
+just build-dx-nvidia
 
 # Build a bootable QCOW2 (for testing in a VM)
 just build-qcow2
