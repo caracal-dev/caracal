@@ -1,0 +1,147 @@
+#!/usr/bin/bash
+# Caracal Stage first-boot account creation.
+#
+# Universal Blue's Anaconda WebUI only partitions the target disk and deploys
+# the image; it does not create a login account. On a rebase the uid-1000 user
+# already exists, but a fresh ISO install boots with no human user. greetd then
+# falls back to the agreety text greeter, which cannot create accounts, leaving
+# the user stuck at a login prompt for an account that does not exist.
+#
+# This runs once, before greetd, and interactively creates the primary account
+# when none is present. caracal-stage-autologin then wires greetd to autologin
+# that user. It is a no-op whenever a uid>=1000 account already exists, so it is
+# safe on rebases and every subsequent boot.
+set -uo pipefail
+
+# audio + realtime gate the rtprio/memlock limits in
+# /etc/security/limits.d/audio.conf. pipewire is intentionally NOT listed:
+# modern PipeWire uses rtkit/socket activation, the group is unused here and
+# would never show up in `id -nG`, so adding it just churns on every login.
+PRIMARY_GROUPS="wheel,audio,realtime,video,render,input"
+LOGIN_SHELL="/bin/bash"
+
+# useradd --groups fails if any target group is missing. The audio appliance
+# groups are created here so the account lands in them on creation and the
+# autologin session has realtime audio access without a second login. This also
+# lets `ujust first-run` skip its privileged group step (see 90-caracal-stage.just).
+ensure_groups() {
+  local grp
+  IFS=',' read -ra _groups <<<"$PRIMARY_GROUPS"
+  for grp in "${_groups[@]}"; do
+    getent group "$grp" >/dev/null || groupadd --system "$grp"
+  done
+}
+
+# A human account is any passwd entry in the normal uid range. System accounts
+# (the greeter included) live below 1000; nobody sits at 65534.
+has_human_user() {
+  awk -F: '$3 >= 1000 && $3 < 65534 { found = 1 } END { exit !found }' /etc/passwd
+}
+
+if has_human_user; then
+  echo "caracal-stage-firstboot: human account already present; nothing to do."
+  exit 0
+fi
+
+valid_username() {
+  local name="$1"
+  # useradd's own NAME_REGEX: start with a lowercase letter or underscore.
+  [[ "$name" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]]
+}
+
+prompt_username() {
+  local name
+  while true; do
+    printf '\nChoose a username: ' >/dev/tty
+    if ! read -r name </dev/tty; then
+      return 1
+    fi
+    if ! valid_username "$name"; then
+      printf 'Invalid username. Use lowercase letters, digits, - or _, starting with a letter.\n' >/dev/tty
+      continue
+    fi
+    if getent passwd "$name" >/dev/null; then
+      printf 'That account already exists. Pick another name.\n' >/dev/tty
+      continue
+    fi
+    printf '%s' "$name"
+    return 0
+  done
+}
+
+prompt_password() {
+  local pass confirm
+  while true; do
+    printf 'Choose a password: ' >/dev/tty
+    if ! read -rs pass </dev/tty; then
+      return 1
+    fi
+    printf '\n' >/dev/tty
+    if [[ -z "$pass" ]]; then
+      printf 'Password cannot be empty.\n' >/dev/tty
+      continue
+    fi
+    printf 'Confirm password: ' >/dev/tty
+    if ! read -rs confirm </dev/tty; then
+      return 1
+    fi
+    printf '\n' >/dev/tty
+    if [[ "$pass" != "$confirm" ]]; then
+      printf 'Passwords do not match. Try again.\n' >/dev/tty
+      continue
+    fi
+    printf '%s' "$pass"
+    return 0
+  done
+}
+
+# Make sure plymouth is gone so the prompt is visible on the console.
+plymouth quit 2>/dev/null || true
+
+cat >/dev/tty <<'BANNER'
+
+==================================================================
+ Caracal Stage — create your user account
+==================================================================
+ No login account was set up during installation.
+ Create one now to finish setup. It will be granted administrator
+ (sudo) and audio access, and you will be logged in automatically.
+==================================================================
+BANNER
+
+username="$(prompt_username)" || {
+  echo "caracal-stage-firstboot: no console input available; deferring to greeter." >&2
+  exit 0
+}
+
+printf 'Full name (optional, press Enter to skip): ' >/dev/tty
+if ! read -r fullname </dev/tty; then
+  fullname=""
+fi
+
+password="$(prompt_password)" || {
+  echo "caracal-stage-firstboot: password entry aborted; deferring to greeter." >&2
+  exit 0
+}
+
+ensure_groups
+
+useradd_args=(--create-home --user-group --groups "$PRIMARY_GROUPS" --shell "$LOGIN_SHELL")
+if [[ -n "${fullname}" ]]; then
+  useradd_args+=(--comment "$fullname")
+fi
+
+if ! useradd "${useradd_args[@]}" "$username"; then
+  echo "caracal-stage-firstboot: useradd failed for '$username'." >&2
+  exit 1
+fi
+
+if ! printf '%s:%s' "$username" "$password" | chpasswd; then
+  echo "caracal-stage-firstboot: failed to set password for '$username'." >&2
+  # Remove the half-provisioned account so the next boot retries cleanly.
+  userdel --remove "$username" 2>/dev/null || true
+  exit 1
+fi
+
+printf '\nAccount "%s" created. Starting Caracal Stage...\n\n' "$username" >/dev/tty
+echo "caracal-stage-firstboot: created primary account '$username'."

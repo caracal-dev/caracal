@@ -1,0 +1,12 @@
+[Unit]
+Description=Caracal Stage per-user first-run setup
+ConditionUser=!@system
+# wineboot/yabridge run headless and only need HOME plus the user bus, both of
+# which are present once the user manager reaches default.target.
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/caracal-stage-first-run
+
+[Install]
+WantedBy=default.target

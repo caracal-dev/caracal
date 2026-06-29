@@ -447,6 +447,14 @@ fi
 getent group video >/dev/null && usermod -aG video greeter || true
 install -d -o greeter -g greeter -m 0755 /var/lib/greetd
 
+# Fresh ISO installs via Universal Blue's Anaconda WebUI create no login account.
+# caracal-stage-firstboot creates the primary user on first boot (before greetd)
+# when none exists; caracal-stage-autologin then autologins it.
+systemctl enable caracal-stage-firstboot.service
+systemctl enable caracal-stage-autologin.service
+# Run `ujust first-run` automatically on each user's first Stage login.
+systemctl --global enable caracal-stage-first-run.service
+
 systemctl enable greetd.service
 systemctl set-default graphical.target
 
@@ -454,6 +462,8 @@ chmod +x /usr/libexec/caracal-user-setup
 chmod +x /usr/libexec/caracal-cpu-performance
 chmod +x /usr/libexec/caracal-wine-execmod
 chmod +x /usr/libexec/caracal-stage-autologin
+chmod +x /usr/libexec/caracal-stage-firstboot
+chmod +x /usr/libexec/caracal-stage-first-run
 
 chmod +x /usr/bin/caracal-stage
 chmod +x /usr/bin/caracal-stage-session

@@ -11,6 +11,16 @@ install_optional_package() {
   }
 }
 
+enable_unit_if_present() {
+  local unit="$1"
+
+  if systemctl cat "${unit}" >/dev/null 2>&1; then
+    systemctl enable "${unit}"
+  else
+    echo "WARNING: unit '${unit}' is unavailable; not enabling it." >&2
+  fi
+}
+
 # Apply IP forwarding before installing Docker to avoid disrupting LXC/Incus networking defaults during package post-install setup.
 install -d /etc/sysctl.d /etc/modules-load.d
 cat >/etc/sysctl.d/90-caracal-dx.conf <<'EOF'
@@ -35,6 +45,7 @@ fedora_dx_packages=(
   cockpit-selinux
   cockpit-storaged
   cockpit-system
+  cockpit-ws
   edk2-ovmf
   flatpak-builder
   incus
@@ -109,14 +120,12 @@ dnf5 -y install ublue-os-libvirt-workarounds || {
 }
 
 if rpm -q docker-ce >/dev/null; then
-  systemctl enable docker.socket
+  enable_unit_if_present docker.socket
 fi
-systemctl enable podman.socket
-systemctl enable cockpit.socket
-systemctl enable libvirtd.service
-if systemctl cat ublue-os-libvirt-workarounds.service >/dev/null 2>&1; then
-  systemctl enable ublue-os-libvirt-workarounds.service
-fi
+enable_unit_if_present podman.socket
+enable_unit_if_present cockpit.socket
+enable_unit_if_present libvirtd.service
+enable_unit_if_present ublue-os-libvirt-workarounds.service
 
 dx_image_name="${IMAGE_NAME:-caracal-dx}"
 dx_variant="Developer Experience"
