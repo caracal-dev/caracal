@@ -19,9 +19,19 @@ first-run:
         exit 1
     fi
 
-    sudo getent group audio >/dev/null || sudo groupadd -r audio
-    sudo getent group realtime >/dev/null || sudo groupadd -r realtime
-    sudo usermod -aG audio,realtime,pipewire "$target_user"
+    # caracal-stage-firstboot already places ISO-installed users in these groups.
+    # Only escalate when something is actually missing so this recipe also runs
+    # non-interactively from caracal-stage-first-run.service (no tty for sudo).
+    # audio + realtime back the rtprio/memlock limits in limits.d. pipewire is
+    # deliberately omitted: it is unused on modern PipeWire and would never show
+    # in `id -nG`, forcing a pointless sudo on every run.
+    current_groups="$(id -nG "$target_user")"
+    for grp in audio realtime; do
+        if ! grep -qw "$grp" <<<"$current_groups"; then
+            sudo getent group "$grp" >/dev/null || sudo groupadd -r "$grp"
+            sudo usermod -aG "$grp" "$target_user"
+        fi
+    done
 
     ujust yabridge-setup
 
@@ -31,7 +41,7 @@ first-run:
     cp -rn -u /usr/lib64/lv2/* ~/.lv2/ 2>/dev/null || true
     cp -rn -u /usr/lib64/clap/* ~/.clap/ 2>/dev/null || true
 
-    echo "Added ${target_user} to audio/realtime/pipewire and prepared Wine/Yabridge plugin folders."
+    echo "Added ${target_user} to audio/realtime and prepared Wine/Yabridge plugin folders."
     echo "Log out and back in before starting the stage session."
 
 yabridge-sync:

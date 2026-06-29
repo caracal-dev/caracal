@@ -1,0 +1,37 @@
+#!/usr/bin/bash
+# Run `ujust first-run` automatically, once, on the user's first Stage login so
+# the Wine/Yabridge prefix and VST/LV2/CLAP plugin folders are prepared without
+# the user having to run it by hand. Group membership is handled at account
+# creation by caracal-stage-firstboot, so the recipe's privileged step is a
+# no-op here and it runs fine without a tty.
+set -uo pipefail
+
+# Only real users have a per-user prefix to set up.
+if [[ "${EUID:-$(id -u)}" -lt 1000 ]]; then
+  exit 0
+fi
+
+STATE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
+STATE_FILE="$STATE_DIR/stage-first-run-version"
+# Bump to force a re-run across image updates when the recipe changes materially.
+FIRST_RUN_VER=1
+
+if [[ -f "$STATE_FILE" && "$(cat "$STATE_FILE" 2>/dev/null)" == "$FIRST_RUN_VER" ]]; then
+  exit 0
+fi
+
+if ! command -v ujust >/dev/null; then
+  echo "caracal-stage-first-run: ujust not found; skipping." >&2
+  exit 0
+fi
+
+# Leave the marker unwritten on failure so the next login retries (e.g. if the
+# Wine stack or network was not ready yet).
+if ! ujust first-run; then
+  echo "caracal-stage-first-run: 'ujust first-run' failed; will retry next login." >&2
+  exit 0
+fi
+
+mkdir -p "$STATE_DIR"
+echo "$FIRST_RUN_VER" >"$STATE_FILE"
+echo "caracal-stage-first-run: completed."

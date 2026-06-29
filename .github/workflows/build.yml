@@ -35,10 +35,14 @@ jobs:
         include:
           - image-suffix: ""
             target: caracal
+          - image-suffix: "-dx"
+            target: caracal-dx
           - image-suffix: "-stage"
             target: caracal-stage
           - image-suffix: "-nvidia"
             target: caracal-nvidia
+          - image-suffix: "-dx-nvidia"
+            target: caracal-dx-nvidia
 
     permissions:
       contents: read

@@ -1,0 +1,29 @@
+[Unit]
+Description=Caracal Stage first-boot account creation
+Documentation=man:useradd(8)
+# Run once the system is up enough to create accounts, but before any greeter
+# grabs the console. greetd is ordered after caracal-stage-autologin, which is
+# ordered after this unit, so greetd waits until account creation finishes.
+After=systemd-user-sessions.service
+After=plymouth-quit-wait.service
+Conflicts=plymouth-quit-wait.service
+Before=caracal-stage-autologin.service
+Before=greetd.service
+# Skip in the live ISO environment; only act on the installed system.
+ConditionKernelCommandLine=!rd.live.image
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=-/usr/bin/plymouth quit
+ExecStart=/usr/libexec/caracal-stage-firstboot
+# Give the wizard a real console so it can prompt for credentials.
+StandardInput=tty
+StandardOutput=tty
+StandardError=journal
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+
+[Install]
+WantedBy=graphical.target

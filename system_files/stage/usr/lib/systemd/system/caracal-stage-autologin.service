@@ -1,6 +1,10 @@
 [Unit]
 Description=Configure greetd autologin for Caracal Stage
 After=systemd-user-sessions.service
+# Resolve the uid-1000 user only after first-boot account creation has had a
+# chance to create it, so a fresh ISO install autologins on its very first boot.
+Wants=caracal-stage-firstboot.service
+After=caracal-stage-firstboot.service
 Before=greetd.service
 
 [Service]
