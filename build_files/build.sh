@@ -517,6 +517,7 @@ chmod +x /usr/libexec/caracal-cpu-performance
 chmod +x /usr/libexec/caracal-wine-execmod
 chmod +x /usr/libexec/caracal-setup-launch
 chmod +x /usr/libexec/caracal-flatpak-setup
+chmod +x /usr/libexec/flatpak-preinstall
 systemctl --global enable caracal-setup-launch.service
 systemctl --global enable caracal-user-setup.service
 systemctl --global enable caracal-user-post-setup.service
