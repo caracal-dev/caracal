@@ -1,0 +1,31 @@
+# Caracal default Flatpak app set, installed at system scope on first boot by
+# flatpak-preinstall.service. Bazaar itself lives in bazaar.preinstall.
+# See: https://docs.flatpak.org/en/latest/flatpak-command-reference.html#flatpak-preinstall
+
+[Flatpak Preinstall app.zen_browser.zen]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.tenacityaudio.Tenacity]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall com.ranfdev.DistroShelf]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.kde.haruna]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gnome.Decibels]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gnome.Loupe]
+Branch=stable
+IsRuntime=false

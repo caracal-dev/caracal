@@ -1,0 +1,26 @@
+#!/usr/bin/bash
+set -oue pipefail
+
+PREINSTALL_DIR="/usr/share/flatpak/preinstall.d"
+
+[[ -d "${PREINSTALL_DIR}" ]] || exit 0
+
+mapfile -t preinstall_files < <(find "${PREINSTALL_DIR}" -name '*.preinstall' -type f | sort)
+
+[[ ${#preinstall_files[@]} -eq 0 ]] && exit 0
+
+apps=()
+for f in "${preinstall_files[@]}"; do
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^\[Flatpak\ Preinstall\ ([^]]+)\]$ ]]; then
+      apps+=("${BASH_REMATCH[1]}")
+    fi
+  done <"$f"
+done
+
+[[ ${#apps[@]} -eq 0 ]] && exit 0
+
+echo "flatpak-preinstall: installing ${#apps[@]} app(s) at system scope..."
+flatpak install --system --noninteractive --or-update flathub "${apps[@]}" || {
+  echo "flatpak-preinstall: some apps failed to install; continuing." >&2
+}
