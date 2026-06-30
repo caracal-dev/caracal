@@ -1,0 +1,16 @@
+[Unit]
+Description=Pre-install Flatpak applications from preinstall.d
+Documentation=https://docs.flatpak.org/en/latest/flatpak-command-reference.html#flatpak-preinstall
+After=network-online.target flatpak-system-helper.service
+Wants=network-online.target
+ConditionPathIsDirectory=/usr/share/flatpak/preinstall.d
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/flatpak-preinstall
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
