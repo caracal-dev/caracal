@@ -237,7 +237,6 @@ wine_bridge_packages=(
 )
 
 copr_audio_workflow_packages=(
-  appimagelauncher
   vst-DISTRHO-drumsynth.x86_64
   vst-DISTRHO-eqinox.x86_64 vst-DISTRHO-vitalium.x86_64
 )
