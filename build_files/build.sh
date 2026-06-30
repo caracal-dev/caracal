@@ -158,8 +158,8 @@ install_wine_stack() {
     winetricks \
     yabridge \
     ntsync-autoload \
-    pipewire-wineasio \
-    || true
+    pipewire-wineasio ||
+    true
 }
 
 # Prefer Patrickl's Juce 8/VSTGUI Wine build for Windows audio installers and
@@ -445,6 +445,15 @@ for attempt in 1 2 3; do
   echo "krunner-bazaar install failed; retrying (${attempt}/3)..." >&2
   sleep $((attempt * 10))
 done
+
+# Enable Flathub as a system remote so Bazaar has a populated catalog on first
+# boot and `flatpak-preinstall.service` can resolve Caracal's default apps at
+# the system scope. Without this the catalog only shows already-installed refs.
+# Adapted from Universal Blue's Aurora (ublue-os/aurora):
+#   build_files/base/03-fetch.sh and build_files/base/17-cleanup.sh
+curl --retry 3 -Lo /etc/flatpak/remotes.d/flathub.flatpakrepo https://dl.flathub.org/repo/flathub.flatpakrepo
+
+systemctl enable flatpak-preinstall.service
 
 install_wine_stack
 validate_wine_stack
