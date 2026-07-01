@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+option="${1:-apply}"
+case "${option,,}" in
+    help|-h|--help)
+        echo "Usage: caracal-setup-audio-profiles [apply|status]"
+        echo "  apply   Set USB ALSA interfaces with a pro-audio profile to Pro Audio"
+        echo "  status  Print detected USB ALSA interfaces and active profiles"
+        exit 0
+        ;;
+    apply|status)
+        ;;
+    *)
+        echo "Unknown option: ${option}" >&2
+        echo "Run 'caracal-setup-audio-profiles help' for usage." >&2
+        exit 1
+        ;;
+esac
+
+if ! command -v pactl >/dev/null 2>&1; then
+    echo "pactl is not installed; cannot inspect PipeWire/PulseAudio cards." >&2
+    exit 1
+fi
+
+if ! pactl info >/dev/null 2>&1; then
+    echo "PipeWire/PulseAudio is not reachable in this user session; skipping audio profile setup." >&2
+    exit 0
+fi
+
+mapfile -t cards < <(
+    pactl list cards | awk '
+        function flush() {
+            if (name != "" && has_pro && is_usb) {
+                print name "\t" desc "\t" active
+            }
+        }
+        /^Card #/ {
+            flush()
+            name = desc = active = ""
+            has_pro = is_usb = 0
+            next
+        }
+        /^[[:space:]]*Name:/ {
+            sub(/^[[:space:]]*Name:[[:space:]]*/, "")
+            name = $0
+            next
+        }
+        /^[[:space:]]*device.description =/ {
+            sub(/^[[:space:]]*device.description = "/, "")
+            sub(/"$/, "")
+            desc = $0
+            next
+        }
+        /^[[:space:]]*device.bus = "usb"/ || /^[[:space:]]*alsa.driver_name = "snd_usb_audio"/ {
+            is_usb = 1
+            next
+        }
+        /^[[:space:]]*pro-audio:/ {
+            has_pro = 1
+            next
+        }
+        /^[[:space:]]*Active Profile:/ {
+            sub(/^[[:space:]]*Active Profile:[[:space:]]*/, "")
+            active = $0
+            next
+        }
+        END {
+            flush()
+        }
+    '
+)
+
+if ((${#cards[@]} == 0)); then
+    echo "No USB ALSA audio interfaces with a Pro Audio profile were detected."
+    exit 0
+fi
+
+changed=0
+for card in "${cards[@]}"; do
+    IFS=$'\t' read -r card_name card_desc active_profile <<<"$card"
+    card_label="${card_desc:-$card_name}"
+
+    if [[ "${option,,}" == "status" ]]; then
+        echo "${card_label}: ${active_profile:-unknown}"
+        continue
+    fi
+
+    if [[ "$active_profile" == "pro-audio" ]]; then
+        echo "${card_label}: already using Pro Audio"
+        continue
+    fi
+
+    echo "${card_label}: switching from '${active_profile:-unknown}' to Pro Audio"
+    pactl set-card-profile "$card_name" pro-audio
+    changed=1
+done
+
+if [[ "${option,,}" == "status" ]]; then
+    exit 0
+elif ((changed)); then
+    echo "USB audio interface profiles updated. Restart DAWs so they rescan ports."
+else
+    echo "USB audio interface profiles are already set."
+fi

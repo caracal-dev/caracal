@@ -172,6 +172,12 @@ restart-pipewire:
     echo "Restarting PipeWire..."
     systemctl --user restart pipewire.service
 
+# Switch USB audio interfaces to PipeWire Pro Audio profiles for DAWs.
+[group("audio")]
+setup-audio-profiles ACTION="":
+    #!/usr/bin/env bash
+    /usr/libexec/caracal-setup-audio-profiles "{{ ACTION }}"
+
 # Expose JACK D-Bus compatibility for legacy JACK controllers.
 [group("audio")]
 use-legacy-audio ACTION="":
@@ -681,6 +687,7 @@ first-run:
     sudo getent group realtime >/dev/null || sudo groupadd -r realtime
     sudo usermod -aG audio,realtime,pipewire "$target_user"
 
+    ujust setup-audio-profiles apply || true
 
     # Set up Wine-native VST bridge
     export WINELOADER=""
@@ -837,6 +844,8 @@ update-audio:
 setup-audio:
     #!/usr/bin/env bash
     set -euo pipefail
+    ujust setup-audio-profiles apply || true
+
     export WINELOADER=""
     for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
         if command -v "$loader" &>/dev/null; then
