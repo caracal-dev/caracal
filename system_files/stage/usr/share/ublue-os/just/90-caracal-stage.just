@@ -9,6 +9,10 @@ stage:
 restart-pipewire:
     systemctl --user restart pipewire.service wireplumber.service pipewire-pulse.service
 
+setup-audio-profiles ACTION="":
+    #!/usr/bin/env bash
+    /usr/libexec/caracal-setup-audio-profiles "{{ ACTION }}"
+
 first-run:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -32,6 +36,8 @@ first-run:
             sudo usermod -aG "$grp" "$target_user"
         fi
     done
+
+    ujust setup-audio-profiles apply || true
 
     ujust yabridge-setup
 
