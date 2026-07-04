@@ -1103,7 +1103,8 @@ vst-iso ACTION="enable":
     fi
 
     if [ "{{ ACTION }}" == "enable" ]; then
-      echo "Enabling auto-isolation sandbox for Windows VSTs..."
+      echo "Setting REAPER bridge flag for Windows VST plugins (yabridge path)..."
+      echo "Note: native Linux VST3 plugins are not affected by this flag."
 
       cp "$REAPER_INI" "${REAPER_INI}.bak"
 
@@ -1122,15 +1123,15 @@ vst-iso ACTION="enable":
       done < "$REAPER_INI"
 
       mv "$TMP_INI" "$REAPER_INI"
-      echo "Optimisation complete! All Windows VSTS are configured to run as isolated processes."
+      echo "Done. Windows VST plugins via yabridge will use REAPER's bridge flag."
       echo "A backup of your previous configuration has been saved to ${REAPER_INI}.bak"
 
     elif [ "{{ ACTION }}" == "disable" ]; then
-      echo "Reverting Windows VSTs to standard native execution..."
+      echo "Removing REAPER bridge flag from VST plugins..."
       cp "$REAPER_INI" "${REAPER_INI}.bak"
 
       sed -i -E 's/ <BRG[0-9]>//g' "$REAPER_INI"
-      echo "All plugins restored to default shared memory threads."
+      echo "Done. Bridge flag removed from VST plugins."
 
     else
       echo "Unknown action. Use 'ujust vst-iso enable' or 'ujust vst-iso disable'"
