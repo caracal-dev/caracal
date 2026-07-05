@@ -180,7 +180,7 @@ KCM.SimpleKCM {
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Process Isolation:")
+            Kirigami.FormData.label: i18n("VST Bridge Mode:")
 
             QQC2.Button {
                 text: kcm.vstIsolationActive ? i18n("Disable") : i18n("Enable")
@@ -194,7 +194,7 @@ KCM.SimpleKCM {
             }
 
             Kirigami.ContextualHelpButton {
-                toolTipText: i18n("Runs Windows VSTs in separate processes in REAPER. Prevents a single plugin crash from taking down the whole DAW.")
+                toolTipText: i18n("Sets REAPER's bridge flag on Windows VST plugins running via yabridge. On Linux, native VST3 plugins (Audio Assault, LSP, DISTRHO, etc.) always run inside REAPER's process regardless of this setting — bridge mode cannot contain their crashes. For native plugin stability, use 'ujust clear-plugin-caches' to remove corrupted cache files that cause convolution plugin crashes.")
             }
         }
 
