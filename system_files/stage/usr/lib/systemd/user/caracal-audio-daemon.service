@@ -1,0 +1,34 @@
+[Unit]
+Description=Caracal Audio Daemon (kiosk user)
+Documentation=https://github.com/caracal-dev/caracal-audio-daemon
+# PipeWire is needed for the Carla host; the Carla-adapter service owns
+# the host. The daemon is control-plane only.
+After=pipewire.service wireplumber.service
+Wants=pipewire.service wireplumber.service
+# The sidecar must be listening before we send any verb; we don't strictly
+# require it (the daemon is fine offline), but on the kiosk image the
+# adapter is always up.
+After=carla-adapter.service
+Wants=carla-adapter.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/caracal-audio-daemon -config /etc/caracal-audio-daemon/config.json
+# Override the catalog at runtime by pointing at a discovered file. The
+# `ujust first-run` recipe writes /usr/share/caracal-stage/catalog.json
+# once Carla's plugin scan completes.
+Environment=CARACAL_AUDIO_DAEMON_CATALOG=/usr/share/caracal-stage/catalog.json
+Environment=CARACAL_AUDIO_DAEMON_STATE=/var/lib/caracal-audio-daemon/state.json
+Restart=on-failure
+RestartSec=2
+
+# Control-plane only. Realtime limits are inherited for Carla and related
+# audio tools started in the same user session.
+LimitRTPRIO=95
+LimitMEMLOCK=infinity
+
+# State file lives under /var/lib (persistent across reboots).
+StateDirectory=caracal-audio-daemon
+
+[Install]
+WantedBy=default.target

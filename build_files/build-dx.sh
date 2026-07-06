@@ -96,6 +96,9 @@ fedora_dx_packages=(
   cockpit-ws
   edk2-ovmf
   flatpak-builder
+  gcc
+  golang
+  gtk3-devel
   incus
   incus-agent
   iotop
@@ -103,10 +106,12 @@ fedora_dx_packages=(
   libvirt-nss
   lxc
   nicstat
+  npm
   numactl
   osbuild-selinux
   p7zip
   p7zip-plugins
+  pkgconf
   podman-machine
   podman-tui
   qemu
@@ -124,6 +129,7 @@ fedora_dx_packages=(
   virt-manager
   virt-v2v
   virt-viewer
+  webkit2gtk4.1-devel
   ydotool
 )
 

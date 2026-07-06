@@ -1,0 +1,21 @@
+[Unit]
+Description=Caracal Carla OSC adapter (Python sidecar)
+Documentation=https://github.com/caracal-dev/caracal-audio-daemon
+# PipeWire + WirePlumber must be live before Carla opens its audio ports.
+After=pipewire.service wireplumber.service
+Wants=pipewire.service wireplumber.service
+
+[Service]
+Type=simple
+# Carla's Python bindings live under /usr/share/carla (Carla RPM layout).
+Environment=PYTHONPATH=/usr/share/carla
+ExecStart=/usr/bin/python3 /usr/share/caracal-stage/carla-adapter.py --osc-port 22800
+Restart=on-failure
+RestartSec=2
+
+# Same realtime window as the daemon: Carla is a real-time audio process.
+LimitRTPRIO=95
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=default.target

@@ -57,7 +57,7 @@ def spawn_hook_action(action):
         return
 
     try:
-        os.execl(
+        os.execl(  # nosec B606: fixed executable and allowlisted hook action.
             "/usr/bin/xdg-terminal-exec",
             "/usr/bin/xdg-terminal-exec",
             '--app-id=io.github.kolunmi.Bazaar',
