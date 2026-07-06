@@ -26,7 +26,7 @@ replace_file_if_present() {
   local from="$2"
   local to="$3"
 
-  [[ -f "${file}" ]] || return
+  [[ -f "${file}" ]] || return 0
   sed -i "s|${from}|${to}|g" "${file}"
 }
 
