@@ -2,7 +2,23 @@
 set -euo pipefail
 
 if [[ -n "${WAYLAND_DISPLAY:-}" || -n "${DISPLAY:-}" ]]; then
-  exec caracal-stage-carla
+  # Launch Carla in the background (not exec) so we can auto‑route after startup
+  caracal-stage-carla &
+  CARLA_PID=$!
+
+  # Give Carla time to start and register its D‑Bus service
+  sleep 2
+
+  # Attempt to auto‑connect all loaded plugins to the master inputs and outputs
+  if command -v carla-control &>/dev/null; then
+    carla-control --connect-inputs 2>/dev/null || true
+    carla-control --connect-outputs 2>/dev/null || true
+  fi
+
+  # Wait for Carla to finish (or be killed)
+  wait $CARLA_PID
+  exit 0
 fi
 
+# If not in a full desktop session, start the Stage session (which includes its own compositor)
 exec dbus-run-session -- caracal-stage-session

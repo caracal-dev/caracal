@@ -191,6 +191,19 @@ dnf -y install "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release
 
 dnf5 -y install caracal-audio-controller realtime-setup caracal-software-installer
 
+# Caracal audio daemon (control plane) + Carla OSC adapter. The adapter is
+# a small Python sidecar that owns Carla's host API; the daemon is a Go
+# HTTP/JSON service that the Wails app talks to. Both are installed as
+# per-user services so they live in the kiosk user's session bus.
+if ! dnf5 -y install caracal-audio-daemon caracal-carla-adapter; then
+  echo "WARNING: caracal-audio-daemon / caracal-carla-adapter RPMs unavailable; falling back to source install." >&2
+  if [[ -d /ctx/caracal-go/caracal-audio-daemon ]]; then
+    install -d /usr/share/caracal-stage
+    install -m 0644 /ctx/caracal-go/caracal-audio-daemon/packaging/carla-adapter.py /usr/share/caracal-stage/carla-adapter.py
+    install -m 0644 /ctx/caracal-go/caracal-audio-daemon/packaging/carla-discover.py /usr/share/caracal-stage/carla-discover.py
+  fi
+fi
+
 systemctl enable realtime-setup.service
 systemctl enable realtime-entsk.service
 
@@ -443,7 +456,9 @@ if ! getent passwd greeter >/dev/null; then
   useradd --system --no-create-home --home-dir /var/lib/greetd \
     --shell /usr/sbin/nologin --comment "greetd greeter" --user-group greeter
 fi
-getent group video >/dev/null && usermod -aG video greeter || true
+if getent group video >/dev/null; then
+  usermod -aG video greeter || true
+fi
 install -d -o greeter -g greeter -m 0755 /var/lib/greetd
 
 # Fresh ISO installs via Universal Blue's Anaconda WebUI create no login account.
@@ -453,6 +468,15 @@ systemctl enable caracal-stage-firstboot.service
 systemctl enable caracal-stage-autologin.service
 # Run `ujust first-run` automatically on each user's first Stage login.
 systemctl --global enable caracal-stage-first-run.service
+# Bring up the audio control plane + Carla OSC adapter in every kiosk
+# user session. They are part of the default user target so the kiosk
+# session can rely on them at login.
+if systemctl cat caracal-audio-daemon.service >/dev/null 2>&1; then
+  systemctl --global enable caracal-audio-daemon.service
+fi
+if systemctl cat carla-adapter.service >/dev/null 2>&1; then
+  systemctl --global enable carla-adapter.service
+fi
 
 systemctl enable greetd.service
 systemctl set-default graphical.target
@@ -467,6 +491,8 @@ chmod +x /usr/libexec/caracal-stage-first-run
 chmod +x /usr/bin/caracal-stage
 chmod +x /usr/bin/caracal-stage-session
 chmod +x /usr/bin/caracal-stage-carla
+chmod +x /usr/share/caracal-stage/carla-adapter.py 2>/dev/null || true
+chmod +x /usr/share/caracal-stage/carla-discover.py 2>/dev/null || true
 
 rm -rf \
   /var/lib/dnf \

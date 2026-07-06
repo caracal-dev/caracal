@@ -69,7 +69,7 @@ var langIds = ["as",    // Assamese
                "zh_CN", // Simplified Chinese
                "zh_TW"] // Traditional Chinese
 
-if (langIds.indexOf(languageId) != -1) {
+if (langIds.indexOf(languageId) !== -1) {
     panel.addWidget("org.kde.plasma.kimpanel");
 }
 

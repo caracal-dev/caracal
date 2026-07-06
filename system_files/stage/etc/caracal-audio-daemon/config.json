@@ -1,0 +1,15 @@
+{
+  "listenAddr": "127.0.0.1:8756",
+  "osc": {
+    "host": "127.0.0.1",
+    "port": 22800
+  },
+  "carla": {
+    "command": "carla",
+    "args": ["--no-gui"],
+    "projectDir": "/usr/share/caracal-stage/projects",
+    "autoStart": false
+  },
+  "_comment": "Stage kiosk defaults. The catalog is intentionally empty here so the daemon falls back to /usr/share/caracal-stage/catalog.json when present; that file is generated at first boot by `carla-discover.py --params` from `ujust first-run`. To hand-author a different rig set, drop a catalog.json into the project dir and pass it via the -catalog flag in the user service.",
+  "catalog": []
+}

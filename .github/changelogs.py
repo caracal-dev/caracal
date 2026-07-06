@@ -4,6 +4,11 @@
 import os
 import subprocess
 import argparse
+import re
+
+
+GITHUB_REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+GIT_REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 
 
 def parse_pkg_list(filepath):
@@ -30,14 +35,36 @@ def get_pkg_version(pkgs, name):
     return "Not Installed"
 
 
-def run_cmd(cmd):
+def validate_github_repo(repo):
+    if not GITHUB_REPO_RE.fullmatch(repo):
+        raise argparse.ArgumentTypeError(f"invalid GitHub repository: {repo}")
+    return repo
+
+
+def validate_git_ref(ref):
+    if not GIT_REF_RE.fullmatch(ref) or ".." in ref or "@{" in ref:
+        raise argparse.ArgumentTypeError(f"invalid git ref: {ref}")
+    return ref
+
+
+def get_git_log(repo, prev_tag, tag):
+    pretty_format = f"* [%h](https://github.com/{repo}/commit/%H) %s (%an)"
     try:
         res = subprocess.run(
-            cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            [
+                "git",
+                "log",
+                f"--pretty=format:{pretty_format}",
+                f"{prev_tag}..{tag}",
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
         return res.stdout.strip()
     except subprocess.CalledProcessError as e:
-        print(f"Error running cmd {' '.join(cmd)}: {e.stderr}")
+        print(f"Error running git log: {e.stderr}")
         return ""
 
 
@@ -45,10 +72,17 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--current", required=True, help="Path to current pkg list")
     parser.add_argument("--previous", required=True, help="Path to previous pkg list")
-    parser.add_argument("--tag", required=True, help="Current tag")
-    parser.add_argument("--prev-tag", required=False, help="Previous tag")
     parser.add_argument(
-        "--repo", required=True, help="GitHub repository, e.g. owner/repo"
+        "--tag", required=True, type=validate_git_ref, help="Current tag"
+    )
+    parser.add_argument(
+        "--prev-tag", required=False, type=validate_git_ref, help="Previous tag"
+    )
+    parser.add_argument(
+        "--repo",
+        required=True,
+        type=validate_github_repo,
+        help="GitHub repository, e.g. owner/repo",
     )
     parser.add_argument(
         "--output", required=True, help="Path to write changelog markdown"
@@ -87,14 +121,7 @@ def main():
     # Git commits
     commits_md = ""
     if args.prev_tag and args.tag:
-        git_log = run_cmd(
-            [
-                "git",
-                "log",
-                f"--pretty=format:* [%h](https://github.com/{args.repo}/commit/%H) %s (%an)",
-                f"{args.prev_tag}..{args.tag}",
-            ]
-        )
+        git_log = get_git_log(args.repo, args.prev_tag, args.tag)
         if git_log:
             # Filter merge/chore commits
             lines = []
