@@ -54,12 +54,15 @@ jobs:
         image-suffix:
           - ""
           - "-stage"
+          - "-stage-arm"
           - "-nvidia"
         exclude:
           - disk-type: qcow2
             image-suffix: "-nvidia"
           - platform: arm64
             image-suffix: "-nvidia"
+          - platform: amd64
+            image-suffix: "-stage-arm"
     permissions:
       contents: read
       packages: read

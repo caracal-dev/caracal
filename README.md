@@ -1,3 +1,24 @@
+---
+auto-sync: enabled
+auto-sync-date: 2026-07-06
+auto-sync-type: doc
+auto-sync-override:
+  sources:
+    - system_files/shared/usr/share/ublue-os/just/90-caracal-os.just
+    - system_files/shared/usr/share/ublue-os/just/60-custom.just
+    - system_files/stage/usr/share/ublue-os/just/90-caracal-stage.just
+    - Justfile
+    - cosign.pub
+  focus:
+    - build commands and ujust recipes in just files
+    - package/plugin names mentioned in tables
+    - image tags and bootc switch commands
+    - external project and documentation URLs
+  preserve:
+    - Based On
+    - Special Thanks to
+---
+
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/7b8ddd4445ff4a9aab0672ecf7abf35f)](https://app.codacy.com/gh/caracal-dev/caracal/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)[![build_image badge](https://github.com/caracal-dev/caracal/actions/workflows/build.yml/badge.svg)](https://github.com/caracal-dev/caracal/actions/workflows/build.yml)[![build iso badge](https://github.com/caracal-dev/caracal/actions/workflows/build-disk.yml/badge.svg)](https://github.com/caracal-dev/caracal/actions/workflows/build-disk.yml)[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/caracal-dev/caracal)
 
 <picture>
@@ -140,7 +161,7 @@ For this we recommend using one of the following:
 - [Rufus](https://rufus.ie/en/) for Windows.
 - [Ventoy](https://www.ventoy.net/en/download.html) for Windows and Linux.
 
-### Installtion Steps
+### Installation Steps
 
 This guide assumes you are using Fedora Media Writer but it is basically the same for all the options mentioned above.
 
@@ -165,7 +186,7 @@ Navigating the installer:
 - Partitioning: Navigate to the Installation Destination screen. Choose your primary hard drive. If you want a fresh system, select Automatic Partitioning and choose to Erase the entire disk.Begin Installation: Click Begin Installation. The system will take a few minutes to copy the Caracal image to your drive.
 - Restart: Once it finishes, restart your computer, remove the USB flash drive when prompted, and boot into your fresh Caracal OS system.
 
-### Post-installtion
+### Post-installation
 
 When you boot in for the first time, the Caracal Setup app will appear. Make sure you have a working internet connection and select 'Run' to configure your system.
 

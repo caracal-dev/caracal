@@ -106,6 +106,39 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 
 RUN bootc container lint
 
+### Stage ARM image
+## ARM64 variant of caracal-stage. Uses kernel-rt from @kernel-vanilla/fedora
+## COPR for low-latency audio on aarch64, and skips Wine/yabridge (x86_64-only
+## stack, not available on aarch64).
+FROM quay.io/fedora-ostree-desktops/kinoite:${FEDORA_VERSION} AS caracal-stage-arm
+
+### Kernel swap — RT kernel
+## Replace the stock Fedora kernel with kernel-rt from the @kernel-vanilla/fedora
+## COPR. Provides a PREEMPT_RT real-time kernel for aarch64 low-latency audio.
+## Must run before build-stage-arm.sh so the correct kernel headers are in place.
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/install-kernel-arm
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/build-stage-arm.sh
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/build-initramfs
+
+RUN bootc container lint
+
 ### NVIDIA image
 ## Separate target for users who want to bootc switch to Caracal with NVIDIA
 ## drivers preinstalled. Disk and ISO builds continue to use the regular image.
