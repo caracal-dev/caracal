@@ -165,6 +165,22 @@ build-stage $target_image=(image_name + "-stage") $tag=default_tag:
         --tag "${target_image}:${tag}" \
         .
 
+# Build the ARM64 stage image variant for local testing (no Wine, stock kernel).
+build-stage-arm $target_image=(image_name + "-stage-arm") $tag=default_tag:
+    #!/usr/bin/env bash
+
+    BUILD_ARGS=()
+    if [[ -z "$(git status -s)" ]]; then
+        BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
+    fi
+
+    podman build \
+        "${BUILD_ARGS[@]}" \
+        --pull=newer \
+        --target caracal-stage-arm \
+        --tag "${target_image}:${tag}" \
+        .
+
 # Command: _rootful_load_image
 # Description: This script checks if the current user is root or running under sudo. If not, it attempts to resolve the image tag using podman inspect.
 #              If the image is found, it loads it into rootful podman. If the image is not found, it pulls it from the repository.

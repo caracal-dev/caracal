@@ -242,3 +242,166 @@ jobs:
         env:
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+
+  build_push_arm:
+    name: Build and push ${{ github.event.repository.name }}-stage-arm
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Prepare environment
+        run: |
+          echo "IMAGE_REGISTRY=${IMAGE_REGISTRY,,}" >> ${GITHUB_ENV}
+          echo "IMAGE_NAME=${IMAGE_NAME,,}-stage-arm" >> ${GITHUB_ENV}
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y podman
+
+      - name: Get current date
+        id: date
+        run: |
+          echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
+
+      - name: Image Metadata
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
+        id: metadata
+        with:
+          tags: |
+            type=raw,value=${{ env.DEFAULT_TAG }}
+            type=raw,value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
+            type=raw,value={{date 'YYYYMMDD'}}
+            type=sha,enable=${{ github.event_name == 'pull_request' }}
+            type=ref,event=pr
+          labels: |
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/${{ github.sha }}/README.md
+            org.opencontainers.image.created=${{ steps.date.outputs.date }}
+            org.opencontainers.image.description=${{ env.IMAGE_DESC }}
+            org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/${{ github.sha }}/README.md
+            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/blob/${{ github.sha }}/Containerfile
+            org.opencontainers.image.title=${{ env.IMAGE_NAME }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/tree/${{ github.sha }}
+            org.opencontainers.image.vendor=${{ github.repository_owner }}
+            org.opencontainers.image.version=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
+            io.artifacthub.package.deprecated=false
+            io.artifacthub.package.keywords=${{ env.IMAGE_KEYWORDS }}
+            io.artifacthub.package.license=Apache-2.0
+            io.artifacthub.package.logo-url=${{ env.IMAGE_LOGO_URL }}
+            io.artifacthub.package.prerelease=false
+            containers.bootc=1
+          sep-tags: " "
+          sep-annotations: " "
+
+      - name: Build Image
+        id: build_image
+        shell: bash
+        env:
+          TAGS: ${{ steps.metadata.outputs.tags }}
+          LABELS: ${{ steps.metadata.outputs.labels }}
+          TARGET: caracal-stage-arm
+        run: |
+          set -euo pipefail
+
+          /usr/bin/buildah version
+
+          tag_args=()
+          for tag in ${TAGS}; do
+            tag_args+=("--tag" "${IMAGE_NAME}:${tag}")
+          done
+
+          label_args=()
+          while IFS= read -r label; do
+            if [[ -n "${label}" ]]; then
+              label_args+=("--label" "${label}")
+            fi
+          done <<< "${LABELS}"
+
+          for attempt in 1 2 3; do
+            if /usr/bin/buildah bud \
+              -f ./Containerfile \
+              --format docker \
+              --tls-verify=true \
+              --target="${TARGET}" \
+              "${label_args[@]}" \
+              "${tag_args[@]}" \
+              .; then
+              exit 0
+            fi
+
+            if [[ "${attempt}" == "3" ]]; then
+              exit 1
+            fi
+
+            sleep_seconds=$((attempt * 30))
+            echo "Build attempt ${attempt} failed; retrying in ${sleep_seconds}s."
+            sleep "${sleep_seconds}"
+          done
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push To GHCR
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        id: push
+        shell: bash
+        env:
+          TAGS: ${{ steps.metadata.outputs.tags }}
+        run: |
+          set -euo pipefail
+
+          authfile="${HOME}/.docker/config.json"
+          image_full="${IMAGE_REGISTRY}/${IMAGE_NAME}"
+
+          if [[ ! -f "${authfile}" ]]; then
+            echo "Docker auth file was not found at ${authfile}." >&2
+            exit 1
+          fi
+
+          for tag in ${TAGS}; do
+            for attempt in 1 2 3; do
+              if /usr/bin/buildah push \
+                --authfile "${authfile}" \
+                --tls-verify=true \
+                "${IMAGE_NAME}:${tag}" \
+                "docker://${image_full}:${tag}"; then
+                break
+              fi
+
+              if [[ "${attempt}" == "3" ]]; then
+                exit 1
+              fi
+
+              sleep_seconds=$((attempt * 30))
+              echo "Push of ${image_full}:${tag} failed on attempt ${attempt}; retrying in ${sleep_seconds}s."
+              sleep "${sleep_seconds}"
+            done
+          done
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        with:
+          cosign-release: 'v2.6.1'
+
+      - name: Sign container image
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        run: |
+          IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}"
+          for tag in ${{ steps.metadata.outputs.tags }}; do
+            cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE_FULL:$tag
+          done
+        env:
+          COSIGN_EXPERIMENTAL: false
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
