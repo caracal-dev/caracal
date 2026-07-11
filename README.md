@@ -1,24 +1,3 @@
----
-auto-sync: enabled
-auto-sync-date: 2026-07-06
-auto-sync-type: doc
-auto-sync-override:
-  sources:
-    - system_files/shared/usr/share/ublue-os/just/90-caracal-os.just
-    - system_files/shared/usr/share/ublue-os/just/60-custom.just
-    - system_files/stage/usr/share/ublue-os/just/90-caracal-stage.just
-    - Justfile
-    - cosign.pub
-  focus:
-    - build commands and ujust recipes in just files
-    - package/plugin names mentioned in tables
-    - image tags and bootc switch commands
-    - external project and documentation URLs
-  preserve:
-    - Based On
-    - Special Thanks to
----
-
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/7b8ddd4445ff4a9aab0672ecf7abf35f)](https://app.codacy.com/gh/caracal-dev/caracal/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)[![build_image badge](https://github.com/caracal-dev/caracal/actions/workflows/build.yml/badge.svg)](https://github.com/caracal-dev/caracal/actions/workflows/build.yml)[![build iso badge](https://github.com/caracal-dev/caracal/actions/workflows/build-disk.yml/badge.svg)](https://github.com/caracal-dev/caracal/actions/workflows/build-disk.yml)[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/caracal-dev/caracal)
 
 <picture>

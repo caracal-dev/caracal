@@ -21,53 +21,6 @@ enable_unit_if_present() {
   fi
 }
 
-replace_file_if_present() {
-  local file="$1"
-  local from="$2"
-  local to="$3"
-
-  [[ -f "${file}" ]] || return 0
-  sed -i "s|${from}|${to}|g" "${file}"
-}
-
-bump_user_setup_version() {
-  local key="$1"
-  local file="/usr/libexec/caracal-user-setup"
-  local version=""
-
-  [[ -f "${file}" ]] || return
-  version="$(awk -F= -v key="${key}" '$1 == key {print $2}' "${file}" | tail -n1)"
-  [[ "${version}" =~ ^[0-9]+$ ]] || return
-
-  sed -i -E "s|^${key}=[0-9]+$|${key}=$((version + 1))|" "${file}"
-}
-
-apply_dx_wallpaper_default() {
-  local old_wallpaper="/usr/share/wallpapers/caracal/caracal-lake.png"
-  local old_wallpaper_uri="file://${old_wallpaper}"
-  local dx_wallpaper="/usr/share/wallpapers/caracal/caracal-silloutte.png"
-  local dx_wallpaper_uri="file://${dx_wallpaper}"
-
-  if [[ ! -f "${dx_wallpaper}" ]]; then
-    echo "ERROR: DX wallpaper '${dx_wallpaper}' is missing." >&2
-    exit 1
-  fi
-
-  for config_file in \
-    /etc/xdg/kscreenlockerrc \
-    /etc/plasmalogin.conf \
-    /usr/libexec/caracal-user-setup \
-    /usr/share/kde-settings/kde-profile/default/xdg/kscreenlockerrc \
-    /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/plasmoidsetupscripts/org.kde.plasma.folder.js \
-    /usr/share/sddm/themes/caracal/theme.conf \
-    /usr/share/sddm/themes/caracal/theme.conf.user; do
-    replace_file_if_present "${config_file}" "${old_wallpaper_uri}" "${dx_wallpaper_uri}"
-    replace_file_if_present "${config_file}" "${old_wallpaper}" "${dx_wallpaper}"
-  done
-
-  bump_user_setup_version PRE_SESSION_SETUP_VER
-  bump_user_setup_version POST_SESSION_SETUP_VER
-}
 
 # Apply IP forwarding before installing Docker to avoid disrupting LXC/Incus networking defaults during package post-install setup.
 install -d /etc/sysctl.d /etc/modules-load.d
@@ -209,8 +162,6 @@ if grep -q '^VARIANT_ID=' /usr/lib/os-release; then
 else
   printf 'VARIANT_ID=%s\n' "${dx_variant_id}" >>/usr/lib/os-release
 fi
-
-apply_dx_wallpaper_default
 
 # Keep third-party repos present for installed packages but disabled by default.
 for repo_file in /etc/yum.repos.d/docker-ce.repo /etc/yum.repos.d/vscodium.repo; do
