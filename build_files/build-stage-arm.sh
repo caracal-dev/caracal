@@ -47,7 +47,7 @@ set_copr_priority() {
 # No Wine COPR enablement — Wine/TKG is x86_64-only and not available on aarch64
 
 copr_repos=(
-  timlau/audio
+  ycollet/audinux
   teervo/DISTRHO
   ublue-os/packages
   ublue-os/staging
@@ -62,7 +62,7 @@ bash /ctx/scripts/install-appimagelauncher.sh
 dnf -y install "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 dnf -y install "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
 
-dnf5 -y install caracal-audio-controller realtime-setup caracal-software-installer
+dnf5 -y install realtime-setup # When aarch 64 is added - caracal-software-installer caracal-audio-controller
 
 systemctl enable realtime-setup.service
 systemctl enable realtime-entsk.service
@@ -160,6 +160,7 @@ audio_device_packages=(
   libusb1
   hidapi
   v4l-utils
+  ray-session
 )
 
 audio_server_packages=(
@@ -189,10 +190,17 @@ stage_audio_application_packages=(
 )
 
 audio_plugin_packages=(
-  lsp-plugins-vst
-  lsp-plugins-clap
-  lsp-plugins-lv2
-  lv2-carla
+  lv2-dkbuilder-guitarix-lv2-plugins
+  lv2-dexed
+  lv2-aidadsp
+  lv2-neural-amp-modeler
+  lv2-avldrums-x42-plugin
+  aida-x
+  mod-cabsim-IR-loader
+  airwin2rack
+  vst3-guitarix
+  lsp-plugins
+  loopino
 )
 
 daw_runtime_packages=(
@@ -322,4 +330,3 @@ rm -rf \
   /var/log/hawkey*
 
 rm -rf /usr/etc
-
