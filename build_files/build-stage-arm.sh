@@ -62,7 +62,7 @@ bash /ctx/scripts/install-appimagelauncher.sh
 dnf -y install "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 dnf -y install "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
 
-dnf5 -y install realtime-setup # When aarch 64 is added - caracal-software-installer caracal-audio-controller
+dnf5 -y install realtime-setup caracal-software-installer caracal-audio-controller
 
 systemctl enable realtime-setup.service
 systemctl enable realtime-entsk.service
