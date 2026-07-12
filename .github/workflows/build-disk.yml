@@ -111,7 +111,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -120,7 +120,7 @@ jobs:
       - name: Build disk images
         id: build
         if: matrix.disk-type != 'installer-iso'
-        uses: osbuild/bootc-image-builder-action@508936ec3c3bb2b88310d9bdf9b3bc64c087bb55 # main, pinned 2026-05-18
+        uses: osbuild/bootc-image-builder-action@30960621b85c9e76c653082f9ef4cab5a10210d5 # main, pinned 2026-05-18
         with:
           builder-image: ${{ env.BIB_IMAGE }}
           config-file: ./disk_config/disk.toml
