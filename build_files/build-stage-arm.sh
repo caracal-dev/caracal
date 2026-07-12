@@ -159,7 +159,7 @@ audio_device_packages=(
   libusb1
   hidapi
   v4l-utils
-  ray-session
+  raysession
 )
 
 audio_server_packages=(
