@@ -212,7 +212,6 @@ daw_runtime_packages=(
   libXv
   dpkg
   libbsd
-  libcurl-gnutls
 )
 
 if ! dnf5 -y install \

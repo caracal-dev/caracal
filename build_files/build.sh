@@ -175,7 +175,7 @@ set_copr_priority patrickl wine-tkg-dev 90
 
 # COPR repositories
 copr_repos=(
-  timlau/audio
+  ycollet/audinux
   teervo/DISTRHO
   ublue-os/packages
   ublue-os/staging
