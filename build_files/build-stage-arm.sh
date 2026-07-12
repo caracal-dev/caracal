@@ -48,7 +48,6 @@ set_copr_priority() {
 
 copr_repos=(
   ycollet/audinux
-  teervo/DISTRHO
   ublue-os/packages
   ublue-os/staging
   tumillanino/caracal-packages
