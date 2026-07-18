@@ -21,7 +21,6 @@ enable_unit_if_present() {
   fi
 }
 
-
 # Apply IP forwarding before installing Docker to avoid disrupting LXC/Incus networking defaults during package post-install setup.
 install -d /etc/sysctl.d /etc/modules-load.d
 cat >/etc/sysctl.d/90-caracal-dx.conf <<'EOF'
@@ -38,6 +37,7 @@ fedora_dx_packages=(
   android-tools
   bcc
   bpftrace
+  chromium
   cockpit-bridge
   cockpit-machines
   cockpit-networkmanager
