@@ -222,6 +222,36 @@ sudo usermod -aG audio,realtime $USER
 
 Then reboot, or at minimum log out and back in, so the new group membership and session limits take effect.
 
+
+### Secure Boot
+
+Caracal ships pre-built kernel modules (NVIDIA, audio drivers, etc.) that are
+signed with the [ublue-os/akmods](https://github.com/ublue-os/akmods) Machine
+Owner Key (MOK). If Secure Boot is enabled in your UEFI firmware, the modules
+will fail to load until you enroll the public key:
+
+On the first boot after installing or rebasing to Caracal, run:
+
+```bash
+mokutil --import /etc/pki/akmods/certs/akmods-ublue.der
+```
+
+The MOK enrollment password is **`universalblue`** (hardcoded across all
+uBlue images). Reboot — the MOK Manager EFI application will appear. Select
+**Enroll MOK**, then **Continue**, enter `universalblue` when prompted, and
+reboot again.
+
+If you get a black screen or the MOK manager does not appear automatically
+after `mokutil`, tap **Enter** repeatedly during the reboot to catch the shim
+bootloader prompt.
+
+To verify the key was enrolled successfully after rebooting:
+
+```bash
+mokutil --list-enrolled | grep -q ublue && echo "Key enrolled" || echo "Key not found"
+```
+
+Once enrolled, the key persists across Caracal image updates.
 ---
 
 ## Building Locally
