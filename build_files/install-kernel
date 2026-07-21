@@ -78,3 +78,13 @@ popd
 # Clear any kernel files the RPM dropped in /boot — atomic images manage
 # /boot via the bootloader layer.
 rm -rf /boot/*
+
+# === Secure Boot support ===
+# Download the ublue akmods public key (MOK certificate) so pre-signed kernel
+# modules can be loaded with Secure Boot enabled. Users must enroll this key
+# via MOK during first boot — see README for instructions.
+install -d -m 0755 /etc/pki/akmods/certs
+curl -sSL --retry 3 \
+  "https://github.com/ublue-os/akmods/raw/refs/heads/main/certs/public_key.der" \
+  -o /etc/pki/akmods/certs/akmods-ublue.der
+chmod 0644 /etc/pki/akmods/certs/akmods-ublue.der
