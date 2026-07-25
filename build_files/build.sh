@@ -185,6 +185,8 @@ for copr_repo in "${copr_repos[@]}"; do
   dnf5 -y copr enable "${copr_repo}"
 done
 
+# SC2016: single-quote intentional — $releasever is a dnf URL template, expanded by dnf, not by bash
+# shellcheck disable=SC2016
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 bash "${SCRIPTS_DIR}/install-appimagelauncher.sh"
 dnf -y install "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
