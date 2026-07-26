@@ -56,6 +56,8 @@ for copr_repo in "${copr_repos[@]}"; do
   dnf5 -y copr enable "${copr_repo}"
 done
 
+# SC2016: single-quote intentional — $releasever is a dnf URL template, expanded by dnf, not by bash
+# shellcheck disable=SC2016
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 bash /ctx/scripts/install-appimagelauncher.sh
 dnf -y install "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
@@ -246,6 +248,8 @@ for optional_package in "${stage_optional_keyboard_packages[@]}"; do
   }
 done
 
+# SC2154: distrho_plugin is the for-loop variable; not assigned elsewhere by design
+# shellcheck disable=SC2154
 for distrho_plugin in "${distrho_plugins[@]}"; do
   dnf5 -y install "${distrho_plugin}" || {
     echo "WARNING: DISTRHO plugin '${distrho_plugin}' is unavailable on this architecture; continuing." >&2
@@ -296,7 +300,9 @@ if ! getent passwd greeter >/dev/null; then
   useradd --system --no-create-home --home-dir /var/lib/greetd \
     --shell /usr/sbin/nologin --comment "greetd greeter" --user-group greeter
 fi
-getent group video >/dev/null && usermod -aG video greeter || true
+if getent group video >/dev/null; then
+  usermod -aG video greeter || true
+fi
 install -d -o greeter -g greeter -m 0755 /var/lib/greetd
 
 # Fresh ISO installs via Universal Blue's Anaconda WebUI create no login account.
