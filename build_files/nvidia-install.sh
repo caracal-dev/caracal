@@ -64,16 +64,18 @@ fi
 variant_pkgs=()
 optional_variant_pkgs=()
 case "${IMAGE_NAME}" in
-  kinoite)
-    variant_pkgs=(supergfxctl)
-    optional_variant_pkgs=(supergfxctl-plasmoid)
-    ;;
-  silverblue)
-    variant_pkgs=(supergfxctl)
-    optional_variant_pkgs=(gnome-shell-extension-supergfxctl-gex)
-    ;;
+kinoite)
+  variant_pkgs=(supergfxctl)
+  optional_variant_pkgs=(supergfxctl-plasmoid)
+  ;;
+silverblue)
+  variant_pkgs=(supergfxctl)
+  optional_variant_pkgs=(gnome-shell-extension-supergfxctl-gex)
+  ;;
 esac
 
+# SC1091: kmods/nvidia-vars is generated at install time and not present in the source tree
+# shellcheck disable=SC1091
 source "${AKMODNV_PATH}"/kmods/nvidia-vars
 
 nvidia_pkgs=(
