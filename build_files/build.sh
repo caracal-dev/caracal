@@ -222,14 +222,14 @@ rpm --erase --nodeps --nodb generic-logos
 
 wine_bridge_packages=(
   yabridge
-  wine
-  wine-core
-  wine-alsa
-  wine-cms
-  wine-common
-  wine-desktop
-  wine-pulseaudio
-  wine-winefonts
+  wine-11.11-300.fc44.x86_64 │
+  wine-core-11.11-300.fc44.x86_64 │
+  wine-alsa-11.11-300.fc44.x86_64 │
+  wine-cms-11.11-300.fc44.x86_64 │
+  wine-common-11.11-300.fc44.noarch │
+  wine-desktop-11.11-300.fc44.noarch │
+  wine-pulseaudio-11.11-300.fc44.x86_64 │
+  wine-winefonts-11.8-300.fc44.noarch │
   winetricks
   wine-mono
   wine-dxvk
