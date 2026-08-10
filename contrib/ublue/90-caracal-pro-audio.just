@@ -111,8 +111,7 @@ pro-audio-info:
     It will:
       * Enable the ${bold}tumillanino/caracal-packages${normal} COPR
         (publisher of caracal-software-installer / caracal-audio-controller).
-      * Enable the ${bold}patrickl/wine-11.8-vstgui-juce8${normal}, ${bold}patrickl/wine-tkg-dev${normal}, and ${bold}teervo/DISTRHO${normal} COPRs
-        for yabridge + Windows VST support and the DISTRHO plugin set.
+      * Enable the ${bold}patrickl/wine-staging-dev${normal}, ${bold}patrickl/wine-tkg-dev${normal}, and ${bold}teervo/DISTRHO${normal} COPRs
       * Layer the Caracal Software Installer and Audio Controller, plus a
         focused audio package set (yabridge, JACK / PipeWire bridges,
         qjackctl, ffado, pavucontrol, helvum, easyeffects, lsp-plugins,
@@ -175,7 +174,7 @@ pro-audio-uninstall:
     sudo rm -f \
         /etc/yum.repos.d/_copr_tumillanino-caracal-packages.repo \
         /etc/yum.repos.d/_copr_patrickl-wine-tkg.repo \
-        /etc/yum.repos.d/_copr_patrickl-wine-11.8-vstgui-juce8.repo \
+        /etc/yum.repos.d/_copr_patrickl-wine-staging-dev.repo \
         /etc/yum.repos.d/_copr_patrickl-wine-tkg-dev.repo \
         /etc/yum.repos.d/_copr_teervo-DISTRHO.repo \
         /etc/security/limits.d/audio.conf \
@@ -276,10 +275,10 @@ _pro-audio-copr:
         fi
     }
     add_copr tumillanino caracal-packages
-    if add_copr patrickl wine-11.8-vstgui-juce8; then
-        set_copr_priority patrickl wine-11.8-vstgui-juce8 80
+    if add_copr patrickl wine-staging-dev; then
+        set_copr_priority patrickl wine-staging-dev 80
     else
-        echo "WARNING: failed to enable patrickl/wine-11.8-vstgui-juce8; falling back to patrickl/wine-tkg-dev." >&2
+        echo "WARNING: failed to enable patrickl/wine-staging-dev; falling back to patrickl/wine-tkg-dev." >&2
     fi
     add_copr patrickl    wine-tkg-dev
     add_copr teervo      DISTRHO
@@ -308,17 +307,10 @@ _pro-audio-audio-stack:
     packages=(
         # Wine VST bridge stack
         yabridge
-        wine-11.8-300.fc44.x86_64
-        wine-core-11.8-300.fc44.x86_64
-        wine-alsa-11.8-300.fc44.x86_64
-        wine-cms-11.8-300.fc44.x86_64
-        wine-common-11.8-300.fc44.noarch
-        wine-desktop-11.8-300.fc44.noarch
-        wine-pulseaudio-11.8-300.fc44.x86_64
-        wine-winefonts-11.8-300.fc44.noarch
-        winetricks
+        wine
         wine-mono
         wine-dxvk
+        winetricks
         libcurl-gnutls
         # JACK + PipeWire compatibility
         pipewire-jack-audio-connection-kit

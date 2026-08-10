@@ -47,8 +47,6 @@ set_copr_priority() {
 validate_wine_stack() {
   echo "Checking for mandatory Wine and Yabridge binaries..."
   rpm -q \
-    wine-core.x86_64 \
-    wine-common.noarch \
     yabridge.x86_64 \
     winetricks || {
     echo "CRITICAL ERROR: required Wine RPMs are missing!" >&2
@@ -101,8 +99,8 @@ validate_wine_stack() {
   local wine_version=""
   wine_version="$("${wine_bin}" --version 2>/dev/null || true)"
   echo "Wine version: ${wine_version:-unknown}"
-  if [[ "${wine_version}" != wine-11.8* ]]; then
-    echo "CRITICAL ERROR: expected Patrickl's Juce 8 Wine 11.8 stack, got '${wine_version:-unknown}'." >&2
+  if [[ "${wine_version}" != wine-11.15* ]]; then
+    echo "CRITICAL ERROR: expected Patrickl's wine-staging-dev Wine 11.15 stack, got '${wine_version:-unknown}'." >&2
     dnf5 list installed "wine*" "yabridge*" "winetricks*" || true
     exit 1
   fi
@@ -144,18 +142,10 @@ validate_wine_stack() {
 
   echo "Wine and Yabridge validation successful."
 }
-
 install_wine_stack() {
   dnf5 -y install --allowerasing "${wine_bridge_packages[@]}"
   dnf5 -y mark user \
     wine \
-    wine-core \
-    wine-common \
-    wine-alsa \
-    wine-cms \
-    wine-desktop \
-    wine-pulseaudio \
-    wine-winefonts \
     wine-mono \
     wine-dxvk \
     winetricks \
@@ -165,13 +155,11 @@ install_wine_stack() {
     true
 }
 
-if dnf5 -y copr enable patrickl/wine-11.8-vstgui-juce8; then
-  set_copr_priority patrickl wine-11.8-vstgui-juce8 80
+if dnf5 -y copr enable patrickl/wine-staging-dev; then
+  set_copr_priority patrickl wine-staging-dev 80
 else
-  echo "WARNING: failed to enable patrickl/wine-11.8-vstgui-juce8; falling back to patrickl/wine-tkg-dev." >&2
+  echo "WARNING: failed to enable patrickl/wine-staging-dev; falling back to patrickl/wine-tkg-dev." >&2
 fi
-dnf5 -y copr enable patrickl/wine-tkg-dev
-set_copr_priority patrickl wine-tkg-dev 90
 
 copr_repos=(
   timlau/audio
@@ -241,17 +229,10 @@ rpm --erase --nodeps --nodb generic-logos
 
 wine_bridge_packages=(
   yabridge
-  wine-11.8-300.fc44.x86_64
-  wine-core-11.8-300.fc44.x86_64
-  wine-alsa-11.8-300.fc44.x86_64
-  wine-cms-11.8-300.fc44.x86_64
-  wine-common-11.8-300.fc44.noarch
-  wine-desktop-11.8-300.fc44.noarch
-  wine-pulseaudio-11.8-300.fc44.x86_64
-  wine-winefonts-11.8-300.fc44.noarch
-  winetricks
+  wine
   wine-mono
   wine-dxvk
+  winetricks
   ntsync-autoload
   pipewire-wineasio
 )
