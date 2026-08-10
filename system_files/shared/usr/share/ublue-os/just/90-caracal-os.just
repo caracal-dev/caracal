@@ -720,10 +720,10 @@ first-run:
     echo "Using Wine loader: ${WINELOADER}"
     wine_version="$("$WINELOADER" --version 2>/dev/null || true)"
     echo "Wine version: ${wine_version:-unknown}"
-    if [[ "${wine_version}" != wine-11.8* ]]; then
-        echo "Error: expected Patrickl's Juce 8 Wine 11.8 stack, got '${wine_version:-unknown}'." >&2
+    if [[ "${wine_version}" != wine-11.15* ]]; then
+        echo "Error: expected Patrickl's wine-staging-dev Wine 11.15 stack, got '${wine_version:-unknown}'." >&2
         echo "Wine 11.10 currently fails PE32 WoW64 execution on Caracal." >&2
-        echo "Rebuild or update Caracal with patrickl/wine-11.8-vstgui-juce8 pinned to Wine 11.8." >&2
+        echo "Rebuild or update Caracal with patrickl/wine-staging-dev providing Wine 11.15." >&2
         rpm -q wine wine-core wine-common yabridge winetricks 2>/dev/null || true
         exit 1
     fi
@@ -733,7 +733,7 @@ first-run:
         WINEPREFIX="$wow64_prefix" wineserver -w 2>/dev/null || true
         rm -rf "$wow64_prefix"
         echo "Error: Wine cannot initialize a temporary WoW64 prefix." >&2
-        echo "Rebuild or update Caracal with Patrickl's Juce 8 Wine stack." >&2
+        echo "Rebuild or update Caracal with Patrickl's wine-staging-dev Wine stack." >&2
         exit 1
     fi
     wine_i386_cmd=""
@@ -873,10 +873,10 @@ setup-audio:
     fi
     wine_version="$("$WINELOADER" --version 2>/dev/null || true)"
     echo "Wine version: ${wine_version:-unknown}"
-    if [[ "${wine_version}" != wine-11.8* ]]; then
-        echo "Error: expected Patrickl's Juce 8 Wine 11.8 stack, got '${wine_version:-unknown}'." >&2
+    if [[ "${wine_version}" != wine-11.15* ]]; then
+        echo "Error: expected Patrickl's wine-staging-dev Wine 11.15 stack, got '${wine_version:-unknown}'." >&2
         echo "Wine 11.10 currently fails PE32 WoW64 execution on Caracal." >&2
-        echo "Rebuild or update Caracal with patrickl/wine-11.8-vstgui-juce8 pinned to Wine 11.8." >&2
+        echo "Rebuild or update Caracal with patrickl/wine-staging-dev providing Wine 11.15." >&2
         rpm -q wine wine-core wine-common yabridge winetricks 2>/dev/null || true
         exit 1
     fi
@@ -885,7 +885,7 @@ setup-audio:
         WINEPREFIX="$wow64_prefix" wineserver -w 2>/dev/null || true
         rm -rf "$wow64_prefix"
         echo "Error: Wine cannot initialize a temporary WoW64 prefix." >&2
-        echo "Rebuild or update Caracal with Patrickl's Juce 8 Wine stack." >&2
+        echo "Rebuild or update Caracal with Patrickl's wine-staging-dev Wine stack." >&2
         exit 1
     fi
     wine_i386_cmd=""

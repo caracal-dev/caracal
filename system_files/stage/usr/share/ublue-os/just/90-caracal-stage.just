@@ -87,8 +87,8 @@ yabridge-setup:
 
     export WINELOADER="${wine_loader}"
     wine_version="$("$WINELOADER" --version 2>/dev/null || true)"
-    if [[ "${wine_version}" != wine-11.8* ]]; then
-        echo "Expected Patrickl's Juce 8 Wine 11.8 stack, got '${wine_version:-unknown}'." >&2
+    if [[ "${wine_version}" != wine-11.15* ]]; then
+        echo "Expected Patrickl's wine-staging-dev Wine 11.15 stack, got '${wine_version:-unknown}'." >&2
         exit 1
     fi
 
