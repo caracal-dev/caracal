@@ -840,6 +840,126 @@ update-audio:
     #!/usr/bin/env bash
     yabridgectl sync
 
+# Auto-connect Carla plugin JACK ports to the default audio sink/source.
+# Run this after adding plugins in Carla to wire them to your interface.
+carla-connect:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if ! command -v pw-link &>/dev/null; then
+        echo "PipeWire (pw-link) not found; can't route audio." >&2
+        exit 1
+    fi
+
+    # Get default audio sink and source port lists
+    sink_ports=($(pw-link -i | grep "^alsa_output.*playback" | sort))
+    source_ports=($(pw-link -o | grep "^alsa_input.*capture" | sort))
+
+    if [[ ${#sink_ports[@]} -eq 0 ]]; then
+        echo "No ALSA playback sink found; is your interface connected?" >&2
+        exit 1
+    fi
+    # Collect Carla plugin output ports: JACK clients with media.role=DSP,
+    # excluding the Carla host client itself and known non-plugin ports.
+    # Build set of already-connected ports from pw-link --links
+    declare -A connected_out connected_in
+    current_header=""
+    links="$(pw-link --links 2>/dev/null || true)"
+    while IFS= read -r line; do
+        trimmed="${line#"${line%%[! ]*}"}"
+        [[ -z "$trimmed" ]] && continue
+        # Header line (no leading space) → the port itself
+        if [[ "$line" == "$trimmed" ]]; then
+            current_header="$trimmed"
+        elif [[ "$trimmed" == "|->"* ]]; then
+            target="${trimmed#|-> }"
+            connected_out["$current_header"]=1
+            connected_in["$target"]=1
+        elif [[ "$trimmed" == "|<-"* ]]; then
+            source="${trimmed#|<- }"
+            connected_in["$current_header"]=1
+            connected_out["$source"]=1
+        fi
+    done <<< "$links"
+    plugin_outputs=()
+    plugin_inputs=()
+    outputs="$(pw-link -o)"
+    while IFS= read -r port; do
+        [[ -z "$port" ]] && continue
+        # Skip ALSA, MIDI, RAOP, Zen, bluez, and monitor ports
+        case "$port" in
+            alsa_*|Midi-*|bluez_*|raop_*|Zen:*) continue ;;
+        esac
+        case "$port" in
+            *:monitor_*) continue ;;
+            *:events-in) continue ;;
+        esac
+        if [[ -z "${connected_out[$port]:-}" ]]; then
+            plugin_outputs+=("$port")
+        fi
+    done <<< "$outputs"
+
+    inputs="$(pw-link -i)"
+    while IFS= read -r port; do
+        [[ -z "$port" ]] && continue
+        case "$port" in
+            alsa_*|Midi-*|bluez_*|raop_*|Zen:*) continue ;;
+        esac
+        case "$port" in
+            *:monitor_*) continue ;;
+            *:events-in) continue ;;
+        esac
+        if [[ -z "${connected_in[$port]:-}" ]]; then
+            plugin_inputs+=("$port")
+        fi
+    done <<< "$inputs"
+
+
+    connected=0
+
+    # Route plugin outputs to the default sink (first stereo pair)
+    if [[ ${#plugin_outputs[@]} -gt 0 ]]; then
+        echo "Connecting ${#plugin_outputs[@]} plugin output(s) to sink..."
+        sink_idx=0
+        for out_port in "${plugin_outputs[@]}"; do
+            sink_port="${sink_ports[$sink_idx]}"
+            if [[ -z "$sink_port" ]]; then
+                sink_idx=0
+                sink_port="${sink_ports[$sink_idx]}"
+            fi
+            if pw-link "$out_port" "$sink_port" 2>/dev/null; then
+                echo "  $out_port -> $sink_port"
+                ((connected++))
+            fi
+            sink_idx=$(( (sink_idx + 1) % ${#sink_ports[@]} ))
+        done
+    fi
+
+    # Route source (interface input) to plugin inputs
+    if [[ ${#plugin_inputs[@]} -gt 0 ]]; then
+        echo "Connecting ${#plugin_inputs[@]} plugin input(s) from source..."
+        src_idx=0
+        for in_port in "${plugin_inputs[@]}"; do
+            src_port="${source_ports[$src_idx]}"
+            if [[ -z "$src_port" ]]; then
+                src_idx=0
+                src_port="${source_ports[$src_idx]}"
+            fi
+            if pw-link "$src_port" "$in_port" 2>/dev/null; then
+                echo "  $src_port -> $in_port"
+                ((connected++))
+            fi
+            src_idx=$(( (src_idx + 1) % ${#source_ports[@]} ))
+        done
+    fi
+
+    if [[ $connected -eq 0 ]]; then
+        echo "No unconnected Carla plugin ports found. Is Carla running with loaded plugins?"
+        echo "Check with: pw-link -io | grep -v 'alsa_\|Midi-\|bluez\|raop\|Zen'"
+    else
+        echo "Done: $connected connection(s) established."
+    fi
+
 # Set up yabridge Wine VST bridge for the current user
 setup-audio:
     #!/usr/bin/env bash
