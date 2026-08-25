@@ -89,8 +89,8 @@ validate_wine_stack() {
   local wine_version=""
   wine_version="$("${wine_bin}" --version 2>/dev/null || true)"
   echo "Wine version: ${wine_version:-unknown}"
-  if [[ "${wine_version}" != wine-11.15* ]]; then
-    echo "CRITICAL ERROR: expected Patrickl's wine-staging-dev Wine 11.15 stack, got '${wine_version:-unknown}'." >&2
+  if [[ "${wine_version}" != wine-11.16* ]]; then
+    echo "CRITICAL ERROR: expected Patrickl's wine-staging-dev Wine 11.16 stack, got '${wine_version:-unknown}'." >&2
     dnf5 list installed "wine*" "yabridge*" "winetricks*" || true
     exit 1
   fi
