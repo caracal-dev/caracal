@@ -120,7 +120,7 @@ jobs:
       - name: Build disk images
         id: build
         if: matrix.disk-type != 'installer-iso'
-        uses: osbuild/bootc-image-builder-action@30960621b85c9e76c653082f9ef4cab5a10210d5 # main, pinned 2026-05-18
+        uses: osbuild/bootc-image-builder-action@56d652d0afb02eb3e4b8fd35e7ca0391dbebab2a # main, pinned 2026-05-18
         with:
           builder-image: ${{ env.BIB_IMAGE }}
           config-file: ./disk_config/disk.toml
