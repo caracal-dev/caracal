@@ -43,6 +43,10 @@ jobs:
             target: caracal-nvidia
           - image-suffix: "-dx-nvidia"
             target: caracal-dx-nvidia
+          - image-suffix: "-gaming"
+            target: caracal-gaming
+          - image-suffix: "-gaming-nvidia"
+            target: caracal-gaming-nvidia
 
     permissions:
       contents: read

@@ -182,7 +182,7 @@ bash "${SCRIPTS_DIR}/install-appimagelauncher.sh"
 dnf -y install "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 dnf -y install "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
 
-dnf5 -y install caracal-setup caracal-software-installer caracal-audio-controller
+dnf5 -y install caracal-setup caracal-software-installer caracal-audio-controller app-creator
 
 # Realtime support
 dnf5 -y install realtime-setup
