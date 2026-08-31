@@ -11,8 +11,7 @@ trap 'rm -rf "${workdir}"' EXIT
 echo "Downloading appimagetool..."
 curl -fL --retry 3 --retry-delay 2 -o "${workdir}/appimagetool-x86_64.AppImage" "${APPIMAGETOOL_URL}"
 
-install -d /usr/local/bin
-install -m 755 "${workdir}/appimagetool-x86_64.AppImage" "${APPIMAGETOOL_BIN}"
+install -D -m 755 "${workdir}/appimagetool-x86_64.AppImage" "${APPIMAGETOOL_BIN}"
 
 if [[ ! -x "${APPIMAGETOOL_BIN}" ]]; then
   echo "CRITICAL ERROR: appimagetool is missing after install." >&2
