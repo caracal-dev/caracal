@@ -179,6 +179,7 @@ done
 # shellcheck disable=SC2016
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 bash "${SCRIPTS_DIR}/install-appimagelauncher.sh"
+bash "${SCRIPTS_DIR}/install-appimagetool.sh"
 dnf -y install "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 dnf -y install "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
 
