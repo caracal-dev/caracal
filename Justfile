@@ -181,6 +181,38 @@ build-stage-arm $target_image=(image_name + "-stage-arm") $tag=default_tag:
         --tag "${target_image}:${tag}" \
         .
 
+# Build the Bazzite-based gaming image variant for local testing.
+build-gaming $target_image=(image_name + "-gaming") $tag=default_tag:
+    #!/usr/bin/env bash
+
+    BUILD_ARGS=()
+    if [[ -z "$(git status -s)" ]]; then
+        BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
+    fi
+
+    podman build \
+        "${BUILD_ARGS[@]}" \
+        --pull=newer \
+        --target caracal-gaming \
+        --tag "${target_image}:${tag}" \
+        .
+
+# Build the Bazzite-NVIDIA gaming image variant for local testing.
+build-gaming-nvidia $target_image=(image_name + "-gaming-nvidia") $tag=default_tag:
+    #!/usr/bin/env bash
+
+    BUILD_ARGS=()
+    if [[ -z "$(git status -s)" ]]; then
+        BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
+    fi
+
+    podman build \
+        "${BUILD_ARGS[@]}" \
+        --pull=newer \
+        --target caracal-gaming-nvidia \
+        --tag "${target_image}:${tag}" \
+        .
+
 # Command: _rootful_load_image
 # Description: This script checks if the current user is root or running under sudo. If not, it attempts to resolve the image tag using podman inspect.
 #              If the image is found, it loads it into rootful podman. If the image is not found, it pulls it from the repository.

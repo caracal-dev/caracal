@@ -175,4 +175,35 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 
 RUN bootc container lint
 
+### Gaming image
+## Bazzite-based gaming variant. Bazzite already ships the kernel, NVIDIA
+## drivers, Steam, Lutris, MangoHud, and the rest of the gaming stack.
+## This target only layers Caracal branding and runtime files on top.
+## Excluded from ISO/disk builds due to image size.
+FROM ghcr.io/ublue-os/bazzite:latest AS caracal-gaming
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    IMAGE_NAME=caracal-gaming /ctx/build-gaming.sh
+
+RUN bootc container lint
+
+### Gaming NVIDIA image
+## Bazzite-NVIDIA-based gaming variant. Same as caracal-gaming but with
+## NVIDIA drivers preinstalled by Bazzite.
+## Excluded from ISO/disk builds due to image size.
+FROM ghcr.io/ublue-os/bazzite-nvidia:latest AS caracal-gaming-nvidia
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    IMAGE_NAME=caracal-gaming-nvidia /ctx/build-gaming.sh
+
+RUN bootc container lint
+
 FROM caracal AS final
