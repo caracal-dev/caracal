@@ -50,22 +50,22 @@
 
 
 /* ==========================================================================
-   NEW TAB / HOME — Gruvbox Dark (dark mode only)
+   NEW TAB / HOME — Caracal Dark (dark mode only)
    ========================================================================== */
 
 
 @-moz-document url-prefix("about:newtab"), url-prefix("about:home") {
   @media (prefers-color-scheme: dark) {
     :root {
-      --newtab-background-color: #282828 !important;
-      --newtab-text-primary-color: #FFFFFF !important;
+      --newtab-background-color: #181616 !important;
+      --newtab-text-primary-color: #dcd7ba !important;
     }
   }
 }
 
 
 /* ==========================================================================
-   PRIVILEGED PAGES — all of about: (Gruvbox Dark, dark mode only)
+   PRIVILEGED PAGES — all of about: (Caracal Dark, dark mode only)
 
    One block for every about: page instead of per-page rules: the in-content
    pages (preferences, addons, logins, support, protections, downloads/
@@ -91,11 +91,11 @@
     :root {
       /* FoxOne palette (userContent has no shared config with userChrome;
          keep in sync with the CONFIG block there) */
-      --uc-color-base:    #282828;
-      --uc-color-surface: #3c3836;
-      --uc-color-accent:  #fabd2f;
-      --uc-color-text:    #FFFFFF;
-      --uc-color-hover:   #7c6f64;
+      --uc-color-base:    #181616;
+      --uc-color-surface: #1f1e1c;
+      --uc-color-accent:  #f6c177;
+      --uc-color-text:    #dcd7ba;
+      --uc-color-hover:   rgba(138, 164, 176, 0.16);
 
       /* Page backgrounds */
       --in-content-page-background: var(--uc-color-base) !important;
@@ -144,8 +144,8 @@
 
     /* Highlighted text */
     ::selection {
-      background-color: #fabd2f !important;
-      color: #282828 !important;
+      background-color: #f6c177 !important;
+      color: #181616 !important;
     }
 
     /* Search/text boxes (about:preferences, about:addons, subdialogs): the
@@ -157,8 +157,8 @@
        ::selection rule lists on the shadow input), so style the input
        element directly and skip the token plumbing. */
     input:where([type="search"], [type="text"], [type="password"], [type="email"], [type="url"], [type="number"], [type="tel"]) {
-      background-color: var(--uc-color-surface, #3c3836) !important;
-      color: var(--uc-color-text, #FFFFFF) !important;
+      background-color: var(--uc-color-surface, #1f1e1c) !important;
+      color: var(--uc-color-text, #dcd7ba) !important;
     }
   }
 }
@@ -169,7 +169,7 @@
    Collected while walking about:about; one block per page.
    ========================================================================== */
 
-/* about:downloads — the SELECTED row is amber only while the window is
+/* about:downloads — the SELECTED row is warm accent only while the window is
    inactive. With focus, browser/themes/windows/downloads/allDownloadsView.css
    paints hardcoded Windows-blue bevel gradients plus a blue outline over it.
    Flatten the focused state back to the selection tokens. */
@@ -177,8 +177,8 @@
   @media (prefers-color-scheme: dark) {
     #downloadsListBox:focus > richlistitem[selected] {
       background-image: none !important;
-      background-color: var(--in-content-item-selected, #fabd2f) !important;
-      color: var(--in-content-item-selected-text, #282828) !important;
+      background-color: var(--in-content-item-selected, #f6c177) !important;
+      color: var(--in-content-item-selected-text, #181616) !important;
       outline: none !important;
     }
   }
@@ -187,42 +187,42 @@
 /* about:debugging — a devtools page with its own Photon palette on top of
    the design tokens. Two stragglers: the text-input focus ring
    (--theme-focus-textinput-outline-color ← --blue-50, variables.css) and
-   the primary button ("Hinzufügen"), which resolves outside the amber
+   the primary button ("Hinzufügen"), which resolves outside the accent
    override. Repoint the local blues and cover the primary-button classes
    directly. Scoped to the page, so DevTools proper keeps its blues. */
 @-moz-document url-prefix("about:debugging") {
   @media (prefers-color-scheme: dark) {
     :root {
-      --blue-50: #fabd2f !important;
-      --blue-55: #fabd2f !important;
-      --blue-60: #fabd2f !important;
-      --theme-focus-outline-color: #fabd2f !important;
-      --theme-focus-textinput-outline-color: #fabd2f !important;
-      --theme-link-color: #fabd2f !important;
+      --blue-50: #f6c177 !important;
+      --blue-55: #f6c177 !important;
+      --blue-60: #f6c177 !important;
+      --theme-focus-outline-color: #f6c177 !important;
+      --theme-focus-textinput-outline-color: #f6c177 !important;
+      --theme-link-color: #f6c177 !important;
     }
     button.primary,
     .primary-button,
     .default-button.primary-button {
-      background-color: #fabd2f !important;
-      color: #282828 !important;
+      background-color: #f6c177 !important;
+      color: #181616 !important;
     }
     button.primary:enabled:hover,
     .primary-button:enabled:hover {
-      background-color: color-mix(in srgb, #fabd2f 85%, #282828) !important;
+      background-color: color-mix(in srgb, #f6c177 85%, #181616) !important;
     }
   }
 }
 
 /* about:mozilla — the Book of Mozilla easter egg ships its own maroon
    radial gradient and white serif text (toolkit aboutMozilla.css). Rebind
-   the scripture to the palette: base background, amber verse. Typography
+   the scripture to the palette: base background, warm accent verse. Typography
    stays untouched; only the colours convert. */
 @-moz-document url("about:mozilla") {
   html {
-    background: #282828 !important;
-    color: #fabd2f !important;
+    background: #181616 !important;
+    color: #f6c177 !important;
   }
   a {
-    color: #fabd2f !important;
+    color: #f6c177 !important;
   }
 }

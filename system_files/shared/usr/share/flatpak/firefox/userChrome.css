@@ -15,21 +15,21 @@
 
 :root {
   /* Color palette — change these five values to retheme FoxOne */
-  --uc-color-base:    #282828;   /* main background (toolbar, frame) */
-  --uc-color-surface: #3c3836;   /* secondary tone (borders, separators, focused URL field) */
-  --uc-color-accent:  #fabd2f;   /* accent color (active tab, focus ring) */
-  --uc-color-text:    #FFFFFF;   /* primary text */
-  --uc-color-hover:   #7c6f64;   /* hover / highlight backgrounds */
+  --uc-color-base:    #181616;   /* main background (toolbar, frame) */
+  --uc-color-surface: #1f1e1c;   /* secondary tone (borders, separators, focused URL field) */
+  --uc-color-accent:  #f6c177;   /* accent color (active tab, focus ring) */
+  --uc-color-text:    #dcd7ba;   /* primary text */
+  --uc-color-hover:   rgba(138, 164, 176, 0.16);   /* hover / highlight backgrounds */
 
   /* Corner radius for the surfaces FoxOne owns (tab-group chips, library
      search field) and the value handed to every surface the rounded-corners
      toggle below can round. */
-  --uc-border-radius: 8px;
+  --uc-border-radius: 12px;
 
   /* Rounded corners (0 = FoxOne's square edges, 1 = every surface FoxOne
      squares takes --uc-border-radius instead). Details in the derived block
      right below the config. */
-  --uc-rounded: 0;
+  --uc-rounded: 1;
 
   /* Statuspanel distance from window border (0 = corner). Set to match the
      floating findbar's --findbar-top / --findbar-right (8px): both are CSS px,
@@ -58,7 +58,7 @@
   --uc-tab-min-width: 76px;
 
   /* Inactive tab hover title color (issue #16) */
-  --uc-tab-hover-text: #ffda85;
+  --uc-tab-hover-text: #f6c177;
 
   /* Container tab indicator line (0 = bottom edge, 1 = top) */
   --uc-container-line-top: 1;
@@ -243,7 +243,7 @@
 
 
 /* ==========================================================================
-   COLOR THEME — Gruvbox Dark
+   COLOR THEME — Caracal Dark
    Replaces the standalone ColorTheme.xpi. Only applies in dark mode.
    ========================================================================== */
 
@@ -469,7 +469,7 @@
      image removes the line entirely; recolouring attempts (border-color
      fallback, explicit 1px border) never produced a visible line, so the
      separator is retired rather than rethemed. Deliberate: no line beats a
-     violet gradient in a Gruvbox menu. */
+     violet gradient in a Caracal menu. */
   toolbarseparator.proton-zap::before {
     border-image: none !important;
   }
@@ -1373,7 +1373,7 @@ sidebar-main,
   --toolbarbutton-icon-fill: var(--uc-tab-hover-text) !important;
 }
 #nav-bar .toolbarbutton-1:is(:active, [open]) {
-  --toolbarbutton-icon-fill: var(--tab-selected-textcolor, #fabd2f) !important;
+  --toolbarbutton-icon-fill: var(--tab-selected-textcolor, #f6c177) !important;
 }
 
 /* The new-tab "+" lives in the tab strip, not #nav-bar, so the rules above
@@ -1389,7 +1389,7 @@ sidebar-main,
   --toolbarbutton-icon-fill: var(--uc-tab-hover-text) !important;
 }
 :is(#tabs-newtab-button, #new-tab-button):is(:active, [open]) {
-  --toolbarbutton-icon-fill: var(--tab-selected-textcolor, #fabd2f) !important;
+  --toolbarbutton-icon-fill: var(--tab-selected-textcolor, #f6c177) !important;
 }
 
 /* Bookmarks-bar overflow chevron (">>"): lives in #PersonalToolbar, so the
@@ -1430,7 +1430,7 @@ sidebar-main,
 }
 #urlbar .urlbar-icon:not(#star-button):is(:active, [open]),
 #urlbar .urlbar-page-action:is(:active, [open]) .urlbar-icon {
-  fill: var(--tab-selected-textcolor, #fabd2f) !important;
+  fill: var(--tab-selected-textcolor, #f6c177) !important;
 }
 
 /* Shield (tracking protection) and the site-info/settings icon use their own
@@ -1446,8 +1446,8 @@ sidebar-main,
 #tracking-protection-icon-container:is(:active, [open]) #tracking-protection-icon,
 #trust-icon-container:is(:active, [open]) #trust-icon,
 #urlbar .identity-box-button:is(:active, [open]) {
-  fill: var(--tab-selected-textcolor, #fabd2f) !important;
-  color: var(--tab-selected-textcolor, #fabd2f) !important;
+  fill: var(--tab-selected-textcolor, #f6c177) !important;
+  color: var(--tab-selected-textcolor, #f6c177) !important;
 }
 
 
@@ -1470,7 +1470,7 @@ sidebar-main,
 }
 #PersonalToolbar .bookmark-item:is(:active, [open]) {
   background-color: transparent !important;
-  color: var(--tab-selected-textcolor, #fabd2f) !important;
+  color: var(--tab-selected-textcolor, #f6c177) !important;
 }
 
 
@@ -1497,8 +1497,8 @@ sidebar-main,
   left: 10px !important;
   right: 10px !important;
   height: 1px !important;
-  background: var(--tab-selected-textcolor, #fabd2f) !important;
-  box-shadow: 0 1px 10px 1px var(--tab-selected-textcolor, #fabd2f) !important;
+  background: var(--tab-selected-textcolor, #f6c177) !important;
+  box-shadow: 0 1px 10px 1px var(--tab-selected-textcolor, #f6c177) !important;
   transform-origin: left !important;
   transform: scaleX(0);
   opacity: 0 !important;
@@ -1515,8 +1515,8 @@ sidebar-main,
 
 /* Inactive busy tabs — white to match tab text color */
 .tabbrowser-tab[busy]:not([selected], [pinned]) .tab-background::before {
-  background: var(--toolbar-color, #FFFFFF) !important;
-  box-shadow: 0 1px 10px 1px var(--toolbar-color, #FFFFFF) !important;
+  background: var(--toolbar-color, #dcd7ba) !important;
+  box-shadow: 0 1px 10px 1px var(--toolbar-color, #dcd7ba) !important;
 }
 
 /* Top glow – busy tabs (pinned excluded: their ::after is the indicator) */
@@ -1528,8 +1528,8 @@ sidebar-main,
   left: 10px !important;
   right: 10px !important;
   height: 1px !important;
-  background: var(--tab-selected-textcolor, #fabd2f) !important;
-  box-shadow: 0 1px 10px 1px var(--tab-selected-textcolor, #fabd2f) !important;
+  background: var(--tab-selected-textcolor, #f6c177) !important;
+  box-shadow: 0 1px 10px 1px var(--tab-selected-textcolor, #f6c177) !important;
   transform-origin: left !important;
   opacity: var(--uc-show-loading-progress) !important;
   animation: uc-progress 2.5s cubic-bezier(0.2, 0.6, 0.4, 1) forwards !important;
@@ -1538,8 +1538,8 @@ sidebar-main,
 
 /* Top glow — inactive tabs use white */
 .tabbrowser-tab[busy]:not([selected], [pinned]) .tab-background::after {
-  background: var(--toolbar-color, #FFFFFF) !important;
-  box-shadow: 0 1px 10px 1px var(--toolbar-color, #FFFFFF) !important;
+  background: var(--toolbar-color, #dcd7ba) !important;
+  box-shadow: 0 1px 10px 1px var(--toolbar-color, #dcd7ba) !important;
 }
 
 @keyframes uc-progress {
@@ -1665,19 +1665,19 @@ sidebar-main {
      trees — style the input directly. #1f1f1f: FoxOne's compiled-in field
      dark (matches the in-content standins). */
   input[type="search"] {
-    background-color: #1f1f1f !important;
+    background-color: #1f1e1c !important;
   }
 
   /* Selected row (bookmarks, history, synced/open tabs) — native paints
      --button-background-color-primary, which resolves to the OS accent
      (cyan block). Selection follows the FoxOne model instead: no
      background block, accent text. Rules pierce into the list shadow
-     trees for the same user-sheet reason as above; #fabd2f =
+     trees for the same user-sheet reason as above; #f6c177 =
      --uc-color-accent (tokens don't reach here either). */
   sidebar-tab-row[selected],
   sidebar-bookmark-row[selected] {
     background-color: transparent !important;
-    color: #fabd2f !important;
+    color: #f6c177 !important;
   }
 }
 
@@ -1686,11 +1686,11 @@ sidebar-main {
    never reaches it. Its search box is a modern moz-input-search though, so
    the same shadow-piercing input rule works; the selection is a XUL tree
    like the Library: FoxOne model via ::-moz-tree pseudos, hardcoded
-   #fabd2f = --uc-color-accent (tree pseudos cannot read variables),
+   #f6c177 = --uc-color-accent (tree pseudos cannot read variables),
    dark-gated for the same reason as the Library block. */
 @-moz-document url("chrome://browser/content/places/bookmarksSidebar.xhtml") {
   input[type="search"] {
-    background-color: #1f1f1f !important;
+    background-color: #1f1e1c !important;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -1701,13 +1701,13 @@ sidebar-main {
     }
     treechildren::-moz-tree-cell-text(selected),
     treechildren::-moz-tree-cell-text(selected, focus) {
-      color: #fabd2f !important;
+      color: #f6c177 !important;
     }
     treechildren::-moz-tree-image(selected),
     treechildren::-moz-tree-image(selected, focus),
     treechildren::-moz-tree-twisty(selected),
     treechildren::-moz-tree-twisty(selected, focus) {
-      fill: #fabd2f !important;
+      fill: #f6c177 !important;
     }
   }
 }
@@ -2254,7 +2254,7 @@ sidebar-main {
   color: var(--uc-tab-hover-text) !important;
 }
 .tabbrowser-tab:not([pinned]) .tab-close-button:hover:active {
-  color: var(--tab-selected-textcolor, #fabd2f) !important;
+  color: var(--tab-selected-textcolor, #f6c177) !important;
 }
 
 /* adaptive tab width */
@@ -2277,8 +2277,8 @@ sidebar-main {
   left: 10px !important;
   right: 10px !important;
   height: 1px !important;
-  background: var(--tab-selected-textcolor, #fabd2f) !important;
-  box-shadow: 0 -1px 10px 1px var(--tab-selected-textcolor, #fabd2f) !important;
+  background: var(--tab-selected-textcolor, #f6c177) !important;
+  box-shadow: 0 -1px 10px 1px var(--tab-selected-textcolor, #f6c177) !important;
 }
 
 /* container tabs indicator (position toggle in CONFIG)
@@ -2753,8 +2753,8 @@ html[id^="taskbartab"] #unified-extensions-button {
    Both panes (folder tree left, item list right) are XUL <tree>s and are
    only styleable through ::-moz-tree-* pseudo-elements. Those CANNOT read
    CSS variables — the palette values are hardcoded here on purpose:
-   #fabd2f = --uc-color-accent. Retheming means touching this block too.
-   Dark-scheme gated like the COLOR THEME block: amber text without a
+   #f6c177 = --uc-color-accent. Retheming means touching this block too.
+   Dark-scheme gated like the COLOR THEME block: warm accent text without a
    highlight needs the dark surface.
 
    Known gap: the Downloads category inside the Library is a richlistbox,
@@ -2764,7 +2764,7 @@ html[id^="taskbartab"] #unified-extensions-button {
 @-moz-document url("chrome://browser/content/places/places.xhtml") {
   @media (prefers-color-scheme: dark) {
 
-    /* Selected row — amber text, no highlight block. The unfocused
+    /* Selected row — warm accent text, no highlight block. The unfocused
        variant (native: grey) gets the same treatment, so the pane that
        doesn't hold focus still shows where you are. */
     treechildren::-moz-tree-row(selected),
@@ -2774,17 +2774,17 @@ html[id^="taskbartab"] #unified-extensions-button {
     }
     treechildren::-moz-tree-cell-text(selected),
     treechildren::-moz-tree-cell-text(selected, focus) {
-      color: #fabd2f !important;
+      color: #f6c177 !important;
     }
     /* Folder/page icons and twisties are context-fill — follow the text. */
     treechildren::-moz-tree-image(selected),
     treechildren::-moz-tree-image(selected, focus),
     treechildren::-moz-tree-twisty(selected),
     treechildren::-moz-tree-twisty(selected, focus) {
-      fill: #fabd2f !important;
+      fill: #f6c177 !important;
     }
 
-    /* Keyboard-cursor dashed ring: redundant next to the amber text
+    /* Keyboard-cursor dashed ring: redundant next to the accent text
        (arrow keys move the selection along anyway) — off. Sits BEFORE the
        hover rule so hovering a current row still shows the frame. */
     treechildren::-moz-tree-row(current),
@@ -2797,7 +2797,7 @@ html[id^="taskbartab"] #unified-extensions-button {
     /* Hover — accent frame, no fill. */
     treechildren::-moz-tree-row(hover) {
       background-color: transparent !important;
-      border: 1px solid #fabd2f !important;
+      border: 1px solid #f6c177 !important;
     }
 
     /* ------------------------------------------------------------------
@@ -2961,7 +2961,7 @@ html[id^="taskbartab"] #unified-extensions-button {
       background-position: center;
       background-size: 12px;
       -moz-context-properties: fill;
-      fill: #282828; /* base — dark check on amber */
+      fill: #181616; /* base — dark check on amber */
     }
   }
 }
