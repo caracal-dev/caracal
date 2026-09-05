@@ -14,7 +14,7 @@ for (const panel of allPanels) {
         if (widget.type === "org.kde.plasma.icontasks") {
             widget.currentConfigGroup = ["General"];
             widget.writeConfig("launchers", [
-                "applications:app.zen_browser.zen.desktop",
+                "applications:net.waterfox.waterfox.desktop",
                 "applications:com.mitchellh.ghostty.desktop",
                 "applications:io.github.kolunmi.Bazaar.desktop",
                 "applications:ardour9.desktop",

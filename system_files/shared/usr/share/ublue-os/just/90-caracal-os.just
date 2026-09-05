@@ -718,12 +718,13 @@ first-run:
         exit 1
     fi
     echo "Using Wine loader: ${WINELOADER}"
+    source /usr/share/caracal/version-pins
     wine_version="$("$WINELOADER" --version 2>/dev/null || true)"
     echo "Wine version: ${wine_version:-unknown}"
-    if [[ "${wine_version}" != wine-11.15* ]]; then
-        echo "Error: expected Patrickl's wine-staging-dev Wine 11.15 stack, got '${wine_version:-unknown}'." >&2
+    if [[ "${wine_version}" != wine-${WINE_VERSION}* ]]; then
+        echo "Error: expected Patrickl's wine-staging-dev Wine ${WINE_VERSION} stack, got '${wine_version:-unknown}'." >&2
         echo "Wine 11.10 currently fails PE32 WoW64 execution on Caracal." >&2
-        echo "Rebuild or update Caracal with patrickl/wine-staging-dev providing Wine 11.15." >&2
+        echo "Rebuild or update Caracal with patrickl/wine-staging-dev providing Wine ${WINE_VERSION}." >&2
         rpm -q wine wine-core wine-common yabridge winetricks 2>/dev/null || true
         exit 1
     fi
@@ -832,6 +833,8 @@ first-run:
     echo "Setting Ghostty theme"
     mkdir -p ~/.config/ghostty
     cp -rn -u /usr/share/ublue-os/ghostty ~/.config/
+
+    /usr/libexec/caracal-waterfox-config
 
     echo 'First-run setup complete. Reboot, or at minimum log out and back in, so group changes and session limits take effect.'
 
@@ -991,12 +994,13 @@ setup-audio:
         echo "Ensure wine-core and wine-common are installed. You may need to reboot after a system update." >&2
         exit 1
     fi
+    source /usr/share/caracal/version-pins
     wine_version="$("$WINELOADER" --version 2>/dev/null || true)"
     echo "Wine version: ${wine_version:-unknown}"
-    if [[ "${wine_version}" != wine-11.15* ]]; then
-        echo "Error: expected Patrickl's wine-staging-dev Wine 11.15 stack, got '${wine_version:-unknown}'." >&2
+    if [[ "${wine_version}" != wine-${WINE_VERSION}* ]]; then
+        echo "Error: expected Patrickl's wine-staging-dev Wine ${WINE_VERSION} stack, got '${wine_version:-unknown}'." >&2
         echo "Wine 11.10 currently fails PE32 WoW64 execution on Caracal." >&2
-        echo "Rebuild or update Caracal with patrickl/wine-staging-dev providing Wine 11.15." >&2
+        echo "Rebuild or update Caracal with patrickl/wine-staging-dev providing Wine ${WINE_VERSION}." >&2
         rpm -q wine wine-core wine-common yabridge winetricks 2>/dev/null || true
         exit 1
     fi
@@ -1065,13 +1069,13 @@ reinstall-flatpaks:
     flatpak install --user -y flathub \
         io.github.kolunmi.Bazaar \
         org.tenacityaudio.Tenacity \
-        app.zen_browser.zen \
+        net.waterfox.waterfox \
         com.ranfdev.DistroShelf \
         org.kde.haruna \
         org.gnome.Decibels \
         "io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf" \
         org.gnome.Loupe
-    # Remove any legacy Firefox flatpak; Zen Browser is the default browser.
+    # Remove any legacy Firefox flatpak; Waterfox is the default browser.
     flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true
     sudo flatpak uninstall -y org.mozilla.firefox 2>/dev/null || true
     flatpak update --user --appstream -y
@@ -1310,3 +1314,76 @@ juce-fix ACTION="dxvk":
       rm -f "$REG_FILE"
       echo "Graphics configuration has been normalised."
     fi
+
+
+# Taken directly from Bazzite
+# Credit https://github/ublue-os/bazzite
+# Launch Waydroid configuration helper. Options: init | configure | gpu | integration | reset | helper
+[group("apps")]
+configure-waydroid ACTION="":
+    #!/usr/bin/bash
+    source /usr/lib/ujust/ujust.sh
+    IMAGE_INFO="/usr/share/ublue-os/image-info.json"
+    IMAGE_NAME=$(jq -r '."image-name"' < $IMAGE_INFO)
+    OPTION={{ ACTION }}
+    if [ "$OPTION" == "help" ]; then
+      echo "Usage: ujust configure-waydroid <option>"
+      echo "  <option>: Specify the quick option to skip the prompt"
+      echo "  Use 'init' to select Initialize Waydroid"
+      echo "  Use 'configure' to select Configure Waydroid"
+      echo "  Use 'gpu' to choose Select GPU for Waydroid"
+      echo "  Use 'integration' to enable desktop window integration for Waydroid"
+      echo "  Use 'reset' to reset Waydroid"
+      echo "  Use 'helper' to install waydroid-helper (https://github.com/waydroid-helper/waydroid-helper)"
+      exit 0
+    elif [ "$OPTION" == "" ]; then
+      echo "${bold}Waydroid Setup${normal}"
+      echo "Please read the $(Urllink "https://docs.bazzite.gg/Installing_and_Managing_Software/Waydroid_Setup_Guide/" "Waydroid setup documentation") before continuing"
+      OPTION=$(Choose "Initialize Waydroid" "Configure Waydroid" "Select GPU for Waydroid" "Reset Waydroid (also removes waydroid-related files from user folder)" "Install waydroid-helper (https://github.com/waydroid-helper/waydroid-helper)")
+    fi
+    if [[ "${OPTION,,}" =~ ^init ]]; then
+      if [[ ! $IMAGE_NAME =~ "deck" && ! $IMAGE_NAME =~ "ally" ]]; then
+        sudo systemctl enable --now waydroid-container
+      fi
+      echo "This might take a bit, please be patient"
+      sudo waydroid init -c 'https://ota.waydro.id/system' -v 'https://ota.waydro.id/vendor'
+      sudo restorecon -R /var/lib/waydroid
+      mkdir -p ~/.local/share/applications
+      cp /usr/share/applications/waydroid-container-restart.desktop ~/.local/share/applications
+      echo "Waydroid has been initialized, please run waydroid once before you Configure Waydroid"
+    elif [[ "${OPTION,,}" =~ ^configure ]]; then
+      git clone https://github.com/ublue-os/waydroid_script.git --depth 1 /tmp/waydroid_script
+      python -m venv /tmp/waydroid_script/venv
+      source /tmp/waydroid_script/venv/bin/activate
+      sudo pip install -r /tmp/waydroid_script/requirements.txt
+      sudo /tmp/waydroid_script/main.py
+      deactivate
+      sudo rm -rf /tmp/waydroid_script
+    elif [[ "${OPTION,,}" =~ gpu ]]; then
+      sudo /usr/bin/waydroid-choose-gpu
+    elif [[ "${OPTION,,}" =~ integration ]]; then
+      waydroid prop set persist.waydroid.multi_windows true
+    elif [[ "${OPTION,,}" =~ ^reset ]]; then
+      echo "Resetting Waydroid"
+      bash -c 'sudo rm -rf /var/lib/waydroid /home/.waydroid ~/waydroid ~/.share/waydroid ~/.local/share/applications/*aydroid* ~/.local/share/waydroid'
+      echo "Waydroid has been reset"
+    elif [[ "${OPTION,,}" =~ helper ]]; then
+      echo "Installing waydroid-helper"
+      if grep -q 'it.mijorus.gearlever' <<< $(flatpak list); then
+          wget \
+              $(curl -s https://api.github.com/repos/waydroid-helper/waydroid-helper/releases/latest | \
+              jq -r ".assets[] | select(.name | test(\".*x86_64.AppImage\")) | .browser_download_url") \
+              -O $HOME/Downloads/waydroid-helper.AppImage
+          chmod +x $HOME/Downloads/waydroid-helper.AppImage
+          echo "Download complete, add it to your app menu via Gear Lever"
+          flatpak run it.mijorus.gearlever $HOME/Downloads/waydroid-helper.AppImage
+      else
+          wget \
+              $(curl -s https://api.github.com/repos/waydroid-helper/waydroid-helper/releases/latest | \
+              jq -r ".assets[] | select(.name | test(\".*AppImage\")) | .browser_download_url") \
+              -O $HOME/Desktop/waydroid-helper.AppImage
+          chmod +x $HOME/Desktop/waydroid-helper.AppImage
+          echo "Install complete, it has been added to your Desktop"
+      fi
+    fi
+

@@ -85,10 +85,11 @@ yabridge-setup:
         exit 1
     fi
 
+    source /usr/share/caracal/version-pins
     export WINELOADER="${wine_loader}"
     wine_version="$("$WINELOADER" --version 2>/dev/null || true)"
-    if [[ "${wine_version}" != wine-11.15* ]]; then
-        echo "Expected Patrickl's wine-staging-dev Wine 11.15 stack, got '${wine_version:-unknown}'." >&2
+    if [[ "${wine_version}" != wine-${STAGE_WINE_VERSION}* ]]; then
+        echo "Expected Patrickl's wine-staging-dev Wine ${STAGE_WINE_VERSION} stack, got '${wine_version:-unknown}'." >&2
         exit 1
     fi
 

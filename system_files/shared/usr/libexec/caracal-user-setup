@@ -153,9 +153,9 @@ run_post_session_setup() {
     plasma-apply-wallpaperimage "$WALLPAPER" || true
   fi
 
-  # Ensure existing users also resolve browser launches to Zen Browser.
+  # Ensure existing users also resolve browser launches to Waterfox.
   # These commands often require a running session bus/portal.
-  xdg-settings set default-web-browser app.zen_browser.zen.desktop 2>/dev/null || true
+  xdg-settings set default-web-browser net.waterfox.waterfox.desktop 2>/dev/null || true
   for mime in \
     text/html \
     x-scheme-handler/http \
@@ -168,7 +168,7 @@ run_post_session_setup() {
     application/x-extension-shtml \
     application/x-extension-xhtml \
     application/x-extension-xht; do
-    xdg-mime default app.zen_browser.zen.desktop "$mime" 2>/dev/null || true
+    xdg-mime default net.waterfox.waterfox.desktop "$mime" 2>/dev/null || true
   done
 }
 
