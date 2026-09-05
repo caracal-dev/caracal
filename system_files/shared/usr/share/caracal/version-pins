@@ -1,0 +1,16 @@
+# Caracal OS version pins
+# Single source of truth for pinned dependency versions.
+# Source this file in bash scripts:
+#   source /usr/share/caracal/version-pins
+#
+# To update a version, change the value here and rebuild. Every consumer picks it up.
+
+# Wine stack (patrickl/wine-staging-dev)
+# Expected version string from `wine --version`
+WINE_VERSION=11.16
+STAGE_WINE_VERSION=11.16
+
+# AppImageLauncher — RPM filename and download URL
+# The release tag version differs from the RPM version — both captured here.
+APPIMAGELAUNCHER_RPM="appimagelauncher_3.0.0-beta-2-gha287.96cb937_x86_64.rpm"
+APPIMAGELAUNCHER_URL="https://github.com/TheAssassin/AppImageLauncher/releases/download/v3.0.0-beta-3/${APPIMAGELAUNCHER_RPM}"

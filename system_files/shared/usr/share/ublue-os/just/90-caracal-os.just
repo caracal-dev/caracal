@@ -718,12 +718,13 @@ first-run:
         exit 1
     fi
     echo "Using Wine loader: ${WINELOADER}"
+    source /usr/share/caracal/version-pins
     wine_version="$("$WINELOADER" --version 2>/dev/null || true)"
     echo "Wine version: ${wine_version:-unknown}"
-    if [[ "${wine_version}" != wine-11.16* ]]; then
-        echo "Error: expected Patrickl's wine-staging-dev Wine 11.16 stack, got '${wine_version:-unknown}'." >&2
+    if [[ "${wine_version}" != wine-${WINE_VERSION}* ]]; then
+        echo "Error: expected Patrickl's wine-staging-dev Wine ${WINE_VERSION} stack, got '${wine_version:-unknown}'." >&2
         echo "Wine 11.10 currently fails PE32 WoW64 execution on Caracal." >&2
-        echo "Rebuild or update Caracal with patrickl/wine-staging-dev providing Wine 11.16." >&2
+        echo "Rebuild or update Caracal with patrickl/wine-staging-dev providing Wine ${WINE_VERSION}." >&2
         rpm -q wine wine-core wine-common yabridge winetricks 2>/dev/null || true
         exit 1
     fi
@@ -993,12 +994,13 @@ setup-audio:
         echo "Ensure wine-core and wine-common are installed. You may need to reboot after a system update." >&2
         exit 1
     fi
+    source /usr/share/caracal/version-pins
     wine_version="$("$WINELOADER" --version 2>/dev/null || true)"
     echo "Wine version: ${wine_version:-unknown}"
-    if [[ "${wine_version}" != wine-11.16* ]]; then
-        echo "Error: expected Patrickl's wine-staging-dev Wine 11.16 stack, got '${wine_version:-unknown}'." >&2
+    if [[ "${wine_version}" != wine-${WINE_VERSION}* ]]; then
+        echo "Error: expected Patrickl's wine-staging-dev Wine ${WINE_VERSION} stack, got '${wine_version:-unknown}'." >&2
         echo "Wine 11.10 currently fails PE32 WoW64 execution on Caracal." >&2
-        echo "Rebuild or update Caracal with patrickl/wine-staging-dev providing Wine 11.16." >&2
+        echo "Rebuild or update Caracal with patrickl/wine-staging-dev providing Wine ${WINE_VERSION}." >&2
         rpm -q wine wine-core wine-common yabridge winetricks 2>/dev/null || true
         exit 1
     fi
