@@ -20,7 +20,7 @@ if [[ -f "$FLATPAK_SETUP_VER_FILE" ]]; then
   fi
 fi
 
-# Remove any legacy Firefox flatpak (Zen Browser is the default browser).
+# Remove any legacy Firefox flatpak (Waterfox is the default browser).
 # Try both user and system scope so rebases away from browser-heavy images
 # actually converge on the Caracal default set.
 flatpak uninstall --user -y org.mozilla.firefox 2>/dev/null || true

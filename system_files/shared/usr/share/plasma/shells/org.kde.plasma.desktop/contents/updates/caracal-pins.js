@@ -1,7 +1,7 @@
 /* global panels */
 
 const desiredLaunchers = [
-    "applications:app.zen_browser.zen.desktop",
+    "applications:net.waterfox.waterfox.desktop",
     "applications:com.mitchellh.ghostty.desktop",
     "applications:io.github.kolunmi.Bazaar.desktop",
     "applications:ardour9.desktop",

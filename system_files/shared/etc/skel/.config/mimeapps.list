@@ -1,12 +1,12 @@
 [Default Applications]
-text/html=app.zen_browser.zen.desktop
-x-scheme-handler/http=app.zen_browser.zen.desktop
-x-scheme-handler/https=app.zen_browser.zen.desktop
-x-scheme-handler/ftp=app.zen_browser.zen.desktop
-x-scheme-handler/chrome=app.zen_browser.zen.desktop
-application/x-extension-htm=app.zen_browser.zen.desktop
-application/x-extension-html=app.zen_browser.zen.desktop
-application/x-extension-shtml=app.zen_browser.zen.desktop
-application/xhtml+xml=app.zen_browser.zen.desktop
-application/x-extension-xhtml=app.zen_browser.zen.desktop
-application/x-extension-xht=app.zen_browser.zen.desktop
+text/html=net.waterfox.waterfox.desktop
+x-scheme-handler/http=net.waterfox.waterfox.desktop
+x-scheme-handler/https=net.waterfox.waterfox.desktop
+x-scheme-handler/ftp=net.waterfox.waterfox.desktop
+x-scheme-handler/chrome=net.waterfox.waterfox.desktop
+application/x-extension-htm=net.waterfox.waterfox.desktop
+application/x-extension-html=net.waterfox.waterfox.desktop
+application/x-extension-shtml=net.waterfox.waterfox.desktop
+application/xhtml+xml=net.waterfox.waterfox.desktop
+application/x-extension-xhtml=net.waterfox.waterfox.desktop
+application/x-extension-xht=net.waterfox.waterfox.desktop
