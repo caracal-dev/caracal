@@ -2,7 +2,7 @@
 # flatpak-preinstall.service. Bazaar itself lives in bazaar.preinstall.
 # See: https://docs.flatpak.org/en/latest/flatpak-command-reference.html#flatpak-preinstall
 
-[Flatpak Preinstall app.zen_browser.zen]
+[Flatpak Preinstall net.waterfox.waterfox]
 Branch=stable
 IsRuntime=false
 
@@ -22,7 +22,7 @@ IsRuntime=false
 Branch=stable
 IsRuntime=false
 
-[Flatpak Preinstall io.github.b43NnUNF4vidFYFhpqaLWy2ANawtRbMtUXZY9Pf.jumpdf]
+[Flatpak Preinstall org.gnome.Papers]
 Branch=stable
 IsRuntime=false
 

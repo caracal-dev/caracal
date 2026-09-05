@@ -1,0 +1,87 @@
+#!/usr/bin/bash
+# Apply Waterfox config overrides (Betterfox user.js + FoxOne theme) to the
+# Waterfox flatpak profile.
+#   Source:  /usr/share/flatpak/firefox/  (baked into the image)
+#   Target:  ~/.var/app/net.waterfox.waterfox/.waterfox/<profile>/
+#
+# Picks the default-release profile from profiles.ini.
+# Runs once per user from ujust first-run.
+
+set -euo pipefail
+
+if [ "${EUID:-$(id -u)}" -lt 1000 ]; then
+  echo "caracal-waterfox-config: skipping system user."
+  exit 0
+fi
+
+SOURCE_DIR="/usr/share/flatpak/firefox"
+WATERFOX_BASE="$HOME/.var/app/net.waterfox.waterfox"
+PROFILE_PARENT="$WATERFOX_BASE/.waterfox"
+CARACAL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
+
+mkdir -p "$CARACAL_DIR"
+MARKER_FILE="$CARACAL_DIR/waterfox-config-version"
+MARKER_VALUE="1"
+
+if [[ -f "$MARKER_FILE" ]] && [[ "$(cat "$MARKER_FILE")" == "$MARKER_VALUE" ]]; then
+  echo "caracal-waterfox-config: already applied."
+  exit 0
+fi
+
+if [ ! -d "$SOURCE_DIR" ]; then
+  echo "caracal-waterfox-config: source $SOURCE_DIR not found -- built-in configs missing."
+  exit 0
+fi
+
+# Find the default-release profile via profiles.ini
+if [ ! -f "$PROFILE_PARENT/profiles.ini" ]; then
+  echo "caracal-waterfox-config: no profiles.ini at $PROFILE_PARENT -- Waterfox never launched."
+  exit 0
+fi
+
+# Parse profiles.ini for the default profile path.
+# Format:
+#   [Profile0]
+#   Name=default-release
+#   IsRelative=1
+#   Path=xxxxx.default-release
+#   Default=1
+PROFILE_DIR=""
+while IFS='=' read -r key value; do
+  if [[ "$key" == "Path" ]] && [[ "$value" == *.default-release ]]; then
+    PROFILE_DIR="$value"
+  fi
+done < <(awk -v RS='' '/Profile.*default-release/' "$PROFILE_PARENT/profiles.ini" 2>/dev/null)
+
+if [ -z "$PROFILE_DIR" ]; then
+  # Fallback: glob *.default-release directories
+  shopt -s nullglob
+  PROFILES=( "$PROFILE_PARENT"/*.default-release )
+  if [ ${#PROFILES[@]} -gt 0 ]; then
+    PROFILE_DIR="$(basename "${PROFILES[0]}")"
+  fi
+fi
+
+if [ -z "$PROFILE_DIR" ]; then
+  echo "caracal-waterfox-config: no default-release profile found under $PROFILE_PARENT."
+  echo "  Launch Waterfox once to create a profile, then re-run ujust first-run."
+  exit 0
+fi
+
+PROFILE_PATH="$PROFILE_PARENT/$PROFILE_DIR"
+
+if [ ! -d "$PROFILE_PATH" ]; then
+  echo "caracal-waterfox-config: profile directory $PROFILE_PATH does not exist."
+  exit 0
+fi
+
+echo "caracal-waterfox-config: applying configs to $PROFILE_DIR"
+
+cp -v --preserve=timestamps "$SOURCE_DIR"/user.js "$PROFILE_PATH/" || true
+
+mkdir -p "$PROFILE_PATH/chrome"
+cp -v --preserve=timestamps "$SOURCE_DIR"/userChrome.css  "$PROFILE_PATH/chrome/" || true
+cp -v --preserve=timestamps "$SOURCE_DIR"/userContent.css "$PROFILE_PATH/chrome/" || true
+
+printf '%s\n' "$MARKER_VALUE" > "$MARKER_FILE"
+echo "caracal-waterfox-config: done -- restart Waterfox if it is running."

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly APPIMAGELAUNCHER_RPM="appimagelauncher_3.0.0-beta-2-gha287.96cb937_x86_64.rpm"
-readonly APPIMAGELAUNCHER_URL="https://github.com/TheAssassin/AppImageLauncher/releases/download/v3.0.0-beta-3/${APPIMAGELAUNCHER_RPM}"
+source /usr/share/caracal/version-pins
+
+readonly APPIMAGELAUNCHER_RPM="${APPIMAGELAUNCHER_RPM}"
+readonly APPIMAGELAUNCHER_URL="${APPIMAGELAUNCHER_URL}"
 
 workdir="$(mktemp -d)"
 trap 'rm -rf "${workdir}"' EXIT
