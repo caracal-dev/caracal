@@ -1,0 +1,42 @@
+#!/usr/bin/bash
+# Apply Waterfox config overrides (Betterfox user.js + FoxOne theme) to the
+# Waterfox flatpak profile directory.
+#   Source:  /usr/share/flatpak/firefox/  (baked into the image)
+#   Target:  ~/.var/app/net.waterfox.waterfox/
+#
+# Runs once per user from ujust first-run.
+
+set -euo pipefail
+
+if [ "${EUID:-$(id -u)}" -lt 1000 ]; then
+  echo "caracal-waterfox-config: skipping system user."
+  exit 0
+fi
+
+SOURCE_DIR="/usr/share/flatpak/firefox"
+WATERFOX_DIR="$HOME/.var/app/net.waterfox.waterfox"
+
+CARACAL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
+mkdir -p "$CARACAL_DIR"
+MARKER_FILE="$CARACAL_DIR/waterfox-config-version"
+MARKER_VALUE="1"
+
+if [[ -f "$MARKER_FILE" ]] && [[ "$(cat "$MARKER_FILE")" == "$MARKER_VALUE" ]]; then
+  echo "caracal-waterfox-config: already applied."
+  exit 0
+fi
+
+if [ ! -d "$SOURCE_DIR" ]; then
+  echo "caracal-waterfox-config: source $SOURCE_DIR not found -- built-in configs missing."
+  exit 0
+fi
+
+mkdir -p "$WATERFOX_DIR/chrome"
+
+echo "caracal-waterfox-config: applying configs to $WATERFOX_DIR"
+cp -v --preserve=timestamps "$SOURCE_DIR"/user.js          "$WATERFOX_DIR/" || true
+cp -v --preserve=timestamps "$SOURCE_DIR"/userChrome.css   "$WATERFOX_DIR/chrome/" || true
+cp -v --preserve=timestamps "$SOURCE_DIR"/userContent.css  "$WATERFOX_DIR/chrome/" || true
+
+printf '%s\n' "$MARKER_VALUE" > "$MARKER_FILE"
+echo "caracal-waterfox-config: done -- restart Waterfox if it is running."

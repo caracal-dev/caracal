@@ -833,6 +833,8 @@ first-run:
     mkdir -p ~/.config/ghostty
     cp -rn -u /usr/share/ublue-os/ghostty ~/.config/
 
+    /usr/libexec/caracal-waterfox-config
+
     echo 'First-run setup complete. Reboot, or at minimum log out and back in, so group changes and session limits take effect.'
 
 # Simply just syncs yabridge
