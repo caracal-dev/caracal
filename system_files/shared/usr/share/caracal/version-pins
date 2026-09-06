@@ -7,8 +7,8 @@
 
 # Wine stack (patrickl/wine-staging-dev)
 # Expected version string from `wine --version`
-WINE_VERSION=11.16
-STAGE_WINE_VERSION=11.16
+WINE_VERSION=11.17
+STAGE_WINE_VERSION=11.17
 
 # AppImageLauncher — RPM filename and download URL
 # The release tag version differs from the RPM version — both captured here.
