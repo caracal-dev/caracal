@@ -5,8 +5,6 @@
 configure-waydroid ACTION="":
     #!/usr/bin/bash
     source /usr/lib/ujust/ujust.sh
-    IMAGE_INFO="/usr/share/ublue-os/image-info.json"
-    IMAGE_NAME=$(jq -r '."image-name"' < $IMAGE_INFO)
     OPTION={{ ACTION }}
     if [ "$OPTION" == "help" ]; then
       echo "Usage: ujust configure-waydroid <option>"
@@ -24,9 +22,7 @@ configure-waydroid ACTION="":
       OPTION=$(Choose "Initialize Waydroid" "Configure Waydroid" "Select GPU for Waydroid" "Reset Waydroid (also removes waydroid-related files from user folder)" "Install waydroid-helper (https://github.com/waydroid-helper/waydroid-helper)")
     fi
     if [[ "${OPTION,,}" =~ ^init ]]; then
-      if [[ ! $IMAGE_NAME =~ "deck" && ! $IMAGE_NAME =~ "ally" ]]; then
-        sudo systemctl enable --now waydroid-container
-      fi
+      sudo systemctl enable --now waydroid-container
       echo "This might take a bit, please be patient"
       sudo waydroid init -c 'https://ota.waydro.id/system' -v 'https://ota.waydro.id/vendor'
       sudo restorecon -R /var/lib/waydroid
@@ -36,10 +32,8 @@ configure-waydroid ACTION="":
     elif [[ "${OPTION,,}" =~ ^configure ]]; then
       git clone https://github.com/ublue-os/waydroid_script.git --depth 1 /tmp/waydroid_script
       python -m venv /tmp/waydroid_script/venv
-      source /tmp/waydroid_script/venv/bin/activate
-      sudo pip install -r /tmp/waydroid_script/requirements.txt
-      sudo /tmp/waydroid_script/main.py
-      deactivate
+      /tmp/waydroid_script/venv/bin/pip install -r /tmp/waydroid_script/requirements.txt
+      sudo /tmp/waydroid_script/venv/bin/python /tmp/waydroid_script/main.py
       sudo rm -rf /tmp/waydroid_script
     elif [[ "${OPTION,,}" =~ gpu ]]; then
       sudo /usr/bin/waydroid-choose-gpu
