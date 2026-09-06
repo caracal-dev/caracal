@@ -198,6 +198,7 @@ default_packages_to_remove=(
   vim-minimal
   firefox
   firefox-langpacks
+  plasma-welcome
   plasma-discover
   plasma-discover-flatpak
   plasma-discover-kns
@@ -239,6 +240,7 @@ base_system_packages=(
   7zip
   neovim
   python3-tkinter
+  python3-icoextract
   ublue-os-just
   distrobox
   zenity

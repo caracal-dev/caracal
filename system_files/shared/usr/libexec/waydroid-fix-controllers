@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+
+# Adapted from Bazzite (https://github.com/ublue-os/bazzite)
+echo add | exec sudo tee /sys/devices/virtual/input/input*/event*/uevent

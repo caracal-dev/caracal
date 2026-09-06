@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+
+# Adapted from Bazzite (https://github.com/ublue-os/bazzite)
+sudo waydroid container restart

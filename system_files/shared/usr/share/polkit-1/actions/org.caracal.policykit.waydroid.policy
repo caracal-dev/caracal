@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!--
+ Adapted from Bazzite (https://github.com/ublue-os/bazzite)
+ Original: org.bazzite.policykit.waydroid.policy
+-->
+<policyconfig>
+  <vendor>Caracal OS</vendor>
+  <vendor_url>https://caracal.dev</vendor_url>
+
+  <action id="org.caracal.policykit.waydroid.container.start">
+    <description>Start Waydroid Container</description>
+    <description xml:lang="ru">Запустить контейнер Waydroid</description>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>yes</allow_any>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/waydroid-container-start</annotate>
+  </action>
+
+  <action id="org.caracal.policykit.waydroid.container.stop">
+    <description>Stop Waydroid Container</description>
+    <description xml:lang="ru">Остановить контейнер Waydroid</description>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>yes</allow_any>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/waydroid-container-stop</annotate>
+  </action>
+
+  <action id="org.caracal.policykit.waydroid.container.restart">
+    <description>Restart Waydroid Container</description>
+    <description xml:lang="ru">Перезапустить контейнер Waydroid</description>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>yes</allow_any>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/waydroid-container-restart</annotate>
+  </action>
+
+  <action id="org.caracal.policykit.waydroid.fix.controllers">
+    <description>Fix Controllers in Waydroid</description>
+    <description xml:lang="ru">Исправить контроллеры в Waydroid</description>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>yes</allow_any>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/waydroid-fix-controllers</annotate>
+  </action>
+</policyconfig>
