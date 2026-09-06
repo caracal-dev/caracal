@@ -181,8 +181,13 @@ done
 dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 bash "${SCRIPTS_DIR}/install-appimagelauncher.sh"
 bash "${SCRIPTS_DIR}/install-appimagetool.sh"
-dnf -y install "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
-dnf -y install "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
+RELEASEVER="$(rpm -E %fedora)"
+curl -fL --retry 3 --retry-delay 2 -o /tmp/rpmfusion-nonfree-release.rpm \
+  "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${RELEASEVER}.noarch.rpm"
+curl -fL --retry 3 --retry-delay 2 -o /tmp/rpmfusion-free-release.rpm \
+  "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${RELEASEVER}.noarch.rpm"
+rpm -Uvh /tmp/rpmfusion-nonfree-release.rpm /tmp/rpmfusion-free-release.rpm
+rm -f /tmp/rpmfusion-nonfree-release.rpm /tmp/rpmfusion-free-release.rpm
 
 dnf5 -y install caracal-setup caracal-software-installer caracal-audio-controller app-creator
 
