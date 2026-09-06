@@ -1,0 +1,10 @@
+// Adapted from Bazzite (https://github.com/ublue-os/bazzite)
+polkit.addRule(function(action, subject) {
+    if ((action.id == "org.caracal.policykit.waydroid.container.start" || 
+         action.id == "org.caracal.policykit.waydroid.container.stop" ||
+         action.id == "org.caracal.policykit.waydroid.container.restart" ||
+         action.id == "org.caracal.policykit.waydroid.fix.controllers") &&
+         subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});

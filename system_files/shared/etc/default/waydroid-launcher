@@ -1,0 +1,7 @@
+# Adapted from Bazzite (https://github.com/ublue-os/bazzite)
+# Caracal default Waydroid resolution.
+# Caracal does not ship hwsupport/sysid — handheld auto-detection
+# from Bazzite is intentionally excluded. Set these in /etc/default/waydroid-launcher
+# if your device needs custom values.
+WAYDROID_WIDTH=$WAYDROID_UNKNOWN_WIDTH
+WAYDROID_HEIGHT=$WAYDROID_UNKNOWN_HEIGHT
