@@ -1,0 +1,16 @@
+# Caracal I/O scheduler tuning for low-latency audio production.
+# Adapted from Bazzite (https://github.com/ublue-os/bazzite)
+#
+# SSD            → kyber (low-latency, good for DAW sample streaming)
+# NVMe           → kyber (low-latency)
+# MicroSD cards  → bfq   (fairness, good for bulk transfer)
+# HDD            → bfq   (fairness, good for sequential access)
+
+# SSD
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="kyber"
+# NVME
+ACTION=="add|change", KERNEL=="nvme[0-9]n[0-9]", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="kyber"
+# MicroSD
+ACTION=="add|change", KERNEL=="mmcblk[0-9]p[0-9]", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="bfq"
+# HDD
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"

@@ -1,0 +1,3 @@
+[General]
+Prepend=preferred://browser;ardour9.desktop;caracal-software-installer.desktop;systemsettings.desktop;io.github.kolunmi.Bazaar.desktop;carla.desktop;com.mitchellh.ghostty.desktop;org.kde.dolphin.desktop;
+IgnoreDefaults=true
