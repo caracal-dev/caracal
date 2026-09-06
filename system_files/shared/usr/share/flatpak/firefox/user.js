@@ -116,7 +116,7 @@ user_pref("cookiebanners.service.mode.privateBrowsing", 0); // project depreciat
 
 //user_pref("waterfox.blocker.ui.enabled", true); // new adblocker option
 //user_pref("waterfox.blocker.enabled", true);
-
+user_pref("browser.urlbar.doubleClickSelectsAll",true)
 /****************************************************************************
  * END: BETTERFOX                                                           *
 ****************************************************************************/
