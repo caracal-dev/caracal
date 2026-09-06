@@ -237,6 +237,7 @@ base_system_packages=(
   openssl
   openssh
   ghostty
+  libxcrypt-compat
   7zip
   neovim
   python3-tkinter
