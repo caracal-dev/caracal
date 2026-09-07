@@ -301,6 +301,7 @@ audio_server_packages=(
   pavucontrol
   pipewire-alsa
   pipewire-utils
+  carla
   helvum
   rtkit
   tuned-profiles-realtime
