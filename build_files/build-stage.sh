@@ -267,6 +267,9 @@ stage_wayland_packages=(
   wl-clipboard
   brightnessctl
   playerctl
+  ironbar
+  swaybg
+  wlogout
 )
 
 stage_optional_keyboard_packages=(
@@ -480,6 +483,8 @@ chmod +x /usr/libexec/caracal-stage-first-run
 chmod +x /usr/bin/caracal-stage
 chmod +x /usr/bin/caracal-stage-session
 chmod +x /usr/bin/caracal-stage-carla
+chmod +x /usr/bin/caracal-stage-ironbar
+chmod +x /usr/bin/caracal-stage-wlogout
 chmod +x /usr/share/caracal-stage/carla-adapter.py 2>/dev/null || true
 chmod +x /usr/share/caracal-stage/carla-discover.py 2>/dev/null || true
 

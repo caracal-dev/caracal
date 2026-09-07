@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+# Caracal Stage Ironbar launcher
+# Sets the config/css paths and spawns the bar.
+set -euo pipefail
+
+export IRONBAR_CONFIG="${IRONBAR_CONFIG:-/etc/xdg/caracal-stage/ironbar/config.corn}"
+export IRONBAR_CSS="${IRONBAR_CSS:-/etc/xdg/caracal-stage/ironbar/style.css}"
+
+exec ironbar "$@"
