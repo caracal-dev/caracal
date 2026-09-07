@@ -325,7 +325,6 @@ audio_application_packages=(
 )
 
 fedora_audio_plugin_packages=(
-  lsp-plugins-vst
   lsp-plugins-clap
   lsp-plugins-lv2
   calf

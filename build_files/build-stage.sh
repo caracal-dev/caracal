@@ -336,7 +336,6 @@ stage_audio_application_packages=(
 )
 
 audio_plugin_packages=(
-  lsp-plugins-vst
   lsp-plugins-clap
   lsp-plugins-lv2
   vst-DISTRHO-drumsynth.x86_64
