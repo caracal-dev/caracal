@@ -231,6 +231,7 @@ wine_bridge_packages=(
 copr_audio_workflow_packages=(
   vst-DISTRHO-drumsynth.x86_64
   vst-DISTRHO-eqinox.x86_64 vst-DISTRHO-vitalium.x86_64
+  Carla-mao
 )
 
 optional_audio_workflow_packages=(
@@ -320,17 +321,14 @@ media_codec_packages=(
 audio_application_packages=(
   ardour9
   qtractor
-  carla
   hydrogen
 )
 
 fedora_audio_plugin_packages=(
-  lsp-plugins-vst
   lsp-plugins-clap
   lsp-plugins-lv2
   calf
   guitarix
-  lv2-carla
 )
 
 daw_runtime_packages=(

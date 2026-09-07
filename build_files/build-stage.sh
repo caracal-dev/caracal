@@ -164,6 +164,7 @@ fi
 
 copr_repos=(
   timlau/audio
+  ycollet/audinux
   teervo/DISTRHO
   ublue-os/packages
   ublue-os/staging
@@ -331,14 +332,12 @@ media_codec_packages=(
 )
 
 stage_audio_application_packages=(
-  carla
+  Carla-mao
 )
 
 audio_plugin_packages=(
-  lsp-plugins-vst
   lsp-plugins-clap
   lsp-plugins-lv2
-  lv2-carla
   vst-DISTRHO-drumsynth.x86_64
   vst-DISTRHO-eqinox.x86_64
   vst-DISTRHO-vitalium.x86_64
