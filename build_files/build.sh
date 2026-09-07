@@ -330,7 +330,6 @@ fedora_audio_plugin_packages=(
   lsp-plugins-lv2
   calf
   guitarix
-  lv2-carla
 )
 
 daw_runtime_packages=(

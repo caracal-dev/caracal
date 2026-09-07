@@ -339,7 +339,6 @@ audio_plugin_packages=(
   lsp-plugins-vst
   lsp-plugins-clap
   lsp-plugins-lv2
-  lv2-carla
   vst-DISTRHO-drumsynth.x86_64
   vst-DISTRHO-eqinox.x86_64
   vst-DISTRHO-vitalium.x86_64
