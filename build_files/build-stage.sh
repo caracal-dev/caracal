@@ -164,6 +164,7 @@ fi
 
 copr_repos=(
   timlau/audio
+  ycollet/audinux
   teervo/DISTRHO
   ublue-os/packages
   ublue-os/staging
@@ -331,7 +332,7 @@ media_codec_packages=(
 )
 
 stage_audio_application_packages=(
-  carla
+  carla-mao
 )
 
 audio_plugin_packages=(

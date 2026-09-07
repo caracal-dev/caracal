@@ -231,6 +231,7 @@ wine_bridge_packages=(
 copr_audio_workflow_packages=(
   vst-DISTRHO-drumsynth.x86_64
   vst-DISTRHO-eqinox.x86_64 vst-DISTRHO-vitalium.x86_64
+  carla-mao
 )
 
 optional_audio_workflow_packages=(
@@ -320,7 +321,6 @@ media_codec_packages=(
 audio_application_packages=(
   ardour9
   qtractor
-  carla
   hydrogen
 )
 
