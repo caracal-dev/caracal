@@ -332,7 +332,7 @@ media_codec_packages=(
 )
 
 stage_audio_application_packages=(
-  carla-mao
+  Carla-mao
 )
 
 audio_plugin_packages=(
