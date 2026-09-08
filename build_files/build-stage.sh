@@ -267,9 +267,10 @@ stage_wayland_packages=(
   wl-clipboard
   brightnessctl
   playerctl
-  ironbar
+  waybar
   swaybg
   wlogout
+  wofi
 )
 
 stage_optional_keyboard_packages=(
@@ -318,7 +319,6 @@ audio_server_packages=(
   pavucontrol
   pipewire-alsa
   pipewire-utils
-  carla
   helvum
   rtkit
   tuned-profiles-realtime
@@ -483,7 +483,7 @@ chmod +x /usr/libexec/caracal-stage-first-run
 chmod +x /usr/bin/caracal-stage
 chmod +x /usr/bin/caracal-stage-session
 chmod +x /usr/bin/caracal-stage-carla
-chmod +x /usr/bin/caracal-stage-ironbar
+chmod +x /usr/bin/caracal-stage-waybar
 chmod +x /usr/bin/caracal-stage-wlogout
 chmod +x /usr/share/caracal-stage/carla-adapter.py 2>/dev/null || true
 chmod +x /usr/share/caracal-stage/carla-discover.py 2>/dev/null || true
