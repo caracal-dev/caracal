@@ -1,0 +1,154 @@
+/* ── Caracal Stage Waybar ──────────────────────────────────────────
+ *   Blend of Kanagawa Dragon (bg/surface) and Catppuccin Macchiato (accents)
+ *   Touch-optimized: larger targets, generous spacing, 56px bar height.
+ *   Top bar with centered clock.
+ * ────────────────────────────────────────────────────────────────── */
+
+/* ── Colours ──────────────────────────────────────────────────────── */
+@define-color bg        #1a1b26;  /* Kanagawa Dragon bg */
+@define-color surface0  #363a4f;  /* Catppuccin Macchiato surface0 */
+@define-color surface1  #424758;  /* Catppuccin Macchiato surface1 */
+@define-color text      #cad3f5;  /* Catppuccin Macchiato text */
+@define-color subtitle0 #a5adcb;  /* Catppuccin Macchiato subtitle0 */
+@define-color blue      #8aadf4;  /* Catppuccin Macchiato blue */
+@define-color green     #a6da95;  /* Catppuccin Macchiato green */
+@define-color red       #ed8796;  /* Catppuccin Macchiato red */
+@define-color yellow    #eed49f;  /* Catppuccin Macchiato yellow */
+@define-color mauve     #c6a0f6;  /* Catppuccin Macchiato mauve */
+@define-color teal      #8bd5ca;  /* Catppuccin Macchiato teal */
+
+/* Reset all styles */
+* {
+    border: none;
+    border-radius: 12px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    font-family: "Cantarell", "Noto Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* The whole bar */
+#waybar {
+    background: transparent;
+    color: @text;
+}
+
+/* Internal bar window (Waybar's own background layer) */
+window#waybar {
+    background: @bg;
+    border-radius: 12px;
+    padding: 0 8px;
+    margin: 8px 8px 0 8px;
+}
+
+/* ── Module base ──────────────────────────────────────────────────── */
+#custom-launcher,
+#taskbar,
+#pulseaudio,
+#custom-keyboard,
+#clock,
+#tray,
+#custom-power {
+    background: transparent;
+    padding: 0 12px;
+    margin: 6px 0;
+    border-radius: 8px;
+}
+
+/* ── Launcher (start menu) button ─────────────────────────────────── */
+#custom-launcher {
+    font-size: 20px;
+    padding: 0 16px;
+    margin-left: 4px;
+    background: transparent;
+}
+#custom-launcher:hover {
+    background: @surface0;
+}
+
+/* ── Taskbar (focused windows) ────────────────────────────────────── */
+#taskbar {
+    padding: 0 4px;
+}
+#taskbar button {
+    background: transparent;
+    padding: 0 8px;
+    margin: 2px 4px;
+    border-radius: 6px;
+    min-width: 32px;
+    min-height: 32px;
+}
+#taskbar button:hover {
+    background: @surface0;
+}
+#taskbar button.active {
+    background: @surface1;
+}
+#taskbar button.empty {
+    background: transparent;
+}
+
+/* ── Volume widget ────────────────────────────────────────────────── */
+#pulseaudio {
+    padding: 0 12px;
+}
+#pulseaudio:hover {
+    background: @surface0;
+}
+#pulseaudio.muted {
+    color: @red;
+}
+
+/* ── Virtual keyboard toggle ──────────────────────────────────────── */
+#custom-keyboard {
+    font-size: 18px;
+    padding: 0 14px;
+}
+#custom-keyboard:hover {
+    background: @surface0;
+}
+
+/* ── Clock ────────────────────────────────────────────────────────── */
+#clock {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 0 14px;
+}
+#clock:hover {
+    background: @surface0;
+}
+
+/* ── System tray ──────────────────────────────────────────────────── */
+#tray {
+    padding: 0 8px;
+}
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+}
+
+/* ── Power button (wlogout) ───────────────────────────────────────── */
+#custom-power {
+    font-size: 18px;
+    padding: 0 14px;
+    margin-right: 4px;
+}
+#custom-power:hover {
+    background: @surface0;
+}
+
+/* ── Tooltip ──────────────────────────────────────────────────────── */
+tooltip {
+    background: @bg;
+    border: 1px solid @surface1;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+tooltip label {
+    color: @text;
+    font-size: 13px;
+}

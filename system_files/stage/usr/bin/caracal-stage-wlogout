@@ -1,0 +1,20 @@
+#!/usr/bin/bash
+# Caracal Stage wlogout launcher
+# Uses touch-optimized layout and Caracal-themed CSS.
+set -euo pipefail
+
+WLOGOUT_LAYOUT="/usr/share/caracal-stage/wlogout/layout"
+WLOGOUT_STYLE="/usr/share/caracal-stage/wlogout/style.css"
+
+if [[ -f "$WLOGOUT_LAYOUT" && -f "$WLOGOUT_STYLE" ]]; then
+    exec wlogout -p xdg \
+        -L "$WLOGOUT_LAYOUT" \
+        -C "$WLOGOUT_STYLE" \
+        -b 2 \
+        -T 400 \
+        -B 400 \
+        -R 600 \
+        -L 600
+else
+    exec wlogout "$@"
+fi
