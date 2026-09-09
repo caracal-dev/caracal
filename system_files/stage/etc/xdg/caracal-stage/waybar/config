@@ -1,0 +1,78 @@
+{
+    // Caracal Stage Waybar
+    // Touch-optimized: top bar, 56px height, generous spacing.
+    // Clock centered. Launcher opens wofi drun (grid, touch-friendly).
+    "layer": "top",
+    "position": "top",
+    "height": 56,
+    "spacing": 8,
+    "margin": "8 8 0 8",
+
+    "modules-left": [
+        "custom/launcher",
+        "wlr/taskbar"
+    ],
+    "modules-center": [
+        "clock"
+    ],
+    "modules-right": [
+        "pulseaudio",
+        "custom/keyboard",
+        "tray",
+        "custom/power"
+    ],
+
+    "custom/launcher": {
+        "format": "󰣇",
+        "tooltip": false,
+        // Touch-friendly: show app grid with icons instead of text run dialog
+        "on-click": "wofi -S drun -W 3 --columns 3 --allow-close --hide-scroll"
+    },
+
+    "wlr/taskbar": {
+        "format": "{icon}",
+        "icon-size": 20,
+        "tooltip-format": "{title}",
+        "on-click": "activate",
+        "on-click-middle": "close",
+        "on-click-right": "minimize"
+    },
+
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰝟 {volume}%",
+        "format-icons": {
+            "default": ["", "", ""]
+        },
+        "max-volume": 100,
+        "scroll-step": 2,
+        "on-click": "pavucontrol",
+        "on-scroll-up": "wpctl set-volume @DEFAULT_SINK@ 2%+",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_SINK@ 2%-",
+        "on-click-right": "wpctl set-mute @DEFAULT_SINK@ toggle"
+    },
+
+    "custom/keyboard": {
+        "format": "",
+        "tooltip": false,
+        // Keyboard auto-shows on text focus; this button just dismisses it
+        "on-click": "pkill wvkbd-mobintl"
+    },
+
+    "clock": {
+        "format": "{:%H:%M}",
+        "tooltip-format": "{:%a %b %d}",
+        "interval": 60
+    },
+
+    "tray": {
+        "icon-size": 20,
+        "spacing": 8
+    },
+
+    "custom/power": {
+        "format": "",
+        "tooltip": false,
+        "on-click": "/usr/bin/caracal-stage-wlogout"
+    }
+}

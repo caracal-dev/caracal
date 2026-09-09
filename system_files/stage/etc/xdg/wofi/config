@@ -1,0 +1,16 @@
+# ── Caracal Stage wofi ──────────────────────────────────────────
+#   Touch-friendly: drun (app grid) mode, 3 columns, large targets.
+#   Colors match Waybar (Kanagawa Dragon / Catppuccin Macchiato blend).
+# ──────────────────────────────────────────────────────────────────
+
+[base]
+show=drun
+columns=3
+hide_scroll=true
+width=60
+allow_images=true
+insensitive=true
+sort_order=default
+prompt=Apps
+no_actions=true
+gconf=false

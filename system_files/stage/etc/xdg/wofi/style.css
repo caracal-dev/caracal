@@ -1,0 +1,76 @@
+/* ── Caracal Stage wofi ──────────────────────────────────────────
+ *   Touch-friendly app grid: large targets, generous spacing.
+ *   Colors match Waybar (Kanagawa Dragon / Catppuccin Macchiato).
+ * ────────────────────────────────────────────────────────────────── */
+
+@define-color bg        #1a1b26;
+@define-color surface0  #363a4f;
+@define-color surface1  #424758;
+@define-color text      #cad3f5;
+@define-color subtitle0 #a5adcb;
+@define-color blue      #8aadf4;
+@define-color green     #a6da95;
+@define-color red       #ed8796;
+
+* {
+    font-family: "Cantarell", "Noto Sans", sans-serif;
+    font-size: 14px;
+}
+
+#window {
+    background: rgba(26, 27, 38, 0.92);
+    border: 1px solid @surface1;
+    border-radius: 14px;
+    padding: 12px;
+}
+
+#outer-box {
+    padding: 8px;
+}
+
+#input {
+    background: @surface0;
+    color: @text;
+    border: 1px solid @surface1;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 15px;
+    margin: 0 0 12px 0;
+}
+
+#scroll {
+    margin: 0;
+}
+
+#inner-box {
+    padding: 0;
+}
+
+#entry {
+    padding: 12px;
+    margin: 4px;
+    border-radius: 10px;
+    background: transparent;
+}
+
+#entry:selected {
+    background: @surface0;
+}
+
+#entry:active {
+    background: @blue;
+}
+
+#entry image {
+    padding: 4px;
+}
+
+#entry label {
+    color: @text;
+    font-size: 13px;
+    padding: 4px 0 0 0;
+}
+
+#entry:selected label {
+    color: @text;
+}

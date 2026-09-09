@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+# Caracal Stage Waybar launcher
+# Points Waybar at the Caracal config/css and spawns the bar.
+set -euo pipefail
+
+CONFIG="${WAYBAR_CONFIG:-/etc/xdg/caracal-stage/waybar/config}"
+CSS="${WAYBAR_CSS:-/etc/xdg/caracal-stage/waybar/style.css}"
+
+exec waybar -c "$CONFIG" -s "$CSS" "$@"
