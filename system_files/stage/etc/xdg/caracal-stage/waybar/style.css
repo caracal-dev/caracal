@@ -1,6 +1,7 @@
 /* ── Caracal Stage Waybar ──────────────────────────────────────────
  *   Blend of Kanagawa Dragon (bg/surface) and Catppuccin Macchiato (accents)
  *   Touch-optimized: larger targets, generous spacing, 56px bar height.
+ *   Top bar with centered clock.
  * ────────────────────────────────────────────────────────────────── */
 
 /* ── Colours ──────────────────────────────────────────────────────── */
@@ -39,7 +40,7 @@ window#waybar {
     background: @bg;
     border-radius: 12px;
     padding: 0 8px;
-    margin: 0 8px 8px 8px;
+    margin: 8px 8px 0 8px;
 }
 
 /* ── Module base ──────────────────────────────────────────────────── */

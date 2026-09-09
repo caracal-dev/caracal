@@ -1,0 +1,26 @@
+# ── Caracal Stage Mako ─────────────────────────────────────────
+#   Touch-optimized: larger notifications, generous spacing.
+#   Colors match Waybar (Kanagawa Dragon / Catppuccin Macchiato).
+# ──────────────────────────────────────────────────────────────────
+
+# Position top-center so it doesn't overlap the waybar launcher
+anchor=top-center
+margin=80,12,12,12
+padding=16,20
+border-radius=12
+border-color=424758
+background-color=1a1b26
+text-color=cad3f5
+width=400
+height=120
+font=Cantarell 13
+max-icon-size=48
+icons=1
+default-timeout=5000
+ignore-timeout=0
+sort=-time
+stacking=overlaps
+group-by=summary
+on-button-left=dismiss
+on-button-middle=dismiss
+on-button-right=invoke-default

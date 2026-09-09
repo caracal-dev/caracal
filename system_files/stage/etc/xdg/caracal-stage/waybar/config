@@ -1,21 +1,23 @@
 {
     // Caracal Stage Waybar
-    // Touch-optimized: bottom bar, 56px height, generous spacing.
-    "layer": "bottom",
-    "position": "bottom",
+    // Touch-optimized: top bar, 56px height, generous spacing.
+    // Clock centered. Launcher opens wofi drun (grid, touch-friendly).
+    "layer": "top",
+    "position": "top",
     "height": 56,
     "spacing": 8,
-    "margin": "0 8 8 8",
+    "margin": "8 8 0 8",
 
     "modules-left": [
         "custom/launcher",
         "wlr/taskbar"
     ],
-    "modules-center": [],
+    "modules-center": [
+        "clock"
+    ],
     "modules-right": [
         "pulseaudio",
         "custom/keyboard",
-        "clock",
         "tray",
         "custom/power"
     ],
@@ -23,7 +25,8 @@
     "custom/launcher": {
         "format": "󰣇",
         "tooltip": false,
-        "on-click": "wofi -show run"
+        // Touch-friendly: show app grid with icons instead of text run dialog
+        "on-click": "wofi -S drun -W 3 --columns 3 --allow-close --hide-scroll"
     },
 
     "wlr/taskbar": {
@@ -52,7 +55,8 @@
     "custom/keyboard": {
         "format": "",
         "tooltip": false,
-        "on-click": "sh -c 'pkill -0 wvkbd-mobintl 2>/dev/null && pkill wvkbd-mobintl || wvkbd-mobintl'"
+        // Keyboard auto-shows on text focus; this button just dismisses it
+        "on-click": "pkill wvkbd-mobintl"
     },
 
     "clock": {
