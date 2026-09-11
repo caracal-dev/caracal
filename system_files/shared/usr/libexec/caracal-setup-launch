@@ -17,11 +17,13 @@ CARACAL_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/caracal"
 mkdir -p "$CARACAL_CONFIG_DIR"
 
 MARKER_FILE="$CARACAL_CONFIG_DIR/setup-launch-version"
-MARKER_VALUE="launched"
 
-if [[ -f "$MARKER_FILE" ]] && [[ "$(cat "$MARKER_FILE")" == "$MARKER_VALUE" ]]; then
-  echo "caracal-setup-launch: already launched."
-  exit 0
+if [[ -f "$MARKER_FILE" ]]; then
+  CONTENT="$(cat "$MARKER_FILE")"
+  if [[ "$CONTENT" == "launched" ]] || [[ "$CONTENT" == "completed" ]]; then
+    echo "caracal-setup-launch: already launched."
+    exit 0
+  fi
 fi
 
 if command -v systemctl >/dev/null 2>&1 &&
@@ -42,5 +44,5 @@ else
   /usr/bin/caracal-setup >/dev/null 2>&1 &
 fi
 
-printf '%s\n' "$MARKER_VALUE" > "$MARKER_FILE"
+printf '%s\n' "launched" > "$MARKER_FILE"
 echo "caracal-setup-launch: launched caracal-setup."
