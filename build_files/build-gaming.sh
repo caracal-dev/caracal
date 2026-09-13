@@ -27,6 +27,11 @@ rsync -rvKlO \
 
 echo "${IMAGE_NAME}" >/etc/hostname
 
+# ── Waterfox config ──────────────────────────────────────────────────────────
+# Betterfox waterfox/user.js is fetched from upstream at build time (not
+# vendored). Caracal-only prefs live in scripts/waterfox-caracal.overrides.js.
+bash /ctx/scripts/fetch-waterfox-userjs.sh /usr/share/flatpak/firefox
+
 # ── Variant branding ─────────────────────────────────────────────────────────
 gaming_variant="Gaming"
 gaming_variant_id="caracal-gaming"
