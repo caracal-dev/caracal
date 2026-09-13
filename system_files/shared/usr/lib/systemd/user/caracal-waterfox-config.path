@@ -1,0 +1,13 @@
+[Unit]
+Description=Watch for Waterfox profile creation to apply Caracal config
+ConditionUser=!@system
+
+[Path]
+# Fires once the Waterfox flatpak has been installed and launched at least
+# once (profiles.ini only exists then). PathExistsGlob also triggers
+# immediately at startup if the profile already exists but the config marker
+# was never written (e.g. DB upgrade carried over an existing profile).
+PathExistsGlob=%h/.var/app/net.waterfox.waterfox/.waterfox/profiles.ini
+
+[Install]
+WantedBy=default.target

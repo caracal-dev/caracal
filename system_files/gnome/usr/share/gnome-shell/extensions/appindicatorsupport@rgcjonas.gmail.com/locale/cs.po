@@ -1,0 +1,152 @@
+# Czech translation of gnome-shell-extension-appindicator.
+# Copyright (C) 2022
+# This file is distributed under the same license as the AppIndicatorExtension package.
+# Daniel Rusek <mail@asciiwolf.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-05-06 21:44+0200\n"
+"PO-Revision-Date: 2025-05-07 09:45+0200\n"
+"Last-Translator: Ludek Vydra <lvtran@u.k2.cz>\n"
+"Language-Team: \n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
+"X-Generator: Poedit 3.6\n"
+
+#: preferences/generalPage.js:15
+msgid "General"
+msgstr "Celkově"
+
+#: preferences/generalPage.js:26
+msgid "Enable Legacy Tray Icons support"
+msgstr "Povol podporu starších ikon na liště"
+
+#: preferences/generalPage.js:27
+msgid "Add X11 legacy tray icons to the panel area"
+msgstr "Přidání starších ikon panelu X11 do oblasti panelu"
+
+#: preferences/generalPage.js:38
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:21
+msgid "Opacity"
+msgstr "Neprůhlednost"
+
+#: preferences/generalPage.js:47
+msgid "Desaturation"
+msgstr "Sytost"
+
+#: preferences/generalPage.js:55
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:13
+msgid "Brightness"
+msgstr "Jas"
+
+#: preferences/generalPage.js:63
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:17
+msgid "Contrast"
+msgstr "Kontrast"
+
+#: preferences/generalPage.js:71
+msgid "Icon Size"
+msgstr "Velikost ikony"
+
+#: preferences/generalPage.js:81
+msgid "Center"
+msgstr "Na střed"
+
+#: preferences/generalPage.js:82
+msgid "Left"
+msgstr "Vlevo"
+
+#: preferences/generalPage.js:83
+msgid "Right"
+msgstr "Vpravo"
+
+#: preferences/generalPage.js:86
+msgid "Tray Horizontal Alignment"
+msgstr "Vodorovné zarovnání lišty"
+
+#: preferences/customIconPage.js:88
+msgid "Custom Icons"
+msgstr "Vlastní ikony"
+
+#: preferences/customIconPage.js:132
+msgid "Indicator ID"
+msgstr "ID indikátoru"
+
+#: preferences/customIconPage.js:133
+msgid "Icon Name"
+msgstr "Název ikony"
+
+#: preferences/customIconPage.js:134
+msgid "Attention Icon Name"
+msgstr "Název ikony upozornění"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:5
+msgid "Enable legacy tray icons support"
+msgstr "Povol podporu starších ikon na liště"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:9
+msgid "Saturation"
+msgstr "Sytost"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:25
+msgid "Icon size"
+msgstr "Velikost ikony"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:26
+msgid "Icon size in pixel"
+msgstr "Velikost ikony v pixelech"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:30
+msgid "Icon spacing"
+msgstr "Rozestupy mezi ikonami"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:31
+msgid "Icon spacing within the tray"
+msgstr "Rozestupy mezi ikonami na liště"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:35
+msgid "Position in tray"
+msgstr "Umístění na liště"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:36
+msgid "Set where the Icon tray should appear in Gnome tray"
+msgstr "Nastavte, kde na Gnome liště se má lišta ikon zobrazovat"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:40
+msgid "Order in tray"
+msgstr "Pořadí na liště"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:41
+msgid "Set where the Icon tray should appear among other trays"
+msgstr "Nastavte, kde mezi ostatními lištami se má lišta ikon zobrazovat"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:45
+msgid "Custom icons"
+msgstr "Vlastní ikony"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:46
+msgid "Replace any icons with custom icons from themes"
+msgstr "Nahradit libovolné ikony vlastními ikonami z motivů"
+
+#~ msgid "Opacity (min: 0, max: 255)"
+#~ msgstr "Neprůhlednost (min: 0, max: 255)"
+
+#~ msgid "Desaturation (min: 0.0, max: 1.0)"
+#~ msgstr "Odbarvení (min: 0.0, max: 1.0)"
+
+#~ msgid "Brightness (min: -1.0, max: 1.0)"
+#~ msgstr "Jas (min: -1.0, max: 1.0)"
+
+#~ msgid "Contrast (min: -1.0, max: 1.0)"
+#~ msgstr "Kontrast (min: -1.0, max: 1.0)"
+
+#~ msgid "Icon size (min: 0, max: 96)"
+#~ msgstr "Velikost ikon (min: 0, max: 96)"
+
+#~ msgid "Preferences"
+#~ msgstr "Předvolby"

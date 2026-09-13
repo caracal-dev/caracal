@@ -1,0 +1,7 @@
+[Unit]
+Description=Apply Caracal Waterfox config overrides
+ConditionUser=!@system
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/caracal-waterfox-config
