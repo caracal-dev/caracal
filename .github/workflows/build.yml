@@ -35,6 +35,8 @@ jobs:
         include:
           - image-suffix: ""
             target: caracal
+          - image-suffix: "-gnome"
+            target: caracal-gnome
           - image-suffix: "-dx"
             target: caracal-dx
           - image-suffix: "-stage"

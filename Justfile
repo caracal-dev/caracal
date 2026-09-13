@@ -149,6 +149,22 @@ build-dx-nvidia $target_image=(image_name + "-dx-nvidia") $tag=default_tag:
         --tag "${target_image}:${tag}" \
         .
 
+# Build the Silverblue/GNOME desktop image variant for local testing.
+build-gnome $target_image=(image_name + "-gnome") $tag=default_tag:
+    #!/usr/bin/env bash
+
+    BUILD_ARGS=()
+    if [[ -z "$(git status -s)" ]]; then
+        BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
+    fi
+
+    podman build \
+        "${BUILD_ARGS[@]}" \
+        --pull=newer \
+        --target caracal-gnome \
+        --tag "${target_image}:${tag}" \
+        .
+
 # Build the stripped-down Wayfire/Carla stage image for local testing.
 build-stage $target_image=(image_name + "-stage") $tag=default_tag:
     #!/usr/bin/env bash
@@ -322,6 +338,10 @@ build-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_build
 [group('Build Virtal Machine Image')]
 build-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso.toml")
 
+# Build a GNOME ISO virtual machine image
+[group('Build Virtal Machine Image')]
+build-iso-gnome $target_image=("localhost/" + image_name + "-gnome") $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso-gnome.toml")
+
 # Rebuild a QCOW2 virtual machine image
 [group('Build Virtal Machine Image')]
 rebuild-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_rebuild-bib target_image tag "qcow2" "disk_config/disk.toml")
@@ -333,6 +353,10 @@ rebuild-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_reb
 # Rebuild an ISO virtual machine image
 [group('Build Virtal Machine Image')]
 rebuild-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_rebuild-bib target_image tag "iso" "disk_config/iso.toml")
+
+# Rebuild a GNOME ISO virtual machine image
+[group('Build Virtal Machine Image')]
+rebuild-iso-gnome $target_image=("localhost/" + image_name + "-gnome") $tag=default_tag: && (_rebuild-bib target_image tag "iso" "disk_config/iso-gnome.toml")
 
 # Run a virtual machine with the specified image type and configuration
 _run-vm $target_image $tag $type $config:

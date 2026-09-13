@@ -4,6 +4,18 @@
 
 set -oue pipefail
 
+# Desktop flavor (kinoite|gnome); see build.sh. KDE pieces (SDDM, plasmalogin,
+# Plasma look-and-feel, kcm-about-distrorc) only run on kinoite; GNOME picks
+# up its own backgrounds, schemas, and GDM pixmaps.
+DESKTOP="${DESKTOP:-kinoite}"
+case "${DESKTOP}" in
+kinoite | gnome) ;;
+*)
+  echo "ERROR: unknown DESKTOP value '${DESKTOP}' (expected kinoite or gnome)" >&2
+  exit 1
+  ;;
+esac
+
 # Update OS identity in /usr/lib/os-release
 sed -i 's|^PRETTY_NAME=.*|PRETTY_NAME="Caracal OS"|' /usr/lib/os-release
 sed -i 's|^NAME=.*|NAME="Caracal OS"|' /usr/lib/os-release
@@ -38,59 +50,75 @@ cp /ctx/assets/logos/caracal.svg /usr/share/icons/hicolor/scalable/apps/start-he
 gtk-update-icon-cache -f /usr/share/icons/hicolor || true
 
 # Overwrite the kde-settings RPM's kcm-about-distrorc so "About This System" shows
-# Caracal branding regardless of which path KDE searches first.
-KDE_PROFILE_XDG="/usr/share/kde-settings/kde-profile/default/xdg"
-mkdir -p "$KDE_PROFILE_XDG"
-cp /etc/xdg/kcm-about-distrorc "$KDE_PROFILE_XDG/kcm-about-distrorc"
+# Caracal branding regardless of which path KDE searches first (kinoite only).
+if [[ "${DESKTOP}" == "kinoite" ]]; then
+  KDE_PROFILE_XDG="/usr/share/kde-settings/kde-profile/default/xdg"
+  mkdir -p "$KDE_PROFILE_XDG"
+  cp /etc/xdg/kcm-about-distrorc "$KDE_PROFILE_XDG/kcm-about-distrorc"
+fi
 
 # Install wallpapers to the system wallpaper directory
 mkdir -p /usr/share/wallpapers/caracal
 cp /ctx/assets/wallpapers/* /usr/share/wallpapers/caracal/
 
+# GNOME desktop branding (gnome only): make the Caracal wallpapers available
+# to the GNOME Settings picker (/usr/share/backgrounds + the XML properties
+# file shipped in system_files/gnome), and replace the GDM pixmaps so the
+# login screen shows the Caracal logo instead of Fedora's.
+if [[ "${DESKTOP}" == "gnome" ]]; then
+  mkdir -p /usr/share/backgrounds/caracal
+  cp /usr/share/wallpapers/caracal/*.png /usr/share/backgrounds/caracal/
+  cp /ctx/assets/logos/caracal.png /usr/share/pixmaps/system-logo-white.png
+  cp /ctx/assets/logos/caracal.png /usr/share/pixmaps/fedora-gdm-logo.png
+fi
+
 # Fedora 44 KDE variants use Plasma Login Manager instead of SDDM. Keep the
 # wallpaper configured for both generations so older builds still brand SDDM.
-if [[ -d /usr/lib/plasmalogin || -e /usr/lib/systemd/system/plasmalogin.service ]]; then
-  install -d /etc
-  cat >/etc/plasmalogin.conf <<'EOF'
+# (kinoite only — GNOME uses GDM, branded separately below.)
+if [[ "${DESKTOP}" == "kinoite" ]]; then
+  if [[ -d /usr/lib/plasmalogin || -e /usr/lib/systemd/system/plasmalogin.service ]]; then
+    install -d /etc
+    cat >/etc/plasmalogin.conf <<'EOF'
 [Greeter]
 WallpaperPluginId=org.kde.image
 
 [Greeter][Wallpaper][org.kde.image][General]
 Image=file:///usr/share/wallpapers/caracal/caracal-lake.png
 EOF
-fi
+  fi
 
-if [[ -d /usr/share/sddm/themes/01-breeze-fedora ]]; then
-  # Build a dedicated Caracal greeter theme from Fedora KDE's known-good SDDM
-  # theme, then apply our wallpaper override to that single theme.
-  rm -rf /usr/share/sddm/themes/caracal
-  cp -a /usr/share/sddm/themes/01-breeze-fedora /usr/share/sddm/themes/caracal
-  # Patch theme.conf directly - SDDM reads this from the theme directory.
-  # theme.conf.user at runtime is read from the sddm user's XDG data home
-  # (/var/lib/sddm/.local/share/sddm/themes/caracal/), NOT from here; a
-  # tmpfiles rule handles that deployment.
-  sed -i \
-    -e 's|^background=.*|background=/usr/share/wallpapers/caracal/caracal-lake.png|' \
-    -e 's|^type=.*|type=image|' \
-    /usr/share/sddm/themes/caracal/theme.conf
-  # Fail the build explicitly if the sed didn't match (silent no-op otherwise).
-  grep -q '^background=/usr/share/wallpapers/caracal/caracal-lake.png' \
-    /usr/share/sddm/themes/caracal/theme.conf
-  # Also write theme.conf.user into the theme dir for any SDDM builds that do
-  # search there, and as the source file for the tmpfiles copy rule.
-  cat > /usr/share/sddm/themes/caracal/theme.conf.user << 'EOF'
+  if [[ -d /usr/share/sddm/themes/01-breeze-fedora ]]; then
+    # Build a dedicated Caracal greeter theme from Fedora KDE's known-good SDDM
+    # theme, then apply our wallpaper override to that single theme.
+    rm -rf /usr/share/sddm/themes/caracal
+    cp -a /usr/share/sddm/themes/01-breeze-fedora /usr/share/sddm/themes/caracal
+    # Patch theme.conf directly - SDDM reads this from the theme directory.
+    # theme.conf.user at runtime is read from the sddm user's XDG data home
+    # (/var/lib/sddm/.local/share/sddm/themes/caracal/), NOT from here; a
+    # tmpfiles rule handles that deployment.
+    sed -i \
+      -e 's|^background=.*|background=/usr/share/wallpapers/caracal/caracal-lake.png|' \
+      -e 's|^type=.*|type=image|' \
+      /usr/share/sddm/themes/caracal/theme.conf
+    # Fail the build explicitly if the sed didn't match (silent no-op otherwise).
+    grep -q '^background=/usr/share/wallpapers/caracal/caracal-lake.png' \
+      /usr/share/sddm/themes/caracal/theme.conf
+    # Also write theme.conf.user into the theme dir for any SDDM builds that do
+    # search there, and as the source file for the tmpfiles copy rule.
+    cat > /usr/share/sddm/themes/caracal/theme.conf.user << 'EOF'
 [General]
 type=image
 background=/usr/share/wallpapers/caracal/caracal-lake.png
 EOF
-fi
+  fi
 
-# Install splash screen logo into the active Breeze Dark look-and-feel package.
-# Caracal now uses Breeze Dark as the only supported default and ships its own
-# splash assets inside that package.
-SPLASH_LOGO="/ctx/assets/logos/caracal-splash.svg"
-mkdir -p /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/images
-cp "$SPLASH_LOGO" /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/images/caracal-logo.svg
+  # Install splash screen logo into the active Breeze Dark look-and-feel package.
+  # Caracal now uses Breeze Dark as the only supported default and ships its own
+  # splash assets inside that package.
+  SPLASH_LOGO="/ctx/assets/logos/caracal-splash.svg"
+  mkdir -p /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/images
+  cp "$SPLASH_LOGO" /usr/share/plasma/look-and-feel/org.kde.breezedark.desktop/contents/splash/images/caracal-logo.svg
+fi
 
 # Plymouth boot splash
 # Remove Bazzite/Kinoite animation frames so only our watermark shows.

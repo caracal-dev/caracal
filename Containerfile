@@ -14,11 +14,13 @@ FROM ${NVIDIA_REF} AS akmods-nvidia
 FROM ghcr.io/ublue-os/brew:latest AS brew
 
 # Build context: scripts live in build_files/, branding assets in assets/images/,
-# system files in system_files/shared/ (deployed via rsync in build.sh, same as Aurora)
+# system files in system_files/<flavor>/ (deployed via rsync in build.sh, same as Aurora)
 FROM scratch AS ctx
 COPY build_files /
 COPY assets/images /assets
 COPY system_files/shared /system_files/shared
+COPY system_files/kinoite /system_files/kinoite
+COPY system_files/gnome /system_files/gnome
 COPY system_files/stage /system_files/stage
 COPY system_files/nvidia /system_files/nvidia
 COPY --from=brew /system_files /system_files/shared
@@ -59,6 +61,42 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     /ctx/build-initramfs
 
 ### Lint
+RUN bootc container lint
+
+### GNOME image
+## Fedora Silverblue (GNOME) desktop variant. Same Caracal audio stack, kernel,
+## and tuning as the KDE base, with GNOME desktop defaults and the Caracal
+## silloutte wallpaper. Intel/AMD only — no NVIDIA variant yet.
+FROM quay.io/fedora-ostree-desktops/silverblue:${FEDORA_VERSION} AS caracal-gnome
+
+### Kernel swap
+## Same OGC/Bazzite kernel from ublue akmods as the KDE build.
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=bind,from=akmods,src=/kernel-rpms,dst=/rpms/kernel \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/install-kernel
+
+### Build
+## Shared packages plus the GNOME desktop overlay; KDE-only steps are skipped
+## via the DESKTOP=gnome flag in build.sh.
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    DESKTOP=gnome IMAGE_NAME=caracal-gnome /ctx/build.sh
+
+### Initramfs
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/build-initramfs
+
 RUN bootc container lint
 
 ### DX image

@@ -23,7 +23,12 @@ on:
       - './.github/workflows/build-disk.yml'
       - './installer/build-iso-makefile-patch'
       - './Containerfile'
+      - './build_files/build.sh'
+      - './build_files/build-gnome-de.sh'
       - './build_files/build-stage.sh'
+      - './system_files/shared/**'
+      - './system_files/gnome/**'
+      - './system_files/kinoite/**'
       - './system_files/stage/**'
 
 env:
@@ -31,7 +36,6 @@ env:
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
   DEFAULT_TAG: "latest"
   FEDORA_VERSION: "44" # keep in sync with Containerfile
-  INSTALLER_VARIANT: "Kinoite"
   BIB_IMAGE: "quay.io/centos-bootc/bootc-image-builder:latest"
   ISO_BUILDER_IMAGE: "ghcr.io/jasonn3/build-container-installer:latest"
 
@@ -53,6 +57,7 @@ jobs:
           - installer-iso
         image-suffix:
           - ""
+          - "-gnome"
           - "-stage"
           - "-stage-arm"
           - "-nvidia"
@@ -76,6 +81,13 @@ jobs:
           IMAGE_REGISTRY_LOWER=${IMAGE_REGISTRY,,}
           IMAGE_NAME_LOWER=${IMAGE_NAME,,}
           IMAGE_SUFFIX="${{ matrix.image-suffix }}"
+          # The installer variant must match the desktop flavor: Silverblue for
+          # GNOME images, Kinoite for the base KDE/Plasma ones.
+          if [ "${IMAGE_SUFFIX}" = "-gnome" ]; then
+            echo "INSTALLER_VARIANT=Silverblue" >> ${GITHUB_ENV}
+          else
+            echo "INSTALLER_VARIANT=Kinoite" >> ${GITHUB_ENV}
+          fi
           # Concatenate the types with a hyphen
           DISK_TYPE=$(echo "${{ matrix.disk-type }}" | tr ' ' '-')
           # Lowercase the image uri

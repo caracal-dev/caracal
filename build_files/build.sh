@@ -3,6 +3,19 @@
 
 set -ouex pipefail
 
+# Desktop environment flavor this image is built for.
+#   kinoite - Fedora Kinoite (KDE Plasma), the default
+#   gnome   - Fedora Silverblue (GNOME); Caracal's KDE-only pieces are skipped
+#             and the GNOME overlay (wallpapers, schemas, extension) is applied
+DESKTOP="${DESKTOP:-kinoite}"
+case "${DESKTOP}" in
+kinoite | gnome) ;;
+*)
+  echo "ERROR: unknown DESKTOP value '${DESKTOP}' (expected kinoite or gnome)" >&2
+  exit 1
+  ;;
+esac
+
 SCRIPTS_DIR="/ctx/scripts"
 
 # System files
@@ -17,6 +30,8 @@ rsync -rvKlO \
   --exclude='/usr/share/caracal-software-installer/***' \
   --exclude='/usr/share/applications/caracal-software-installer.desktop' \
   /ctx/system_files/shared/ /
+# Desktop-specific overlay (kinoite or gnome) applied after shared so it wins.
+rsync -rvKlO /ctx/system_files/${DESKTOP}/ /
 echo "caracal" >/etc/hostname
 
 set_copr_priority() {
@@ -203,14 +218,18 @@ default_packages_to_remove=(
   vim-minimal
   firefox
   firefox-langpacks
-  plasma-welcome
-  plasma-discover
-  plasma-discover-flatpak
-  plasma-discover-kns
-  plasma-discover-libs
-  plasma-discover-notifier
-  plasma-discover-rpm-ostree
 )
+if [[ "${DESKTOP}" == "kinoite" ]]; then
+  default_packages_to_remove+=(
+    plasma-welcome
+    plasma-discover
+    plasma-discover-flatpak
+    plasma-discover-kns
+    plasma-discover-libs
+    plasma-discover-notifier
+    plasma-discover-rpm-ostree
+  )
+fi
 
 # Remove unwanted defaults
 dnf5 -y remove "${default_packages_to_remove[@]}" || true
@@ -389,28 +408,37 @@ fi
 install_wine_stack
 validate_wine_stack
 
-kcm_build_packages=(
-  cmake
-  extra-cmake-modules
-  gcc-c++
-  kf6-kcmutils-devel
-  kf6-kcoreaddons-devel
-  kf6-ki18n-devel
-  ninja-build
-  qt6-qtbase-devel
-  qt6-qtdeclarative-devel
-)
+# KDE system-settings plugin for Caracal audio actions (kinoite only).
+if [[ "${DESKTOP}" == "kinoite" ]]; then
+  kcm_build_packages=(
+    cmake
+    extra-cmake-modules
+    gcc-c++
+    kf6-kcmutils-devel
+    kf6-kcoreaddons-devel
+    kf6-ki18n-devel
+    ninja-build
+    qt6-qtbase-devel
+    qt6-qtdeclarative-devel
+  )
 
-dnf5 -y install "${kcm_build_packages[@]}"
-kcm_qt_plugin_dir="$(qtpaths6 --plugin-dir)"
-cmake -S /ctx/kcm-caracal-audio -B /tmp/kcm-caracal-audio-build -G Ninja \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX=/usr \
-  -DKDE_INSTALL_PLUGINDIR="${kcm_qt_plugin_dir}"
-cmake --build /tmp/kcm-caracal-audio-build
-cmake --install /tmp/kcm-caracal-audio-build
-rm -rf /tmp/kcm-caracal-audio-build
-dnf5 -y remove --no-autoremove "${kcm_build_packages[@]}" || true
+  dnf5 -y install "${kcm_build_packages[@]}"
+  kcm_qt_plugin_dir="$(qtpaths6 --plugin-dir)"
+  cmake -S /ctx/kcm-caracal-audio -B /tmp/kcm-caracal-audio-build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DKDE_INSTALL_PLUGINDIR="${kcm_qt_plugin_dir}"
+  cmake --build /tmp/kcm-caracal-audio-build
+  cmake --install /tmp/kcm-caracal-audio-build
+  rm -rf /tmp/kcm-caracal-audio-build
+  dnf5 -y remove --no-autoremove "${kcm_build_packages[@]}" || true
+fi
+
+# GNOME desktop-environment setup (Silverblue flavor): default app removals,
+# tray support, and schema compilation.
+if [[ "${DESKTOP}" == "gnome" ]]; then
+  /ctx/build-gnome-de.sh
+fi
 
 # Virutal Machine Manager and dependencies
 dnf -y install @virtualization
@@ -419,20 +447,23 @@ dnf -y swap 'ffmpeg-free' 'ffmpeg' --allowerasing
 
 # Bazaar app store
 # Bazaar itself is preinstalled as a Flatpak. The KRunner plugin comes from
-# ublue-os/packages COPR, which occasionally returns 504s
-for attempt in 1 2 3; do
-  if dnf5 -y install krunner-bazaar; then
-    break
-  fi
+# ublue-os/packages COPR, which occasionally returns 504s (kinoite only —
+# GNOME Shell has no KRunner to host it).
+if [[ "${DESKTOP}" == "kinoite" ]]; then
+  for attempt in 1 2 3; do
+    if dnf5 -y install krunner-bazaar; then
+      break
+    fi
 
-  if [[ "${attempt}" == "3" ]]; then
-    echo "WARNING: krunner-bazaar failed to install after ${attempt} attempts; continuing without the optional KRunner plugin." >&2
-    break
-  fi
+    if [[ "${attempt}" == "3" ]]; then
+      echo "WARNING: krunner-bazaar failed to install after ${attempt} attempts; continuing without the optional KRunner plugin." >&2
+      break
+    fi
 
-  echo "krunner-bazaar install failed; retrying (${attempt}/3)..." >&2
-  sleep $((attempt * 10))
-done
+    echo "krunner-bazaar install failed; retrying (${attempt}/3)..." >&2
+    sleep $((attempt * 10))
+  done
+fi
 
 # Enable Flathub as a system remote so Bazaar has a populated catalog on first
 # boot and `flatpak-preinstall.service` can resolve Caracal's default apps at
@@ -486,18 +517,29 @@ systemctl enable caracal-wine-execmod.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
-for display_manager in gdm.service sddm.service; do
-  if systemctl cat "${display_manager}" >/dev/null 2>&1; then
-    systemctl disable "${display_manager}" || true
+if [[ "${DESKTOP}" == "gnome" ]]; then
+  # Silverblue defaults to GDM; make the enablement explicit so the base-image
+  # default cannot silently regress.
+  if systemctl cat gdm.service >/dev/null 2>&1; then
+    systemctl enable gdm.service
+  else
+    echo "ERROR: gdm.service not found in GNOME build" >&2
+    exit 1
   fi
-done
-if systemctl cat plasmalogin.service >/dev/null 2>&1; then
-  systemctl enable plasmalogin.service
-elif systemctl cat sddm.service >/dev/null 2>&1; then
-  systemctl enable sddm.service
 else
-  echo "ERROR: no supported display manager unit found (expected plasmalogin.service or sddm.service)" >&2
-  exit 1
+  for display_manager in gdm.service sddm.service; do
+    if systemctl cat "${display_manager}" >/dev/null 2>&1; then
+      systemctl disable "${display_manager}" || true
+    fi
+  done
+  if systemctl cat plasmalogin.service >/dev/null 2>&1; then
+    systemctl enable plasmalogin.service
+  elif systemctl cat sddm.service >/dev/null 2>&1; then
+    systemctl enable sddm.service
+  else
+    echo "ERROR: no supported display manager unit found (expected plasmalogin.service or sddm.service)" >&2
+    exit 1
+  fi
 fi
 
 chmod +x /usr/libexec/caracal-user-setup

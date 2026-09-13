@@ -1,0 +1,28 @@
+# Caracal OS GNOME defaults (Fedora Silverblue desktop flavor).
+# Applied system-wide via /usr/share/glib-2.0/schemas on every first login;
+# user overrides in GNOME Settings take precedence.
+[org.gnome.desktop.background]
+color-shading-type='solid'
+picture-options='zoom'
+picture-uri='file:///usr/share/backgrounds/caracal/caracal-silloutte.png'
+picture-uri-dark='file:///usr/share/backgrounds/caracal/caracal-silloutte.png'
+primary-color='#161617'
+secondary-color='#2e2e30'
+
+[org.gnome.desktop.interface]
+color-scheme='prefer-dark'
+
+[org.gnome.desktop.screensaver]
+color-shading-type='solid'
+picture-options='zoom'
+picture-uri='file:///usr/share/backgrounds/caracal/caracal-silloutte.png'
+picture-uri-dark='file:///usr/share/backgrounds/caracal/caracal-silloutte.png'
+primary-color='#161617'
+secondary-color='#2e2e30'
+
+[org.gnome.shell]
+enabled-extensions=['appindicatorsupport@rgcjonas.gmail.com']
+favorite-apps=['io.github.kolunmi.Bazaar.desktop', 'net.waterfox.waterfox.desktop', 'org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'ardour9.desktop', 'virt-manager.desktop']
+
+[org.gnome.shell.extensions.appindicator]
+legacy-tray-enabled=false

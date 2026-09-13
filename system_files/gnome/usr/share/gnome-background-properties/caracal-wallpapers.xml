@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE wallpapers SYSTEM "gnome-wp-list.dtd">
+<!-- Caracal OS wallpaper set for the GNOME Settings background picker. -->
+<wallpapers>
+  <wallpaper>
+    <name>Caracal Silloutte</name>
+    <filename>/usr/share/backgrounds/caracal/caracal-silloutte.png</filename>
+    <options>zoom</options>
+    <pcolor>#161617</pcolor>
+    <scolor>#2e2e30</scolor>
+  </wallpaper>
+  <wallpaper>
+    <name>Caracal Sunset</name>
+    <filename>/usr/share/backgrounds/caracal/caracal-sunset.png</filename>
+    <options>zoom</options>
+    <pcolor>#161617</pcolor>
+    <scolor>#2e2e30</scolor>
+  </wallpaper>
+  <wallpaper>
+    <name>Caracal Stalking</name>
+    <filename>/usr/share/backgrounds/caracal/caracal-stalking.png</filename>
+    <options>zoom</options>
+    <pcolor>#161617</pcolor>
+    <scolor>#2e2e30</scolor>
+  </wallpaper>
+  <wallpaper>
+    <name>Caracal Lake</name>
+    <filename>/usr/share/backgrounds/caracal/caracal-lake.png</filename>
+    <options>zoom</options>
+    <pcolor>#161617</pcolor>
+    <scolor>#2e2e30</scolor>
+  </wallpaper>
+  <wallpaper>
+    <name>Caracal Overlook</name>
+    <filename>/usr/share/backgrounds/caracal/caracal-overlook.png</filename>
+    <options>zoom</options>
+    <pcolor>#161617</pcolor>
+    <scolor>#2e2e30</scolor>
+  </wallpaper>
+  <wallpaper>
+    <name>Caracal Close</name>
+    <filename>/usr/share/backgrounds/caracal/caracal-close.png</filename>
+    <options>zoom</options>
+    <pcolor>#161617</pcolor>
+    <scolor>#2e2e30</scolor>
+  </wallpaper>
+</wallpapers>

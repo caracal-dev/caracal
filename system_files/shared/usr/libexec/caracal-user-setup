@@ -1,8 +1,10 @@
 #!/usr/bin/bash
 # Applies Caracal OS branding and default apps to the current user's config.
-# Runs in two phases: a pre-session migration that must finish before Plasma
-# starts, plus a post-session phase for wallpaper application that needs a live
-# graphical session. Version tracking forces reruns across rebases when needed.
+# Runs in two phases: a pre-session migration that must finish before the
+# desktop session starts, plus a post-session phase for wallpaper application
+# that needs a live graphical session. KDE and GNOME sessions are handled
+# separately (see DESKTOP_FLAVOR below). Version tracking forces reruns across
+# rebases when needed.
 
 set -oue pipefail
 
@@ -18,7 +20,18 @@ POST_SESSION_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/post-session-version"
 LEGACY_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/version"
 FLATPAK_SETUP_VER_FILE="$CARACAL_CONFIG_DIR/flatpak-version"
 
-WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
+# Desktop flavor detection: KDE (kinoite) vs GNOME (silverblue). GNOME exposes
+# no kscreenlockerrc/plasma-appletsrc; its wallpaper preference is gsettings.
+DESKTOP_FLAVOR="kde"
+if [[ "${XDG_CURRENT_DESKTOP:-}" == *GNOME* ]]; then
+  DESKTOP_FLAVOR="gnome"
+fi
+
+if [[ "${DESKTOP_FLAVOR}" == "gnome" ]]; then
+  WALLPAPER="/usr/share/backgrounds/caracal/caracal-silloutte.png"
+else
+  WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
+fi
 USER_SHELL="$(getent passwd "$(id -un)" | cut -d: -f7)"
 USER_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 SOFTWARE_INSTALLER_DESKTOP_SOURCE="/usr/share/applications/caracal-software-installer.desktop"
@@ -114,19 +127,28 @@ should_run_versioned_setup() {
 }
 
 run_pre_session_setup() {
-  reset_legacy_plasma_session_state
-  drop_user_seeded_kickoff_favorites_if_pristine
+  # Plasma session state and KDE preferences only exist on kinoite.
+  if [[ "${DESKTOP_FLAVOR}" == "kde" ]]; then
+    reset_legacy_plasma_session_state
+    drop_user_seeded_kickoff_favorites_if_pristine
 
-  # -- Lock screen wallpaper --
-  kwriteconfig6 \
-    --file "$HOME/.config/kscreenlockerrc" \
-    --group Greeter --group Wallpaper --group org.kde.image --group General \
-    --key Image "$WALLPAPER"
+    # -- Lock screen wallpaper --
+    kwriteconfig6 \
+      --file "$HOME/.config/kscreenlockerrc" \
+      --group Greeter --group Wallpaper --group org.kde.image --group General \
+      --key Image "$WALLPAPER"
 
-  kwriteconfig6 \
-    --file "$HOME/.config/kscreenlockerrc" \
-    --group Greeter --group Wallpaper --group org.kde.image --group General \
-    --key PreviewImage "$WALLPAPER"
+    kwriteconfig6 \
+      --file "$HOME/.config/kscreenlockerrc" \
+      --group Greeter --group Wallpaper --group org.kde.image --group General \
+      --key PreviewImage "$WALLPAPER"
+
+    # Prefer Ghostty for KDE terminal launches in the current user session.
+    kwriteconfig6 \
+      --file "$USER_CONFIG_DIR/kdeglobals" \
+      --group General \
+      --key TerminalApplication "com.mitchellh.ghostty.desktop"
+  fi
 
   # -- Desktop shortcuts --
   DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || true)"
@@ -139,18 +161,23 @@ run_pre_session_setup() {
     install -m755 "$SOFTWARE_INSTALLER_DESKTOP_SOURCE" \
       "$DESKTOP_DIR/caracal-software-installer.desktop"
   fi
-
-  # Prefer Ghostty for KDE terminal launches in the current user session.
-  kwriteconfig6 \
-    --file "$USER_CONFIG_DIR/kdeglobals" \
-    --group General \
-    --key TerminalApplication "com.mitchellh.ghostty.desktop"
 }
 
 run_post_session_setup() {
-  # plasma-apply-wallpaperimage needs a live Plasma session.
-  if command -v plasma-apply-wallpaperimage &>/dev/null; then
-    plasma-apply-wallpaperimage "$WALLPAPER" || true
+  if [[ "${DESKTOP_FLAVOR}" == "gnome" ]]; then
+    # Apply the Caracal default wallpaper (silloutte) for rebased users. The
+    # gschema override covers fresh installs; existing profiles need the
+    # per-user gsettings write, which requires a live session bus.
+    if command -v gsettings &>/dev/null; then
+      gsettings set org.gnome.desktop.background picture-uri "$WALLPAPER" || true
+      gsettings set org.gnome.desktop.background picture-uri-dark "$WALLPAPER" || true
+      gsettings set org.gnome.desktop.background picture-options zoom || true
+    fi
+  else
+    # plasma-apply-wallpaperimage needs a live Plasma session.
+    if command -v plasma-apply-wallpaperimage &>/dev/null; then
+      plasma-apply-wallpaperimage "$WALLPAPER" || true
+    fi
   fi
 
   # Ensure existing users also resolve browser launches to Waterfox.
@@ -173,8 +200,8 @@ run_post_session_setup() {
 }
 
 # Bump this when user-config migrations need re-application across rebases.
-PRE_SESSION_SETUP_VER=30
-POST_SESSION_SETUP_VER=29
+PRE_SESSION_SETUP_VER=31
+POST_SESSION_SETUP_VER=30
 DEFAULT_FLATPAK_SETUP_VER=2
 
 launch_default_flatpak_setup

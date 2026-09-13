@@ -5,15 +5,7 @@ set -ouex pipefail
 
 rsync -rvKlO \
   --exclude='/etc/hostname' \
-  --exclude='/etc/sddm.conf.d/***' \
   --exclude='/etc/xdg/autostart/***' \
-  --exclude='/etc/xdg/kactivitymanagerd-statsrc' \
-  --exclude='/etc/xdg/kdeglobals' \
-  --exclude='/etc/xdg/kscreenlockerrc' \
-  --exclude='/etc/xdg/ksplashrc' \
-  --exclude='/etc/xdg/kwinrc' \
-  --exclude='/etc/xdg/plasmarc' \
-  --exclude='/usr/lib/sddm/***' \
   --exclude='/usr/lib/systemd/user/bazaar.service' \
   --exclude='/usr/lib/systemd/user/caracal-setup-launch.service' \
   --exclude='/usr/lib/systemd/user/caracal-user-post-setup.service' \
@@ -21,10 +13,7 @@ rsync -rvKlO \
   --exclude='/usr/lib/systemd/user/caracal-waterfox-config.service' \
   --exclude='/usr/lib/systemd/user/caracal-waterfox-config.path' \
   --exclude='/usr/share/applications/caracal-software-installer.desktop' \
-  --exclude='/usr/share/applications/kcm_caracal_audio.desktop' \
   --exclude='/usr/share/flatpak/***' \
-  --exclude='/usr/share/kde-settings/***' \
-  --exclude='/usr/share/plasma/***' \
   --exclude='/usr/share/ublue-os/bazaar/***' \
   --exclude='/usr/share/ublue-os/homebrew/***' \
   /ctx/system_files/shared/ /
