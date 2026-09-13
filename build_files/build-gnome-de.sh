@@ -50,6 +50,17 @@ dnf5 -y install glib2-devel
 glib-compile-schemas \
   /usr/share/gnome-shell/extensions/appindicatorsupport@rgcjonas.gmail.com/schemas
 
+# Keep Caracal Audio Controller tray-only in GNOME. The RPM ships a launcher
+# entry (/usr/share/applications/caracal-audio-controller.desktop) alongside
+# its autostart file, so it appears in the app grid here; scope it to KDE,
+# where the launcher entry stays as-is. The autostart copy is tracked
+# NoDisplay in system_files/gnome/etc/xdg/autostart/, and NoDisplay does not
+# affect autostart, so the tray icon is preserved.
+if [[ -f /usr/share/applications/caracal-audio-controller.desktop ]]; then
+  sed -i '/^OnlyShowIn=/d; /^Categories=/a OnlyShowIn=KDE;' \
+    /usr/share/applications/caracal-audio-controller.desktop
+fi
+
 # Caracal defaults: default wallpaper (caracal-silloutte), favorite apps,
 # enabled extensions, dark color scheme. Recompile so the overrides apply.
 rm -f /usr/share/glib-2.0/schemas/gschemas.compiled
