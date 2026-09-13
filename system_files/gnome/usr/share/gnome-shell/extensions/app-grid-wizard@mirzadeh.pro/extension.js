@@ -1,0 +1,414 @@
+import GObject from 'gi://GObject';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Shell from 'gi://Shell';
+
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {QuickMenuToggle, SystemIndicator} from 'resource:///org/gnome/shell/ui/quickSettings.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+
+const APP_FOLDER_SCHEMA_ID = 'org.gnome.desktop.app-folders';
+const APP_FOLDER_SCHEMA_PATH = '/org/gnome/desktop/app-folders/folders/';
+const DEBOUNCE_DELAY = 2000;
+const CHROME_APP_DESKTOP_ID_PATTERN = /^(chrome|chromium)-.+\.desktop$/i;
+const CHROME_APP_FILENAME_PATTERN = /\/(chrome|chromium)-.+\.desktop$/i;
+const CHROME_BROWSER_EXEC_PATTERN = /(^|\/)(google-chrome|google-chrome-stable|google-chrome-beta|google-chrome-unstable|chromium|chromium-browser)(\s|$)/i;
+const LOCAL_DESKTOP_FILE_PATH_FRAGMENT = `${GLib.get_home_dir()}/.local/share/applications/`;
+
+const FOLDER_CONFIGS = [
+    {id: 'agw-accessories', schemaKey: 'folder-accessories', name: () => _('Accessories'), categories: ['Utility']},
+    {id: 'agw-chrome-apps', schemaKey: 'folder-chrome-apps', name: () => _('Chrome Apps'), categories: ['chrome-apps']},
+    {id: 'agw-games', schemaKey: 'folder-games', name: () => _('Games'), categories: ['Game']},
+    {id: 'agw-graphics', schemaKey: 'folder-graphics', name: () => _('Graphics'), categories: ['Graphics']},
+    {id: 'agw-internet', schemaKey: 'folder-internet', name: () => _('Internet'), categories: ['Network', 'WebBrowser', 'Email']},
+    {id: 'agw-office', schemaKey: 'folder-office', name: () => _('Office'), categories: ['Office']},
+    {id: 'agw-programming', schemaKey: 'folder-programming', name: () => _('Programming'), categories: ['Development']},
+    {id: 'agw-science', schemaKey: 'folder-science', name: () => _('Science'), categories: ['Science']},
+    {id: 'agw-sound-video', schemaKey: 'folder-sound-video', name: () => _('Sound & Video'), categories: ['AudioVideo', 'Audio', 'Video']},
+    {id: 'agw-system-tools', schemaKey: 'folder-system-tools', name: () => _('System Tools'), categories: ['System', 'Settings']},
+    {id: 'agw-universal-access', schemaKey: 'folder-universal-access', name: () => _('Universal Access'), categories: ['Accessibility']},
+    {id: 'agw-wine', schemaKey: 'folder-wine', name: () => _('Wine'), categories: ['Wine', 'X-Wine', 'Wine-Programs-Accessories']},
+    {id: 'agw-waydroid', schemaKey: 'folder-waydroid', name: () => _('Waydroid'), categories: ['Waydroid', 'X-WayDroid-App']}
+];
+
+class AppFolderManager {
+    constructor(extensionSettings) {
+        this._folderSettings = new Gio.Settings({schema_id: APP_FOLDER_SCHEMA_ID});
+        this._extensionSettings = extensionSettings;
+        this._shellSettings = new Gio.Settings({schema_id: 'org.gnome.shell'});
+        this._sources = new Set();
+    }
+
+    _trackSource(id) {
+        if (id)
+            this._sources.add(id);
+        return id;
+    }
+
+    cancelSources() {
+        for (const id of this._sources)
+            GLib.Source.remove(id);
+        this._sources.clear();
+    }
+
+    destroy() {
+        this.cancelSources();
+        this._folderSettings = null;
+        this._extensionSettings = null;
+        this._shellSettings = null;
+        this._sources = null;
+    }
+
+    resetLayout() {
+        this._trackSource(GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
+            const empty = new GLib.Variant('aa{sv}', []);
+            this._shellSettings.set_value('app-picker-layout', empty);
+            console.debug('App-Grid-Wizard: Layout set to [] for auto-pagination');
+            return GLib.SOURCE_REMOVE;
+        }));
+    }
+
+    takeSnapshot() {
+        if (!this._extensionSettings.get_boolean('snapshot-taken')) {
+            const current = this._folderSettings.get_strv('folder-children');
+            this._extensionSettings.set_strv('original-folder-children', current);
+            const layout = this._shellSettings.get_value('app-picker-layout');
+            this._extensionSettings.set_value('original-app-layout', layout);
+            this._extensionSettings.set_boolean('snapshot-taken', true);
+            console.debug('App-Grid-Wizard: Snapshot saved');
+        }
+    }
+
+    restoreSnapshot() {
+        if (!this._extensionSettings.get_boolean('snapshot-taken'))
+            return;
+
+        const original = this._extensionSettings.get_strv('original-folder-children');
+        const originalLayout = this._extensionSettings.get_value('original-app-layout');
+        
+        this._folderSettings.set_strv('folder-children', original);
+        // Apply original layout after folders are present
+        this._trackSource(GLib.timeout_add(GLib.PRIORITY_LOW, 200, () => {
+            if (originalLayout.n_children() > 0)
+                this._shellSettings.set_value('app-picker-layout', originalLayout);
+            else
+                this.resetLayout();
+            console.debug('App-Grid-Wizard: Snapshot restored');
+            return GLib.SOURCE_REMOVE;
+        }));
+    }
+
+    applyFolders() {
+        const enabledConfigs = FOLDER_CONFIGS.filter(c => 
+            this._extensionSettings.get_boolean(c.schemaKey)
+        );
+        
+        // Replace all folders with only our enabled folders
+        const ourIds = enabledConfigs.map(c => c.id);
+        this._folderSettings.set_strv('folder-children', ourIds);
+        
+        // Configure enabled folders
+        for (const config of enabledConfigs) {
+            const folderPath = `${APP_FOLDER_SCHEMA_PATH}${config.id}/`;
+            const folderSchema = Gio.Settings.new_with_path('org.gnome.desktop.app-folders.folder', folderPath);
+            folderSchema.set_string('name', config.name());
+            folderSchema.set_strv('categories', config.categories);
+            folderSchema.set_strv('apps', this._getExplicitApps(config));
+        }
+        
+        console.debug('App-Grid-Wizard: Folders applied');
+        this.resetLayout();
+    }
+
+    _getExplicitApps(config) {
+        if (config.id === 'agw-chrome-apps')
+            return this._getChromeAppDesktopIds();
+
+        return [];
+    }
+
+    _getChromeAppDesktopIds() {
+        const appSystem = Shell.AppSystem.get_default();
+        const appIds = [];
+
+        for (const app of appSystem.get_installed()) {
+            const appId = app.get_id();
+            const appInfo = app.get_app_info();
+
+            if (!appId || !appInfo)
+                continue;
+
+            if (!this._isChromeAppLauncher(appId, appInfo))
+                continue;
+
+            appIds.push(appId);
+        }
+
+        appIds.sort((a, b) => a.localeCompare(b));
+        console.debug(`App-Grid-Wizard: Detected ${appIds.length} Chrome app launcher(s)`);
+        return appIds;
+    }
+
+    _isChromeAppLauncher(appId, appInfo) {
+        const categories = this._getDesktopAppCategories(appInfo);
+        if (categories.includes('chrome-apps'))
+            return true;
+
+        const execLine = this._getDesktopAppExec(appInfo);
+        if (!execLine.includes('--app-id=') && !execLine.includes('--app='))
+            return false;
+
+        const filename = this._getDesktopAppFilename(appInfo);
+        return CHROME_APP_DESKTOP_ID_PATTERN.test(appId) ||
+            CHROME_APP_FILENAME_PATTERN.test(filename) ||
+            (filename.startsWith(LOCAL_DESKTOP_FILE_PATH_FRAGMENT) &&
+                CHROME_BROWSER_EXEC_PATTERN.test(execLine));
+    }
+
+    _getDesktopAppCategories(appInfo) {
+        return (appInfo.get_categories() ?? '').toLowerCase();
+    }
+
+    _getDesktopAppExec(appInfo) {
+        return (appInfo.get_commandline() ?? '').toLowerCase();
+    }
+
+    _getDesktopAppFilename(appInfo) {
+        return (appInfo.get_filename() ?? '').toLowerCase();
+    }
+
+    removeFolders() {
+        const current = this._folderSettings.get_strv('folder-children');
+        const ourIds = FOLDER_CONFIGS.map(c => c.id);
+        const filtered = current.filter(id => !ourIds.includes(id));
+        this._folderSettings.set_strv('folder-children', filtered);
+        console.debug('App-Grid-Wizard: Folders removed');
+    }
+}
+
+class WizardController {
+    constructor(extensionSettings) {
+        this._extensionSettings = extensionSettings;
+        this._folderManager = new AppFolderManager(extensionSettings);
+        this._monitorId = null;
+        this._debounceTimeoutId = null;
+        this._settingsChangedIds = [];
+
+        this._enabledChangedId = this._extensionSettings.connect('changed::enabled', () => {
+            this._syncEnabledState();
+        });
+
+        for (const config of FOLDER_CONFIGS) {
+            const id = this._extensionSettings.connect(`changed::${config.schemaKey}`, () => {
+                if (this.enabled)
+                    this._scheduleUpdate();
+            });
+            this._settingsChangedIds.push(id);
+        }
+
+        if (this.enabled)
+            this._startMonitoring();
+    }
+
+    get enabled() {
+        return this._extensionSettings.get_boolean('enabled');
+    }
+
+    get settings() {
+        return this._extensionSettings;
+    }
+
+    restoreOriginalLayout() {
+        this._folderManager.restoreSnapshot();
+        this._extensionSettings.set_boolean('snapshot-taken', false);
+        this._extensionSettings.set_boolean('enabled', false);
+    }
+
+    destroy() {
+        this._stopMonitoring();
+
+        for (const id of this._settingsChangedIds)
+            this._extensionSettings.disconnect(id);
+        this._settingsChangedIds = [];
+
+        if (this._enabledChangedId)
+            this._extensionSettings.disconnect(this._enabledChangedId);
+        this._enabledChangedId = null;
+
+        this._folderManager.resetLayout();
+        this._folderManager.destroy();
+        this._folderManager = null;
+        this._extensionSettings = null;
+    }
+
+    _syncEnabledState() {
+        if (this.enabled) {
+            this._folderManager.takeSnapshot();
+            this._folderManager.applyFolders();
+            this._startMonitoring();
+        } else {
+            this._folderManager.resetLayout();
+            this._stopMonitoring();
+        }
+    }
+
+    _startMonitoring() {
+        if (this._monitorId)
+            return;
+
+        const appSystem = Shell.AppSystem.get_default();
+        this._monitorId = appSystem.connect('installed-changed', () => {
+            this._scheduleUpdate();
+        });
+        console.debug('App-Grid-Wizard: Monitoring started');
+    }
+
+    _scheduleUpdate() {
+        if (this._debounceTimeoutId)
+            GLib.Source.remove(this._debounceTimeoutId);
+
+        this._debounceTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, DEBOUNCE_DELAY, () => {
+            if (this.enabled)
+                this._folderManager.applyFolders();
+
+            this._debounceTimeoutId = null;
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _stopMonitoring() {
+        if (this._monitorId) {
+            Shell.AppSystem.get_default().disconnect(this._monitorId);
+            this._monitorId = null;
+        }
+
+        if (this._debounceTimeoutId) {
+            GLib.Source.remove(this._debounceTimeoutId);
+            this._debounceTimeoutId = null;
+        }
+        console.debug('App-Grid-Wizard: Monitoring stopped');
+    }
+}
+
+const WizardToggle = GObject.registerClass(
+class WizardToggle extends QuickMenuToggle {
+    _init(controller, openPreferences) {
+        super._init({
+            title: 'App Grid Wizard',
+            iconName: 'view-grid-symbolic',
+            toggleMode: true,
+        });
+
+        this._controller = controller;
+        this._extensionSettings = controller.settings;
+        this._openPreferences = openPreferences;
+
+        this.checked = this._controller.enabled;
+        this.connect('clicked', this._onClicked.bind(this));
+
+        this._enabledChangedId = this._extensionSettings.connect('changed::enabled', () => {
+            const enabled = this._controller.enabled;
+            if (this.checked === enabled)
+                return;
+            this.checked = enabled;
+        });
+        
+        const restoreItem = new PopupMenu.PopupMenuItem(_('Restore Original Layout'));
+        restoreItem.connect('activate', () => {
+            this._controller.restoreOriginalLayout();
+        });
+        this.menu.addMenuItem(restoreItem);
+
+        const prefsItem = new PopupMenu.PopupMenuItem(_('More Settings…'));
+        prefsItem.connect('activate', () => {
+            this._openPreferences();
+        });
+        this.menu.addMenuItem(prefsItem);
+    }
+
+    _onClicked() {
+        this._extensionSettings.set_boolean('enabled', this.checked);
+    }
+
+    destroy() {
+        if (this._enabledChangedId)
+            this._extensionSettings.disconnect(this._enabledChangedId);
+        this._enabledChangedId = null;
+        super.destroy();
+    }
+});
+
+const WizardIndicator = GObject.registerClass(
+class WizardIndicator extends SystemIndicator {
+    _init(controller, openPreferences) {
+        super._init();
+        this.quickSettingsItems.push(new WizardToggle(controller, openPreferences));
+    }
+    destroy() {
+        this.quickSettingsItems.forEach(item => item.destroy());
+        super.destroy();
+    }
+});
+
+export default class WizardManagerExtension extends Extension {
+    enable() {
+        this._settings = this.getSettings();
+        this._controller = new WizardController(this._settings);
+        this._showQuickSettingsChangedId = this._settings.connect('changed::show-quick-settings', () => {
+            this._syncQuickSettingsIndicator();
+        });
+        this._syncQuickSettingsIndicator();
+        this._maybeShowQuickSettingsHint();
+        console.debug('App-Grid-Wizard: Enabled');
+    }
+
+    disable() {
+        this._destroyIndicator();
+        if (this._showQuickSettingsChangedId)
+            this._settings.disconnect(this._showQuickSettingsChangedId);
+        this._showQuickSettingsChangedId = null;
+        if (this._controller)
+            this._controller.destroy();
+        this._controller = null;
+        this._settings = null;
+        console.debug('App-Grid-Wizard: Disabled');
+    }
+
+    _maybeShowQuickSettingsHint() {
+        if (!this._settings.get_boolean('show-quick-settings'))
+            return;
+
+        if (this._settings.get_boolean('enabled'))
+            return;
+
+        if (this._settings.get_boolean('quick-settings-hint-shown'))
+            return;
+
+        Main.notify(
+            _('App Grid Wizard'),
+            _('Open Quick Settings and turn on App Grid Wizard to create folders.')
+        );
+        this._settings.set_boolean('quick-settings-hint-shown', true);
+    }
+
+    _syncQuickSettingsIndicator() {
+        if (this._settings.get_boolean('show-quick-settings')) {
+            if (!this._indicator) {
+                this._indicator = new WizardIndicator(this._controller, () => this.openPreferences());
+                Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator);
+            }
+            return;
+        }
+
+        this._destroyIndicator();
+    }
+
+    _destroyIndicator() {
+        if (!this._indicator)
+            return;
+
+        this._indicator.destroy();
+        this._indicator = null;
+    }
+}

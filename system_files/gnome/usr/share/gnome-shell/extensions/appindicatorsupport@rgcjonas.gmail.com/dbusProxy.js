@@ -71,12 +71,18 @@ export const DBusProxy = GObject.registerClass({
         if (this[`${method}Async`])
             return;
 
-        if (!this[`${method}Remote`])
+        // Only ever invoke members that are known to belong to the D-Bus
+        // interface; never call an arbitrary member by a crafted method name.
+        if (!this.gInterfaceInfo.methods.some(m => m.name === method))
+            throw new Error(`Unknown method '${method}'`);
+
+        const remoteMethod = this[`${method}Remote`];
+        if (typeof remoteMethod !== 'function')
             throw new Error(`Missing remote method '${method}'`);
 
         this[`${method}Async`] = function (...args) {
             return new Promise((resolve, reject) => {
-                this[`${method}Remote`](...args, (ret, e) => {
+                remoteMethod.call(this, ...args, (ret, e) => {
                     if (e)
                         reject(e);
                     else

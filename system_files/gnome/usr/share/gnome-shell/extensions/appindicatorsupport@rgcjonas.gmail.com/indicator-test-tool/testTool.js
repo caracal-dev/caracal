@@ -51,7 +51,7 @@ const ScrollType = {
         });
 
         let getRandomIcon = () =>
-            iconsPool[Math.floor(Math.random() * (iconsPool.length - 1))];
+            iconsPool[GLib.random_int_range(0, iconsPool.length)];
 
         let setRandomIconPath = () => {
             let iconName = getRandomIcon();
@@ -59,7 +59,7 @@ const ScrollType = {
                 16, Gtk.IconLookupFlags.GENERIC_FALLBACK);
             let iconFile = Gio.File.new_for_path(iconInfo.get_filename());
             let [, extension] = iconFile.get_basename().split('.');
-            let newName = `${Math.floor(Math.random() * 100)}${iconName}.${extension}`;
+            let newName = `${GLib.random_int_range(0, 100)}${iconName}.${extension}`;
             let newFile = Gio.File.new_for_path(
                 `${GLib.dir_make_tmp('indicator-test-XXXXXX')}/${newName}`);
             temporaryFiles.push(newFile, newFile.get_parent());

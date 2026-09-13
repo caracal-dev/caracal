@@ -21,7 +21,7 @@ primary-color='#161617'
 secondary-color='#2e2e30'
 
 [org.gnome.shell]
-enabled-extensions=['appindicatorsupport@rgcjonas.gmail.com']
+enabled-extensions=['appindicatorsupport@rgcjonas.gmail.com', 'app-grid-wizard@mirzadeh.pro']
 favorite-apps=['io.github.kolunmi.Bazaar.desktop', 'net.waterfox.waterfox.desktop', 'org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'ardour9.desktop', 'virt-manager.desktop']
 
 [org.gnome.shell.extensions.appindicator]
