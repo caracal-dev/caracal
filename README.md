@@ -129,7 +129,7 @@ Caracal publishes a GNOME desktop variant (`caracal-gnome`, built on Fedora Silv
 - Default wallpaper: **Caracal Silloutte** (`caracal-silloutte.png`)
 - AppIndicator tray support so the Caracal audio controller runs on GNOME
 - Stock Fedora GNOME apps that Caracal replaces (gnome-software, gnome-tour, gnome-initial-setup, and friends) are removed
-- GDM login screen uses the Caracal logo
+- GDM login screen shows the Caracal silloutte wallpaper with the Caracal logo
 
 The GNOME ISO is produced by the same disk-build workflow (matrix `-gnome` suffix) and is included in the S3/R2 artifact upload when `upload-to-s3` is enabled on `workflow_dispatch`.
 

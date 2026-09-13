@@ -55,4 +55,13 @@ glib-compile-schemas \
 rm -f /usr/share/glib-2.0/schemas/gschemas.compiled
 glib-compile-schemas /usr/share/glib-2.0/schemas
 
+# GDM login-screen wallpaper (caracal-silloutte) via the gdm system dconf
+# database: the keyfile ships in system_files/gnome/etc/dconf/db/gdm.d/ and
+# must be compiled here so the greeter renders it instead of the Fedora
+# default (the gdm user's session reads system-db:gdm — see
+# /etc/dconf/profile/gdm). dconf is a gnome-shell dependency; pull it in
+# explicitly (hermetic, same pattern as glib2-devel) if the base drops it.
+command -v dconf >/dev/null || dnf5 -y install dconf
+dconf update
+
 dnf5 -y remove --no-autoremove glib2-devel || true

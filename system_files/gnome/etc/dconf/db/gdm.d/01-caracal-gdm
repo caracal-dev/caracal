@@ -1,0 +1,15 @@
+# Caracal OS GDM login-screen background (GNOME build).
+#
+# GDM's greeter runs a gnome-shell session for the gdm user, which reads the
+# "gdm" dconf profile (/etc/dconf/profile/gdm, shipped by the gdm RPM) that
+# includes system-db:gdm. The keyfile above the compiled database is shipped
+# here and compiled with `dconf update` in build-gnome-de.sh, so the login
+# screen shows the Caracal silloutte wallpaper instead of the Fedora default.
+# Values mirror zz0-caracal-gnome.gschema.override (desktop + screensaver).
+[org/gnome/desktop/background]
+color-shading-type='solid'
+picture-options='zoom'
+picture-uri='file:///usr/share/backgrounds/caracal/caracal-silloutte.png'
+picture-uri-dark='file:///usr/share/backgrounds/caracal/caracal-silloutte.png'
+primary-color='#161617'
+secondary-color='#2e2e30'
