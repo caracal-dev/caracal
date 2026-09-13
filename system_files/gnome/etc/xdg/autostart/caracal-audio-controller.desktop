@@ -2,6 +2,7 @@
 Type=Application
 Name=Caracal Audio Controller
 Comment=Start the Caracal audio tray controller
+NoDisplay=true
 Exec=caracal-audio-controller
 TryExec=caracal-audio-controller
 Icon=caracal-audio-controller
