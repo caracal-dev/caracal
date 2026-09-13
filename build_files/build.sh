@@ -474,6 +474,11 @@ curl --retry 3 -Lo /etc/flatpak/remotes.d/flathub.flatpakrepo https://dl.flathub
 
 systemctl enable flatpak-preinstall.service
 
+# Waterfox config: Betterfox waterfox/user.js is fetched from upstream at
+# build time (not vendored — tracks Betterfox releases instead of a stale
+# copy). Caracal-only prefs live in scripts/waterfox-caracal.overrides.js.
+bash "${SCRIPTS_DIR}/fetch-waterfox-userjs.sh" /usr/share/flatpak/firefox
+
 install_wine_stack
 validate_wine_stack
 
