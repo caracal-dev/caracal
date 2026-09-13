@@ -15,6 +15,7 @@ gnome_gui_packages=(
   libappindicator-gtk3
   libayatana-appindicator-gtk3
   openssh-askpass
+  gnome-tweak-tool
 )
 
 # Fedora GNOME defaults that Caracal does not need or replaces:
@@ -50,15 +51,40 @@ dnf5 -y install glib2-devel
 glib-compile-schemas \
   /usr/share/gnome-shell/extensions/appindicatorsupport@rgcjonas.gmail.com/schemas
 
+# Vendored App Grid Wizard extension (organizes the app grid into category
+# folders; opt-in via its Quick Settings toggle on first login).
+glib-compile-schemas \
+  /usr/share/gnome-shell/extensions/app-grid-wizard@mirzadeh.pro/schemas
+
 # Keep Caracal Audio Controller tray-only in GNOME. The RPM ships a launcher
 # entry (/usr/share/applications/caracal-audio-controller.desktop) alongside
-# its autostart file, so it appears in the app grid here; scope it to KDE,
-# where the launcher entry stays as-is. The autostart copy is tracked
-# NoDisplay in system_files/gnome/etc/xdg/autostart/, and NoDisplay does not
-# affect autostart, so the tray icon is preserved.
+# an autostart entry (/etc/xdg/autostart/caracal-audio-controller.desktop),
+# both scoped OnlyShowIn=KDE.
+#   - Launcher: scope it to KDE so it does not clutter the GNOME app grid.
+#   - Autostart: drop the KDE scoping — gnome-session honors OnlyShowIn and
+#     would skip the entry, so the tray icon never appears. NoDisplay is kept
+#     (tray-only) and does not affect autostart.
+# This must run after the package install: the system_files/gnome overlay
+# copy is overwritten by the RPM's own autostart file during
+# `dnf5 install caracal-audio-controller` in build.sh.
 if [[ -f /usr/share/applications/caracal-audio-controller.desktop ]]; then
   sed -i '/^OnlyShowIn=/d; /^Categories=/a OnlyShowIn=KDE;' \
     /usr/share/applications/caracal-audio-controller.desktop
+fi
+if [[ -f /etc/xdg/autostart/caracal-audio-controller.desktop ]]; then
+  cat >/etc/xdg/autostart/caracal-audio-controller.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Caracal Audio Controller
+Comment=Start the Caracal audio tray controller
+NoDisplay=true
+Exec=caracal-audio-controller
+TryExec=caracal-audio-controller
+Icon=caracal-audio-controller
+Terminal=false
+X-GNOME-Autostart-enabled=true
+StartupNotify=false
+EOF
 fi
 
 # Caracal defaults: default wallpaper (caracal-silloutte), favorite apps,

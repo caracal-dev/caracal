@@ -116,46 +116,50 @@ first-run:
     echo "Audio plugins have been moved to user folders"
 
     echo "Setting up shell"
-    function brew-bundle(){
-        echo 'Installing bling tools from Homebrew...'
-        brew bundle --file /usr/share/ublue-os/homebrew/caracal-cli.Brewfile --verbose
-    }
-    sh -c "KEEP_ZSHRC=yes $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    git clone https://github.com/zsh-users/zsh-autosuggestions.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
-    git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting"
-    brew-bundle
-    {
-        echo 'export ZSH="$HOME/.oh-my-zsh"'
-        echo 'ZSH_THEME="candy"'
-        echo 'plugins=(git'
-        echo 'zsh-autosuggestions'
-        echo 'zsh-syntax-highlighting'
-        echo 'fast-syntax-highlighting'
-        echo ')'
-        echo 'source $ZSH/oh-my-zsh.sh'
-        echo eval "$(atuin init zsh)"  
-        echo eval "$(zoxide init zsh)"
-        echo alias grep='ug'
-        echo alias cd="z"
-        echo alias egrep='ug -E'
-        echo alias fgrep='ug -F'
-        echo alias xzgrep='ug -z'
-        echo alias xzegrep='ug -zE'
-        echo alias xzfgrep='ug -zF'
-        echo alias ll='eza -l --icons=auto --group-directories-first'
-        echo alias l.='eza -d .*'
-        echo alias ls='eza --icons=auto'
-        echo alias l1='eza -1'
-    } >> ~/.zshrc
+    if [[ -d "${ZSH:-$HOME/.oh-my-zsh}" ]]; then
+        echo "Oh My Zsh already installed; skipping shell setup."
+    else
+        function brew-bundle(){
+            echo 'Installing bling tools from Homebrew...'
+            brew bundle --file /usr/share/ublue-os/homebrew/caracal-cli.Brewfile --verbose
+        }
+        sh -c "KEEP_ZSHRC=yes $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        git clone https://github.com/zsh-users/zsh-autosuggestions.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+        git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting"
+        brew-bundle
+        {
+            echo 'export ZSH="$HOME/.oh-my-zsh"'
+            echo 'ZSH_THEME="candy"'
+            echo 'plugins=(git'
+            echo 'zsh-autosuggestions'
+            echo 'zsh-syntax-highlighting'
+            echo 'fast-syntax-highlighting'
+            echo ')'
+            echo 'source $ZSH/oh-my-zsh.sh'
+            echo eval "$(atuin init zsh)"  
+            echo eval "$(zoxide init zsh)"
+            echo alias grep='ug'
+            echo alias cd="z"
+            echo alias egrep='ug -E'
+            echo alias fgrep='ug -F'
+            echo alias xzgrep='ug -z'
+            echo alias xzegrep='ug -zE'
+            echo alias xzfgrep='ug -zF'
+            echo alias ll='eza -l --icons=auto --group-directories-first'
+            echo alias l.='eza -d .*'
+            echo alias ls='eza --icons=auto'
+            echo alias l1='eza -1'
+        } >> ~/.zshrc
 
-    echo "Switch to ZSH if using a terminal emulator" 
+        echo "Switch to ZSH if using a terminal emulator"
 
-    {
-      echo 'if [[ $- == *i* ]]; then'
-      echo '  exec zsh'
-      echo 'fi'
-    } >> ~/.bashrc
+        {
+          echo 'if [[ $- == *i* ]]; then'
+          echo '  exec zsh'
+          echo 'fi'
+        } >> ~/.bashrc
+    fi
 
     echo "Setting Ghostty theme"
     mkdir -p ~/.config/ghostty

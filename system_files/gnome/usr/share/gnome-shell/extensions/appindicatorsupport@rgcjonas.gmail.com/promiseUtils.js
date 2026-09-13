@@ -72,6 +72,9 @@ export class CancellablePromise extends Promise {
         return this._root ? this._root : this;
     }
 
+    // then() is intentional: we subclass Promise, and the override is what
+    // propagates the cancel-chain root to chained promises.
+    // biome-ignore lint/suspicious/noThenProperty: Promise subclass override
     then(...args) {
         const ret = super.then(...args);
 

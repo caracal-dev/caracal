@@ -128,6 +128,7 @@ Caracal publishes a GNOME desktop variant (`caracal-gnome`, built on Fedora Silv
 
 - Default wallpaper: **Caracal Silloutte** (`caracal-silloutte.png`)
 - AppIndicator tray support so the Caracal audio controller runs on GNOME
+- App Grid Wizard preinstalled: turn on its Quick Settings toggle to organize the app grid into category folders (opt-in on first login)
 - Stock Fedora GNOME apps that Caracal replaces (gnome-software, gnome-tour, gnome-initial-setup, and friends) are removed
 - GDM login screen shows the Caracal silloutte wallpaper with the Caracal logo
 
