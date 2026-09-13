@@ -1,20 +1,32 @@
+[[customizations.filesystem]]
+mountpoint = "/"
+minsize = "40 GiB"
+
 [customizations.installer.kickstart]
 contents = """
 %post
-bootc switch --mutate-in-place --transport registry ghcr.io/ublue-os/image-template:latest
+bootc switch --mutate-in-place --transport registry ghcr.io/tumillanino/caracal-gnome:latest
 %end
 """
 
 [customizations.installer.modules]
 enable = [
-  "org.fedoraproject.Anaconda.Modules.Storage",
-  "org.fedoraproject.Anaconda.Modules.Runtime"
-]
-disable = [
+  "org.fedoraproject.Anaconda.Modules.Localization",
   "org.fedoraproject.Anaconda.Modules.Network",
+  "org.fedoraproject.Anaconda.Modules.Payloads",
+  "org.fedoraproject.Anaconda.Modules.Runtime",
   "org.fedoraproject.Anaconda.Modules.Security",
   "org.fedoraproject.Anaconda.Modules.Services",
+  "org.fedoraproject.Anaconda.Modules.Storage",
   "org.fedoraproject.Anaconda.Modules.Users",
-  "org.fedoraproject.Anaconda.Modules.Subscription",
-  "org.fedoraproject.Anaconda.Modules.Timezone"
+  "org.fedoraproject.Anaconda.Modules.Timezone",
 ]
+
+disable = [
+  "org.fedoraproject.Anaconda.Modules.Subscription",
+]
+
+[customizations.iso]
+volume_id = "CARACAL_OS"
+application_id = "Caracal OS Installer (GNOME)"
+publisher = "Caracal OS"

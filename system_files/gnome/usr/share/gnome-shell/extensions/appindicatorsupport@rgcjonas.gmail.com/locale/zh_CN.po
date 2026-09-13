@@ -1,0 +1,145 @@
+# Chinese (China) translation for TopIcons-Plus.
+# Copyright (C) 2017-2017 TopIcons-Plus's COPYRIGHT HOLDER
+# This file is distributed under the same license as the TopIcons-Plus package.
+# Dingzhong Chen <wsxy162@gmail.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: TopIcons-Plus master\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-03-07 02:36+0100\n"
+"PO-Revision-Date: 2023-07-08 15:34+0800\n"
+"Last-Translator: Dee.H.Y <dongfengweixiao@hotmail.com>\n"
+"Language-Team: \n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#: prefs.js:59
+msgid "Enable Legacy Tray Icons support"
+msgstr "启用旧托盘图标支持"
+
+#: prefs.js:91
+msgid "Opacity (min: 0, max: 255)"
+msgstr "不透明度（最低：0，最高：255）"
+
+#: prefs.js:120
+msgid "Desaturation (min: 0.0, max: 1.0)"
+msgstr "饱和度（最低：0.0，最高：1.0）"
+
+#: prefs.js:148
+msgid "Brightness (min: -1.0, max: 1.0)"
+msgstr "亮度（最低：-1.0，最高：1.0）"
+
+#: prefs.js:176
+msgid "Contrast (min: -1.0, max: 1.0)"
+msgstr "对比度（最低：-1.0，最高：1.0）"
+
+#: prefs.js:204
+msgid "Icon size (min: 0, max: 96)"
+msgstr "图标大小（最小：0，最大：96）"
+
+#: prefs.js:232
+msgid "Tray horizontal alignment"
+msgstr "托盘水平对齐方式"
+
+#: prefs.js:237
+msgid "Center"
+msgstr "居中"
+
+#: prefs.js:238
+msgid "Left"
+msgstr "左对齐"
+
+#: prefs.js:239
+msgid "Right"
+msgstr "右对齐"
+
+#: prefs.js:286
+msgid "Indicator ID"
+msgstr "指示器 ID"
+
+#: prefs.js:287
+msgid "Icon Name"
+msgstr "图标名称"
+
+#: prefs.js:288
+msgid "Attention Icon Name"
+msgstr ""
+
+#: prefs.js:363
+msgid "Preferences"
+msgstr "首选项"
+
+#: prefs.js:365
+msgid "Custom Icons"
+msgstr "自定义图标"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:5
+msgid "Enable legacy tray icons support"
+msgstr "启用旧托盘图标支持"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:9
+msgid "Saturation"
+msgstr "饱和度"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:13
+msgid "Brightness"
+msgstr "亮度"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:17
+msgid "Contrast"
+msgstr "对比度"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:21
+msgid "Opacity"
+msgstr "透明度"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:25
+msgid "Icon size"
+msgstr "图标尺寸"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:26
+msgid "Icon size in pixel"
+msgstr "图标大小（像素）"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:30
+msgid "Icon spacing"
+msgstr "图标间距"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:31
+msgid "Icon spacing within the tray"
+msgstr "托盘内的图标间距"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:35
+msgid "Position in tray"
+msgstr "托盘中的位置"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:36
+msgid "Set where the Icon tray should appear in Gnome tray"
+msgstr "设置图标托盘应出现在Gnome托盘中的位置"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:40
+msgid "Order in tray"
+msgstr "托盘中的顺序"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:41
+msgid "Set where the Icon tray should appear among other trays"
+msgstr "设置图标托盘应出现在其他托盘中的位置"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:45
+msgid "Custom icons"
+msgstr "自定义图标"
+
+#: schemas/org.gnome.shell.extensions.appindicator.gschema.xml:46
+msgid "Replace any icons with custom icons from themes"
+msgstr "用主题中的自定义图标替换任意图标"
+
+#~ msgid "Spacing between icons (min: 0, max: 20)"
+#~ msgstr "图标间隔（最小：0，最大：20）"
+
+#~ msgid "Tray offset"
+#~ msgstr "托盘偏移量"

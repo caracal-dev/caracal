@@ -5,7 +5,9 @@
 #   Target:  ~/.var/app/net.waterfox.waterfox/.waterfox/<profile>/
 #
 # Picks the default-release profile from profiles.ini.
-# Runs once per user from ujust first-run.
+# Triggered by caracal-waterfox-config.path user systemd unit when the profile
+# directory appears (flatpak must be installed and Waterfox launched once).
+# Idempotent via version marker — safe to run repeatedly.
 
 set -euo pipefail
 

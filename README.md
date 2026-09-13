@@ -8,6 +8,8 @@
 
 A custom [bootc](https://github.com/bootc-dev/bootc) image built on Fedora Kinoite (KDE Plasma), tuned from the ground up for audio production. Caracal-OS delivers a fast, immutable Linux desktop with a lean core production stack ready on first boot, while the larger DAW, plugin, instrument, and utility catalog is handled by the bundled Caracal Software Installer.
 
+A GNOME desktop build (`caracal-gnome`) is also published from the same source for users who prefer a GNOME/Silverblue workflow — same audio stack, kernel, and first-run setup, with the Caracal silloutte wallpaper as the default.
+
 ---
 
 ## What's Inside
@@ -119,6 +121,17 @@ ujust dx-group
 ```
 
 Then reboot, or log out and back in, so Docker, Incus, libvirt, and serial-device group membership applies.
+
+### GNOME Image
+
+Caracal publishes a GNOME desktop variant (`caracal-gnome`, built on Fedora Silverblue) alongside the default KDE image. It carries the same kernel, low-latency audio stack, Wine/yabridge bridge, Waydroid, virtualization, and first-run setup, with GNOME-native defaults:
+
+- Default wallpaper: **Caracal Silloutte** (`caracal-silloutte.png`)
+- AppIndicator tray support so the Caracal audio controller runs on GNOME
+- Stock Fedora GNOME apps that Caracal replaces (gnome-software, gnome-tour, gnome-initial-setup, and friends) are removed
+- GDM login screen shows the Caracal silloutte wallpaper with the Caracal logo
+
+The GNOME ISO is produced by the same disk-build workflow (matrix `-gnome` suffix) and is included in the S3/R2 artifact upload when `upload-to-s3` is enabled on `workflow_dispatch`.
 
 ---
 
