@@ -1,0 +1,15 @@
+[Unit]
+Description=Configure SDDM autologin for the primary user
+Documentation=https://github.com/caracal-dev/caracal
+# Run before the display manager so the SDDM autologin config is in place
+# when SDDM parses its configuration. Works with both SDDM and plasmalogin;
+# plasmalogin ignores SDDM config drop-ins, so writing them is harmless.
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/caracal-autologin
+
+[Install]
+WantedBy=multi-user.target
