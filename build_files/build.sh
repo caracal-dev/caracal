@@ -523,12 +523,18 @@ systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
 if [[ "${DESKTOP}" == "gnome" ]]; then
-  # Silverblue defaults to GDM; make the enablement explicit so the base-image
-  # default cannot silently regress.
+  # Bazzite-style: use SDDM instead of GDM so the display manager supports
+  # autologin (caracal-autologin.service writes the SDDM config). GDM does
+  # not offer a simple autologin path on first boot without a pre-existing
+  # user account, and the Caracal setup wizard needs an autologin session to
+  # create the primary user after an ISO install.
   if systemctl cat gdm.service >/dev/null 2>&1; then
-    systemctl enable gdm.service
+    systemctl disable gdm.service
+  fi
+  if systemctl cat sddm.service >/dev/null 2>&1; then
+    systemctl enable sddm.service
   else
-    echo "ERROR: gdm.service not found in GNOME build" >&2
+    echo "ERROR: sddm.service not found for GNOME build" >&2
     exit 1
   fi
 else
@@ -547,10 +553,13 @@ else
   fi
 fi
 
+systemctl enable caracal-autologin.service
+
 chmod +x /usr/libexec/caracal-user-setup
 chmod +x /usr/libexec/caracal-cpu-performance
 chmod +x /usr/libexec/caracal-wine-execmod
 chmod +x /usr/libexec/caracal-setup-launch
+chmod +x /usr/libexec/caracal-autologin
 chmod +x /usr/libexec/caracal-waterfox-config
 chmod +x /usr/libexec/caracal-flatpak-setup
 chmod +x /usr/libexec/flatpak-preinstall
