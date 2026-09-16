@@ -1,9 +1,9 @@
 [Unit]
-Description=Configure SDDM autologin for the primary user
+Description=Configure autologin for the primary user
 Documentation=https://github.com/caracal-dev/caracal
-# Run before the display manager so the SDDM autologin config is in place
-# when SDDM parses its configuration. Works with both SDDM and plasmalogin;
-# plasmalogin ignores SDDM config drop-ins, so writing them is harmless.
+# Run before the display manager so the autologin config is in place when
+# the DM parses its configuration: GDM reads /etc/gdm/custom.conf (GNOME),
+# SDDM reads /etc/sddm.conf.d (older KDE builds). plasmalogin ignores both.
 Before=display-manager.service
 
 [Service]

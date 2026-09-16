@@ -523,18 +523,18 @@ systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
 if [[ "${DESKTOP}" == "gnome" ]]; then
-  # Bazzite-style: use SDDM instead of GDM so the display manager supports
-  # autologin (caracal-autologin.service writes the SDDM config). GDM does
-  # not offer a simple autologin path on first boot without a pre-existing
-  # user account, and the Caracal setup wizard needs an autologin session to
-  # create the primary user after an ISO install.
-  if systemctl cat gdm.service >/dev/null 2>&1; then
-    systemctl disable gdm.service
-  fi
+  # Desktop GNOME keeps GDM (Bazzite's approach): GDM provides the lock
+  # screen for GNOME sessions that SDDM cannot (SDDM on desktop GNOME leaves
+  # screen locking broken — Bazzite reverted it for the same reason), and
+  # caracal-autologin.service enables GDM autologin via /etc/gdm/custom.conf
+  # so the Caracal setup wizard still gets an automatic first-boot session.
   if systemctl cat sddm.service >/dev/null 2>&1; then
-    systemctl enable sddm.service
+    systemctl disable sddm.service || true
+  fi
+  if systemctl cat gdm.service >/dev/null 2>&1; then
+    systemctl enable gdm.service
   else
-    echo "ERROR: sddm.service not found for GNOME build" >&2
+    echo "ERROR: gdm.service not found for GNOME build" >&2
     exit 1
   fi
 else
