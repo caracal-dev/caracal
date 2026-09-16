@@ -529,7 +529,7 @@ if [[ "${DESKTOP}" == "gnome" ]]; then
   # caracal-autologin.service enables GDM autologin via /etc/gdm/custom.conf
   # so the Caracal setup wizard still gets an automatic first-boot session.
   if systemctl cat sddm.service >/dev/null 2>&1; then
-    systemctl disable sddm.service
+    systemctl disable sddm.service || true
   fi
   if systemctl cat gdm.service >/dev/null 2>&1; then
     systemctl enable gdm.service
