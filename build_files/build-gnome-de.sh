@@ -6,7 +6,9 @@
 # Pattern follows ublue-os/bazzite's GNOME branch: strip the Fedora GNOME
 # default apps that Caracal replaces (Bazaar, its own setup wizard), add the
 # few GNOME-native helpers, compile the vendored AppIndicator extension and
-# our gschema overrides, and install SDDM for autologin support (Bazzite-style).
+# our gschema overrides, and keep GDM as the display manager (GDM provides
+# the lock screen for GNOME sessions; autologin is configured at boot by
+# caracal-autologin.service via /etc/gdm/custom.conf, Bazzite-style).
 
 set -ouex pipefail
 
@@ -15,7 +17,6 @@ gnome_gui_packages=(
   libappindicator-gtk3
   libayatana-appindicator-gtk3
   openssh-askpass
-  sddm
   gnome-tweak-tool
 )
 
@@ -93,10 +94,11 @@ fi
 rm -f /usr/share/glib-2.0/schemas/gschemas.compiled
 glib-compile-schemas /usr/share/glib-2.0/schemas
 
-# dconf update compiles all dconf databases (including the gdm wallpaper db
-# under system_files/gnome/etc/dconf/db/gdm.d/, kept for reference — the
-# GNOME variant now uses SDDM instead of GDM). dconf is a gnome-shell
-# dependency; install it explicitly if the base drops it.
+# dconf update compiles all dconf databases, including the gdm wallpaper db
+# under system_files/gnome/etc/dconf/db/gdm.d/. GDM's greeter reads the gdm
+# dconf profile (system-db:gdm) so the login/lock screen shows the Caracal
+# silloutte wallpaper. dconf is a gnome-shell dependency; install it
+# explicitly if the base drops it.
 command -v dconf >/dev/null || dnf5 -y install dconf
 dconf update
 
