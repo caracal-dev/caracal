@@ -165,6 +165,22 @@ build-gnome $target_image=(image_name + "-gnome") $tag=default_tag:
         --tag "${target_image}:${tag}" \
         .
 
+# Build the GNOME Developer Experience image variant for local testing.
+build-gnome-dx $target_image=(image_name + "-gnome-dx") $tag=default_tag:
+    #!/usr/bin/env bash
+
+    BUILD_ARGS=()
+    if [[ -z "$(git status -s)" ]]; then
+        BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
+    fi
+
+    podman build \
+        "${BUILD_ARGS[@]}" \
+        --pull=newer \
+        --target caracal-gnome-dx \
+        --tag "${target_image}:${tag}" \
+        .
+
 # Build the stripped-down Wayfire/Carla stage image for local testing.
 build-stage $target_image=(image_name + "-stage") $tag=default_tag:
     #!/usr/bin/env bash
