@@ -387,9 +387,8 @@ cosign verify --key cosign.pub ghcr.io/caracal-dev/caracal:latest
 ## Special Thanks to:
 
 - Fedora Kinoite - The base this image is built on
-- Universal Blue - for making this type of project possible
-- [Bazzite](https://github.com/ublue-os/bazzite) - for the many performance enhancements
-- [Aurora](https://github.com/ublue-os/aurora) - for the system-scope Flathub + Bazaar preinstall setup
-- [Secureblue](https://github.com/secureblue/secureblue) - for some security improvement ideas
-- [Zirconium](https://github.com/zirconium-dev/zirconium) - excellent learning source
-- [Zena](https://github.com/zena-linux/zena) for providing an example of CachyOS kernel implementation
+- [Universal Blue](https://github.com/ublue-os) - for making this type of project possible
+- [Bazzite](https://github.com/ublue-os/bazzite) - for the many performance enhancements and being an excellent source for complex configurations
+- [Aurora](https://github.com/ublue-os/aurora) - for the system-scope Flathub + Bazaar preinstall setup and being an excellent source for simple configurations
+- [Betterfox](https://github.com/yokoffing/Betterfox) - For the Waterfox default configs
+- [FoxOne](https://github.com/Firnschnee/FoxOne) - For the sleek minimal Waterfox theme
