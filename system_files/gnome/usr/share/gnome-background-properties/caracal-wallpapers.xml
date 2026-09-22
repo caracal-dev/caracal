@@ -44,4 +44,25 @@
     <pcolor>#161617</pcolor>
     <scolor>#2e2e30</scolor>
   </wallpaper>
+  <wallpaper>
+    <name>Caracal Mist</name>
+    <filename>/usr/share/backgrounds/caracal/caracal-mist.png</filename>
+    <options>zoom</options>
+    <pcolor>#161617</pcolor>
+    <scolor>#2e2e30</scolor>
+  </wallpaper>
+  <wallpaper>
+    <name>Caracal Moonlight</name>
+    <filename>/usr/share/backgrounds/caracal/caracal-moonlight.png</filename>
+    <options>zoom</options>
+    <pcolor>#161617</pcolor>
+    <scolor>#2e2e30</scolor>
+  </wallpaper>
+  <wallpaper>
+    <name>Caracal Gruvbox</name>
+    <filename>/usr/share/backgrounds/caracal/caracal-gruvbox.png</filename>
+    <options>zoom</options>
+    <pcolor>#161617</pcolor>
+    <scolor>#2e2e30</scolor>
+  </wallpaper>
 </wallpapers>
