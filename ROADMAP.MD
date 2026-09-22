@@ -20,12 +20,12 @@ The core infrastructure and baseline performance tuning.
 ## 🚀 Phase 2: Refinement (Near-Term)
 Improving the "first 15 minutes" and expanding the ecosystem.
 
-- [ ] **Caracal Software Installer Catalog Expansion:** Adding more curated Linux-native plugins (CLAP, VST3, LV2) to the Software Installer.
-- [ ] **Streamlined First-Run:** Enhancing `ujust first-run` with a graphical or interactive setup wizard for hardware selection.
-- [ ] **Hardware Quirk Database:** Expanding `/usr/lib/modprobe.d/` with more specific quirks for professional USB and FireWire interfaces.
-- [ ] **DAW Configuration Templates:** Pre-optimized project templates for included DAWs to minimize setup time.
+- [x] **Caracal Software Installer Catalog Expansion:** Adding more curated Linux-native plugins (CLAP, VST3, LV2) to the Software Installer.
+- [x] **Streamlined First-Run:** Enhancing `ujust first-run` with a graphical or interactive setup wizard for hardware selection.
+- [x] **Hardware Quirk Database:** Expanding `/usr/lib/modprobe.d/` with more specific quirks for professional USB and FireWire interfaces.
+- [x] **DAW Configuration Templates:** Pre-optimized project templates for included DAWs to minimize setup time.
 - [ ] **Documentation Wiki:** Detailed guides on Yabridge management, Homebrew integration, and low-latency troubleshooting.
-- [ ] **Flatpak Volume Normalization:** Finalizing system-wide PipeWire/WirePlumber rules for consistent audio levels across apps.
+- [x] **Flatpak Volume Normalization:** Finalizing system-wide PipeWire/WirePlumber rules for consistent audio levels across apps.
 
 ---
 
