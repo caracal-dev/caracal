@@ -30,7 +30,7 @@ fi
 if [[ "${DESKTOP_FLAVOR}" == "gnome" ]]; then
   WALLPAPER="/usr/share/backgrounds/caracal/caracal-silloutte.png"
 else
-  WALLPAPER="/usr/share/wallpapers/caracal/caracal-lake.png"
+  WALLPAPER="/usr/share/wallpapers/caracal/caracal-mist.png"
 fi
 USER_SHELL="$(getent passwd "$(id -un)" | cut -d: -f7)"
 USER_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"

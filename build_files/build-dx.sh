@@ -136,11 +136,10 @@ enable_unit_if_present ublue-os-libvirt-workarounds.service
 
 dx_image_name="${IMAGE_NAME:-caracal-dx}"
 dx_variant="Developer Experience"
-dx_variant_id="caracal-dx"
 if [[ "${dx_image_name}" == *nvidia* ]]; then
   dx_variant="Developer Experience NVIDIA"
-  dx_variant_id="caracal-dx-nvidia"
 fi
+dx_variant_id="${dx_image_name}"
 
 echo "${dx_image_name}" >/etc/hostname
 

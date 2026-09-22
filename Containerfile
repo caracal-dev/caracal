@@ -213,6 +213,22 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 
 RUN bootc container lint
 
+### GNOME DX image
+## Developer workstation variant of the GNOME desktop image. Same DX additions
+## as caracal-dx (Docker, VSCodium, libvirt/QEMU tooling, Cockpit, Incus/LXC,
+## tracing/profiling tools) layered on the Silverblue-based caracal-gnome.
+## Container-only — no ISO or disk build is produced for this variant.
+FROM caracal-gnome AS caracal-gnome-dx
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    IMAGE_NAME=caracal-gnome-dx /usr/bin/bash /ctx/build-dx.sh
+
+RUN bootc container lint
+
 ### Gaming image
 ## Bazzite-based gaming variant. Bazzite already ships the kernel, NVIDIA
 ## drivers, Steam, Lutris, MangoHud, and the rest of the gaming stack.
