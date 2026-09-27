@@ -5,6 +5,14 @@ Documentation=https://github.com/caracal-dev/caracal
 # the DM parses its configuration: GDM reads /etc/gdm/custom.conf (GNOME),
 # SDDM reads /etc/sddm.conf.d (older KDE builds). plasmalogin ignores both.
 Before=display-manager.service
+# On a fresh install the Anaconda second stage (initial-setup.service, which
+# runs the username/password/wifi wizard) creates the human account first.
+# Wait for it so we can detect that account and keep autologin off — without
+# this ordering the bootstrap user would win the boot race and the DM would
+# autologin the locked bootstrap account instead of showing the freshly
+# created account at the greeter. No-op on boots where initial-setup is no
+# longer enabled (it self-disables after completing).
+After=initial-setup.service
 
 [Service]
 Type=oneshot

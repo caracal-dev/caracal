@@ -132,7 +132,7 @@ Caracal publishes a GNOME desktop variant (`caracal-gnome`, built on Fedora Silv
 - AppIndicator tray support so the Caracal audio controller runs on GNOME
 - App Grid Wizard preinstalled: turn on its Quick Settings toggle to organize the app grid into category folders (opt-in on first login)
 - Stock Fedora GNOME apps that Caracal replaces (gnome-software, gnome-tour, gnome-initial-setup, and friends) are removed
-- GDM login/lock screen shows the Caracal silloutte wallpaper with the Caracal logo, with automatic first-boot login into the Caracal setup wizard (Bazzite-style GDM autologin via `/etc/gdm/custom.conf`)
+- GDM login/lock screen shows the Caracal silloutte wallpaper with the Caracal logo. On ISO installs the Anaconda second-stage wizard (`initial-setup`) runs on first boot to create the username/password (same flow as the KDE image); for installs where no account exists, GDM autologins a locked bootstrap user into the Caracal setup wizard instead (Bazzite-style autologin via `/etc/gdm/custom.conf`)
 
 The GNOME ISO is produced by the same disk-build workflow (matrix `-gnome` suffix) and is included in the S3/R2 artifact upload when `upload-to-s3` is enabled on `workflow_dispatch`.
 
