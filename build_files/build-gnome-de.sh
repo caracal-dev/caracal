@@ -18,6 +18,16 @@ gnome_gui_packages=(
   libayatana-appindicator-gtk3
   openssh-askpass
   gnome-tweak-tool
+  # First-boot Anaconda second stage (username, password, wifi) — same as the
+  # KDE ISO flow. Silverblue ships no initial-setup (Fedora relies on
+  # gnome-initial-setup there), and gnome-initial-setup is removed below, so
+  # without these a fresh install's first boot lands on a GDM greeter with no
+  # accounts. initial-setup.service runs before display-manager.service and
+  # self-disables after a successful run; the wayland-generic backend hosts
+  # the GUI in a Weston kiosk (Xwayland), same mechanism Kinoite uses.
+  initial-setup
+  initial-setup-gui
+  initial-setup-gui-wayland-generic
 )
 
 # Fedora GNOME defaults that Caracal does not need or replaces:
