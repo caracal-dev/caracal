@@ -18,16 +18,10 @@ gnome_gui_packages=(
   libayatana-appindicator-gtk3
   openssh-askpass
   gnome-tweak-tool
-  # First-boot Anaconda second stage (username, password, wifi) — same as the
-  # KDE ISO flow. Silverblue ships no initial-setup (Fedora relies on
-  # gnome-initial-setup there), and gnome-initial-setup is removed below, so
-  # without these a fresh install's first boot lands on a GDM greeter with no
-  # accounts. initial-setup.service runs before display-manager.service and
-  # self-disables after a successful run; the wayland-generic backend hosts
-  # the GUI in a Weston kiosk (Xwayland), same mechanism Kinoite uses.
-  initial-setup
-  initial-setup-gui
-  initial-setup-gui-wayland-generic
+  # No initial-setup here: the second stage on fresh ISO installs is the
+  # Caracal setup wizard, launched inside the desktop session that
+  # caracal-autologin.service autologs into (same flow as the KDE image,
+  # whose Kinoite base ships no initial-setup either).
 )
 
 # Fedora GNOME defaults that Caracal does not need or replaces:
@@ -53,11 +47,18 @@ gnome_packages_to_remove=(
 dnf5 -y install "${gnome_gui_packages[@]}"
 dnf5 -y remove "${gnome_packages_to_remove[@]}" || true
 
-# Compile GNOME Shell schemas. glib-compile-schemas ships in glib2-devel.
-# (kinoite pulls it transitively; GNOME does not, so install and remove it
-# around the compile step to keep the final image lean.)
-dnf5 -y install glib2-devel
-
+# Materialize the system groups the Kinoite base compose bakes into
+# /etc/group but the Silverblue base only defines in /usr/lib/group
+# (Fedora 44 usr-merged group DB). NSS merges /usr/lib/group, so getent
+# finds these groups and groupadd refuses them as existing — but
+# shadow-utils (useradd/groupadd) read /etc/group directly, so without
+# these lines useradd --groups fails on first boot, the bootstrap user is
+# never created, and GDM falls back to a greeter with no accounts — the
+# Caracal setup wizard never runs.
+for entry in 'audio:x:63:' 'video:x:39:' 'input:x:104:' 'render:x:105:'; do
+  grp="${entry%%:*}"
+  grep -q "^${grp}:" /etc/group || echo "$entry" >> /etc/group
+done
 # Vendored AppIndicator + KStatusNotifierItem extension (system tray for the
 # Caracal audio controller and other Qt AppIndicator apps).
 glib-compile-schemas \
