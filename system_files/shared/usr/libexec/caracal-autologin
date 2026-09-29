@@ -68,10 +68,18 @@ if [[ -z "${user}" ]]; then
   echo "caracal-autologin: no human user found; creating bootstrap user '${BOOTSTRAP_USER}'."
   user="${BOOTSTRAP_USER}"
   if ! getent passwd "${user}" >/dev/null; then
-    # Ensure audio/realtime groups exist before creating the account
-    # (same pattern as caracal-stage-firstboot).
-    for grp in wheel audio realtime video render input; do
-      getent group "$grp" >/dev/null || groupadd --system "$grp"
+    # Materialize the supplementary groups into /etc/group. On Fedora 44+
+    # usr-merged systems these live in /usr/lib/group: NSS merges them (so
+    # getent finds them and groupadd refuses them as existing) but
+    # shadow-utils reads /etc/group directly — without this, useradd
+    # --groups fails, the bootstrap user is never created, and the display
+    # manager falls back to a greeter with no accounts.
+    for entry in 'audio:x:63:' 'video:x:39:' 'input:x:104:' 'render:x:105:'; do
+      grp="${entry%%:*}"
+      grep -q "^${grp}:" /etc/group || echo "$entry" >> /etc/group
+    done
+    for grp in wheel realtime; do
+      getent group "$grp" >/dev/null || groupadd --system "$grp" || true
     done
     useradd \
       --uid 1000 \
@@ -82,8 +90,16 @@ if [[ -z "${user}" ]]; then
       "${user}"
     # Lock the password so the account cannot be logged into via the greeter
     # (autologin bypasses the greeter).
-    passwd --lock "${user}" || true
+    passwd --lock "${user}" 2>/dev/null || true
   fi
+fi
+
+# Only write autologin config for an account that actually exists — writing
+# it for a missing user makes the display manager fall back to a greeter
+# with no usable accounts (the GNOME ISO symptom).
+if ! getent passwd "${user}" >/dev/null; then
+  echo "caracal-autologin: bootstrap user '${user}' does not exist; not enabling autologin." >&2
+  exit 1
 fi
 
 if [[ "$session" == "gnome.desktop" ]]; then
