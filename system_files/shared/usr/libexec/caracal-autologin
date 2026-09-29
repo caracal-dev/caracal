@@ -59,6 +59,18 @@ if [[ ${#real_users[@]} -gt 0 ]]; then
   exit 0
 fi
 
+# KDE/Kinoite ships plasma-setup.service — the Plasma first-run wizard runs
+# before the display manager and owns first-boot account creation (Aurora
+# swaps in a patched plasma-setup; nobody bootstraps on KDE). Never
+# bootstrap there: the group materialization below makes useradd succeed,
+# which creates the bootstrap user plus an SDDM autologin that hijacks the
+# plasma-setup flow. The bootstrap path is only for images with no in-image
+# first-run mechanism (GNOME/Silverblue).
+if [[ -f /usr/lib/systemd/system/plasma-setup.service ]]; then
+  echo "caracal-autologin: plasma-setup.service present; skipping bootstrap autologin."
+  exit 0
+fi
+
 # No real user yet. Check for an existing bootstrap user.
 user="$(id -nu 1000 2>/dev/null || true)"
 if [[ -z "${user}" ]]; then
