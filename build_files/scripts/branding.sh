@@ -28,12 +28,12 @@ fi
 if grep -q '^VARIANT=' /usr/lib/os-release; then
   sed -i 's|^VARIANT=.*|VARIANT="Caracal OS"|' /usr/lib/os-release
 else
-  printf '%s\n' 'VARIANT="Caracal OS"' >> /usr/lib/os-release
+  printf '%s\n' 'VARIANT="Caracal OS"' >>/usr/lib/os-release
 fi
 if grep -q '^VARIANT_ID=' /usr/lib/os-release; then
   sed -i 's|^VARIANT_ID=.*|VARIANT_ID=caracal-os|' /usr/lib/os-release
 else
-  printf '%s\n' 'VARIANT_ID=caracal-os' >> /usr/lib/os-release
+  printf '%s\n' 'VARIANT_ID=caracal-os' >>/usr/lib/os-release
 fi
 sed -i 's|^LOGO=.*|LOGO=distributor-logo|' /usr/lib/os-release
 
@@ -83,7 +83,7 @@ if [[ "${DESKTOP}" == "kinoite" ]]; then
 WallpaperPluginId=org.kde.image
 
 [Greeter][Wallpaper][org.kde.image][General]
-Image=file:///usr/share/wallpapers/caracal/caracal-lake.png
+Image=file:///usr/share/wallpapers/caracal/caracal-mist.png
 EOF
   fi
 
@@ -97,18 +97,18 @@ EOF
     # (/var/lib/sddm/.local/share/sddm/themes/caracal/), NOT from here; a
     # tmpfiles rule handles that deployment.
     sed -i \
-      -e 's|^background=.*|background=/usr/share/wallpapers/caracal/caracal-lake.png|' \
+      -e 's|^background=.*|background=/usr/share/wallpapers/caracal/caracal-mist.png|' \
       -e 's|^type=.*|type=image|' \
       /usr/share/sddm/themes/caracal/theme.conf
     # Fail the build explicitly if the sed didn't match (silent no-op otherwise).
-    grep -q '^background=/usr/share/wallpapers/caracal/caracal-lake.png' \
+    grep -q '^background=/usr/share/wallpapers/caracal/caracal-mist.png' \
       /usr/share/sddm/themes/caracal/theme.conf
     # Also write theme.conf.user into the theme dir for any SDDM builds that do
     # search there, and as the source file for the tmpfiles copy rule.
-    cat > /usr/share/sddm/themes/caracal/theme.conf.user << 'EOF'
+    cat >/usr/share/sddm/themes/caracal/theme.conf.user <<'EOF'
 [General]
 type=image
-background=/usr/share/wallpapers/caracal/caracal-lake.png
+background=/usr/share/wallpapers/caracal/caracal-mist.png
 EOF
   fi
 
@@ -128,7 +128,7 @@ rm -f /usr/share/plymouth/themes/spinner/throbber-*.png
 # and overwrite the rsync'd file before dracut runs.
 mkdir -p /usr/share/plymouth/themes/spinner
 cp /ctx/assets/logos/plymouth-watermark.png \
-   /usr/share/plymouth/themes/spinner/watermark.png
+  /usr/share/plymouth/themes/spinner/watermark.png
 
 # Replace EFI boot picker icon with Caracal logo
 mkdir -p /usr/share/pixmaps/bootloader
