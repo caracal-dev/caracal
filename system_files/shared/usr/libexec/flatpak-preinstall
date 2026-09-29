@@ -1,4 +1,11 @@
 #!/usr/bin/bash
+# Pre-installs the Caracal default Flatpak set at system scope from
+# /usr/share/flatpak/preinstall.d. Each app installs in its own transaction so
+# one flaky ref cannot abort the whole set, and failures exit non-zero so a
+# broken run shows as `failed` in systemd instead of silently passing.
+# Idempotent: `--or-update` plus ostree content dedup make re-runs incremental,
+# and the unit re-runs at every boot until the set is complete.
+
 set -oue pipefail
 
 PREINSTALL_DIR="/usr/share/flatpak/preinstall.d"
@@ -21,6 +28,21 @@ done
 [[ ${#apps[@]} -eq 0 ]] && exit 0
 
 echo "flatpak-preinstall: installing ${#apps[@]} app(s) at system scope..."
-flatpak install --system --noninteractive --or-update flathub "${apps[@]}" || {
-  echo "flatpak-preinstall: some apps failed to install; continuing." >&2
-}
+
+failures=()
+for app in "${apps[@]}"; do
+  echo "flatpak-preinstall: installing ${app}..."
+  if flatpak install --system --noninteractive --or-update flathub "${app}"; then
+    echo "flatpak-preinstall: ${app} installed."
+  else
+    echo "flatpak-preinstall: ${app} FAILED to install." >&2
+    failures+=("${app}")
+  fi
+done
+
+if [[ ${#failures[@]} -gt 0 ]]; then
+  echo "flatpak-preinstall: ${#failures[@]} app(s) failed: ${failures[*]}" >&2
+  exit 1
+fi
+
+echo "flatpak-preinstall: all ${#apps[@]} app(s) installed."
