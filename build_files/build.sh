@@ -228,6 +228,9 @@ if [[ "${DESKTOP}" == "kinoite" ]]; then
     plasma-discover-libs
     plasma-discover-notifier
     plasma-discover-rpm-ostree
+    # Stock KDE wallpaper pack; Caracal ships its own wallpaper set, and the
+    # desktop default (Next) lives in plasma-breeze-common (~255 MB)
+    plasma-workspace-wallpapers
   )
 fi
 
@@ -481,6 +484,82 @@ bash "${SCRIPTS_DIR}/fetch-waterfox-userjs.sh" /usr/share/flatpak/firefox
 
 install_wine_stack
 validate_wine_stack
+
+# ── Debloat ──────────────────────────────────────────────────────────────────
+# Remove weak-dep chains and build-time orphans that dnf pulled in but nothing
+# at runtime needs (~833 MB installed, 67 packages measured). The list is
+# explicit on purpose: a blanket `dnf autoremove` would also strip weak-dep
+# kernel firmware. Regenerate candidates with `dnf5 autoremove --assumeno`
+# inside a throwaway container.
+debloat_packages=(
+  # KCM audio plugin build orphan closure (transient toolchain deps)
+  clang-libs
+  clang-resource-filesystem
+  compiler-rt
+  doxygen
+  graphviz
+  gts
+  js-doxygen
+  kde-qdoc-common
+  kf6-kcolorscheme-devel
+  lasi
+  libX11-devel
+  libXau-devel
+  libfbclient2
+  libffi-devel
+  libglvnd-core-devel
+  libglvnd-devel
+  libomp
+  libomp-devel
+  libpq
+  libstdc++-devel
+  libxcb-devel
+  libxkbcommon-devel
+  libxml2-devel
+  netpbm
+  poppler-glib
+  python3-pyliblo3
+  python3-tornado
+  qt6-designer
+  qt6-doc-devel
+  qt6-doctools
+  qt6-linguist
+  qt6-qtbase-ibase
+  qt6-qtbase-odbc
+  qt6-qtbase-postgresql
+  qt6-qttools-libs-designercomponents
+  rhash
+  spdlog
+  vulkan-headers
+  vulkan-loader-devel
+  wayland-devel
+  web-assets-filesystem
+  xorg-x11-proto-devel
+  xz-devel
+  # Weak-dep chains: neovim→tree-sitter-cli→nodejs, sos→boto3, and the
+  # akonadi→mariadb stack (akonadi-server is itself an orphan — nothing
+  # installed requires or recommends it)
+  akonadi-server
+  akonadi-server-mysql
+  mariadb-server
+  mariadb-server-utils
+  tree-sitter-cli
+  nodejs22
+  nodejs22-full-i18n
+  nodejs22-npm
+  nodejs22-docs
+  nodejs22-libs
+  nodejs22-bin
+  python3-boto3
+  python3-botocore
+  flexiblas
+  flexiblas-openblas-openmp
+  flexiblas-netlib
+  openblas-openmp
+)
+for debloat_package in "${debloat_packages[@]}"; do
+  dnf5 -y remove "$debloat_package" || true
+done
 
 # System config
 sed -Ei "s/secure_path = (.*)/secure_path = \1:\/home\/linuxbrew\/.linuxbrew\/bin/" /etc/sudoers
