@@ -53,6 +53,10 @@ done
 
 if [[ ${#missing[@]} -eq 0 ]]; then
   echo "flatpak-preinstall: all ${#apps[@]} app(s) already installed."
+  # The installer ISO omits Locale refs to save space; this first online
+  # update pulls them (and any app updates) via flatpak's related-ref
+  # machinery. Offline boots fail here and the timer retries every 15 min.
+  flatpak update --system --noninteractive || true
   exit 0
 fi
 

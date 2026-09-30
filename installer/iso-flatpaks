@@ -9,5 +9,8 @@
 #
 # Kept offline: the app store and the default browser — the two things a
 # fresh install needs immediately, before any network-dependent setup.
+# Locale refs are NOT bundled (they would add ~770 MB to the ISO): offline
+# installs are English-first, and flatpak-preinstall pulls the Locale refs
+# on the first online boot after installation.
 app/io.github.kolunmi.Bazaar/x86_64/stable
 app/net.waterfox.waterfox/x86_64/stable
