@@ -39,8 +39,8 @@ echo "generate-flatpak-refs: installing ${#refs[@]} ref(s) to collect the depend
 # before flatpak touches it.
 mkdir -p /var/lib/flatpak
 
-# Install all locales so offline installs are complete for every language,
-# matching Bazzite's ISO behaviour.
+# languages has no effect on which refs deploy (Locale commits deploy
+# regardless); the ISO-side Locale filter below handles ISO size.
 flatpak config --system --set languages "*"
 
 # The flathub remote comes from /etc/flatpak/remotes.d in the image; the
@@ -64,11 +64,17 @@ fi
 
 # Deployed refs live under deploy/<ref>; flatten to the plain ref form that
 # the ISO bundler (and Anaconda's local-remote install) expects.
+# Locale refs are omitted from the ISO on purpose: their commits bundle
+# every language (~770 MB for the two platform runtimes), which dominates
+# the ISO size. flatpak installs tolerate the missing related ref, so
+# offline installs work in English and flatpak-preinstall pulls the
+# Locale refs on the first online boot.
 ostree refs --repo=/var/lib/flatpak/repo \
   | grep '^deploy/' \
   | grep -v 'org\.freedesktop\.Platform\.openh264' \
+  | grep -v '\.Locale/' \
   | sed 's/^deploy\///g' \
-  | sort -u >"${OUT_FILE}"
+  >"${OUT_FILE}"
 
 # Sanity check: every requested ref must have made it into the bundle.
 for ref in "${refs[@]}"; do
