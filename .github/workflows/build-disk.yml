@@ -97,6 +97,14 @@ jobs:
           echo "USER_UID=${USER_UID}" >> ${GITHUB_ENV}
           echo "USER_GID=${USER_GID}" >> ${GITHUB_ENV}
           if [ "${{ matrix.disk-type }}" = "installer-iso" ]; then
+            # Stage images ship no flatpak preinstall set, so their ISOs
+            # bundle nothing offline; desktop and NVIDIA legs bundle
+            # Bazaar + Waterfox (see installer/iso-flatpaks).
+            if [ "${IMAGE_SUFFIX}" != "-stage" ] && [ "${IMAGE_SUFFIX}" != "-stage-arm" ]; then
+              echo "BUNDLE_FLATPAKS=true" >> ${GITHUB_ENV}
+            else
+              echo "BUNDLE_FLATPAKS=false" >> ${GITHUB_ENV}
+            fi
             echo "OUTPUT_DIR=${GITHUB_WORKSPACE}/output/installer" >> ${GITHUB_ENV}
             if [ "${{ matrix.platform }}" = "arm64" ]; then
               echo "ISO_ARCH=aarch64" >> ${GITHUB_ENV}
@@ -142,6 +150,22 @@ jobs:
           # Keep CI aligned with the local Justfile, which always builds Btrfs-backed images.
           additional-args: --use-librepo=True --rootfs=btrfs
 
+      - name: Generate offline flatpak ref list
+        if: env.BUNDLE_FLATPAKS == 'true'
+        run: |
+          set -euo pipefail
+          # Installs the offline flatpak set into a throwaway container of
+          # the image being released and dumps the full deployed-ref closure
+          # (apps + runtimes + locales) for jasonn3 to bundle into the ISO.
+          mkdir -p "${GITHUB_WORKSPACE}/flatpak_refs"
+          docker run --rm \
+            --volume "${GITHUB_WORKSPACE}/installer:/input/installer:ro" \
+            --volume "${GITHUB_WORKSPACE}/flatpak_refs:/input/output" \
+            "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}" \
+            /input/installer/generate-flatpak-refs.sh \
+              /input/installer/iso-flatpaks \
+              /input/output/flatpaks_with_deps
+
       - name: Build installer ISO
         if: matrix.disk-type == 'installer-iso'
         shell: bash
@@ -155,12 +179,22 @@ jobs:
           fi
 
           # Adapted from ublue-os/bazzite just_scripts/build-iso.sh.
+          docker_volumes=()
+          make_args=()
+          if [ "${BUNDLE_FLATPAKS}" = "true" ]; then
+            docker_volumes+=(--volume "${GITHUB_WORKSPACE}/flatpak_refs:/build-container-installer/flatpak_refs")
+            make_args+=(
+              FLATPAK_REMOTE_REFS_DIR="/build-container-installer/flatpak_refs"
+              FLATPAK_REMOTE_NAME="flathub"
+            )
+          fi
           docker run \
             --rm \
             --privileged \
             --volume "${AUTHFILE}:/auth/config.json:ro" \
             --volume "${GITHUB_WORKSPACE}/installer/build-iso-makefile-patch:/build-container-installer/container/Makefile:ro" \
             --volume "${OUTPUT_DIR}:/build-container-installer/build" \
+            "${docker_volumes[@]}" \
             "${ISO_BUILDER_IMAGE}" \
             ARCH="${ISO_ARCH}" \
             AUTHFILE="/auth/config.json" \
@@ -170,6 +204,7 @@ jobs:
             IMAGE_REPO="${IMAGE_REGISTRY}" \
             IMAGE_TAG="${DEFAULT_TAG}" \
             ISO_NAME="build/${IMAGE_NAME}-${DEFAULT_TAG}-${{ matrix.platform }}.iso" \
+            "${make_args[@]}" \
             VARIANT="${INSTALLER_VARIANT}" \
             VERSION="${FEDORA_VERSION}"
 
