@@ -1,0 +1,14 @@
+[Unit]
+Description=Re-run Flatpak preinstall until the default set is complete
+
+[Timer]
+# First re-run shortly after boot; the boot-time activation of the service
+# happens through the enabled unit itself, this catches the case where it
+# failed against a flaky network.
+OnBootSec=3min
+OnUnitActiveSec=15min
+AccuracySec=1min
+Unit=flatpak-preinstall.service
+
+[Install]
+WantedBy=timers.target
