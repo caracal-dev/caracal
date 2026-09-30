@@ -8,7 +8,9 @@ ConditionPathIsDirectory=/usr/share/flatpak/preinstall.d
 [Service]
 Type=oneshot
 ExecStart=/usr/libexec/flatpak-preinstall
-RemainAfterExit=yes
+# No RemainAfterExit: flatpak-preinstall.timer must be able to re-trigger
+# this unit after it exits, so a failed install attempt on a flaky network
+# converges without a reboot.
 StandardOutput=journal
 StandardError=journal
 

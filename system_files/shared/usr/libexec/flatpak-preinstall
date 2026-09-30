@@ -3,8 +3,13 @@
 # /usr/share/flatpak/preinstall.d. Each app installs in its own transaction so
 # one flaky ref cannot abort the whole set, and failures exit non-zero so a
 # broken run shows as `failed` in systemd instead of silently passing.
-# Idempotent: `--or-update` plus ostree content dedup make re-runs incremental,
-# and the unit re-runs at every boot until the set is complete.
+#
+# Designed for flaky networks: apps that are already installed are skipped
+# without touching the remote (keeps first boot clean when the installer
+# preloaded the set offline), missing apps get several attempts per run, and
+# flatpak-preinstall.timer re-runs the unit every 15 minutes until the set is
+# complete. `--or-update` plus ostree content dedup make re-runs incremental:
+# a partially pulled runtime resumes instead of restarting from zero.
 
 set -oue pipefail
 
@@ -27,21 +32,57 @@ done
 
 [[ ${#apps[@]} -eq 0 ]] && exit 0
 
-echo "flatpak-preinstall: installing ${#apps[@]} app(s) at system scope..."
+# Skip apps that are already installed so a complete system never needs the
+# network here. `--app` filters out Locale/Debug/extension refs, which can be
+# present on their own after a partially completed install.
+mapfile -t installed < <(flatpak list --system --app --columns=application 2>/dev/null || true)
 
-failures=()
+missing=()
 for app in "${apps[@]}"; do
-  echo "flatpak-preinstall: installing ${app}..."
-  if flatpak install --system --noninteractive --or-update flathub "${app}"; then
+  found=0
+  for have in "${installed[@]:-}"; do
+    if [[ "$have" == "$app" ]]; then
+      found=1
+      break
+    fi
+  done
+  if [[ "$found" -eq 0 ]]; then
+    missing+=("$app")
+  fi
+done
+
+if [[ ${#missing[@]} -eq 0 ]]; then
+  echo "flatpak-preinstall: all ${#apps[@]} app(s) already installed."
+  exit 0
+fi
+
+echo "flatpak-preinstall: ${#missing[@]} of ${#apps[@]} app(s) missing, installing: ${missing[*]}"
+
+ATTEMPTS=3
+failures=()
+for app in "${missing[@]}"; do
+  installed_ok=0
+  for attempt in $(seq 1 "${ATTEMPTS}"); do
+    echo "flatpak-preinstall: installing ${app} (attempt ${attempt}/${ATTEMPTS})..."
+    if flatpak install --system --noninteractive --or-update flathub "${app}"; then
+      installed_ok=1
+      break
+    fi
+    if [[ "${attempt}" -lt "${ATTEMPTS}" ]]; then
+      sleep $((attempt * 15))
+    fi
+  done
+  if [[ "$installed_ok" -eq 1 ]]; then
     echo "flatpak-preinstall: ${app} installed."
   else
-    echo "flatpak-preinstall: ${app} FAILED to install." >&2
+    echo "flatpak-preinstall: ${app} FAILED to install after ${ATTEMPTS} attempts." >&2
     failures+=("${app}")
   fi
 done
 
 if [[ ${#failures[@]} -gt 0 ]]; then
-  echo "flatpak-preinstall: ${#failures[@]} app(s) failed: ${failures[*]}" >&2
+  echo "flatpak-preinstall: ${#failures[@]} app(s) still missing: ${failures[*]}" >&2
+  echo "flatpak-preinstall: flatpak-preinstall.timer will retry in ~15 minutes." >&2
   exit 1
 fi
 

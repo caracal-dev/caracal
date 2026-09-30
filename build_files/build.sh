@@ -472,7 +472,7 @@ fi
 #   build_files/base/03-fetch.sh and build_files/base/17-cleanup.sh
 curl --retry 3 -Lo /etc/flatpak/remotes.d/flathub.flatpakrepo https://dl.flathub.org/repo/flathub.flatpakrepo
 
-systemctl enable flatpak-preinstall.service
+systemctl enable flatpak-preinstall.service flatpak-preinstall.timer
 
 # Waterfox config: Betterfox waterfox/user.js is fetched from upstream at
 # build time (not vendored — tracks Betterfox releases instead of a stale
