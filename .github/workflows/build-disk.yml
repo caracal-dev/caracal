@@ -114,7 +114,6 @@ jobs:
           fi
 
       - name: Install dependencies
-        if: matrix.platform == 'arm64'
         run: |
           set -x
           sudo apt update -y
@@ -157,14 +156,20 @@ jobs:
           # Installs the offline flatpak set into a throwaway container of
           # the image being released and dumps the full deployed-ref closure
           # (apps + runtimes + locales) for jasonn3 to bundle into the ISO.
+          # Podman, not docker: the ostree-chunked kinoite base leaves the
+          # image above docker's 127-layer graphdriver cap ("max depth
+          # exceeded" at pull). Podman has no such limit.
           mkdir -p "${GITHUB_WORKSPACE}/flatpak_refs"
-          docker run --rm \
+          podman run --rm --authfile "${HOME}/.docker/config.json" \
             --volume "${GITHUB_WORKSPACE}/installer:/input/installer:ro" \
             --volume "${GITHUB_WORKSPACE}/flatpak_refs:/input/output" \
             "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}" \
             /input/installer/generate-flatpak-refs.sh \
               /input/installer/iso-flatpaks \
               /input/output/flatpaks_with_deps
+          # Reclaim the image storage before the ISO build; jasonn3 pulls its
+          # own copy via skopeo, so keeping podman's would only pressure disk.
+          podman rmi "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
 
       - name: Build installer ISO
         if: matrix.disk-type == 'installer-iso'
