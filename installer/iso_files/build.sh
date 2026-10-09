@@ -24,19 +24,19 @@ mount -o remount,rw /proc/sys
 # system stack — both are pruned here and return on the first online boot
 # via flatpak-preinstall.service.
 if [[ "${BUNDLE_FLATPAKS:-true}" == "true" && -s "${SCRIPT_DIR}/flatpaks.list" ]]; then
-    echo "Installing offline Flatpaks..."
-    grep -v '^\s*#' "${SCRIPT_DIR}/flatpaks.list" \
-        | grep -v '^\s*$' \
-        | xargs -r flatpak install -y --system --noninteractive
-    # Prune via ostree refs — authoritative view of what actually deployed
-    # (flatpak list is unreliable for related refs in build containers).
-    mapfile -t prune_refs < <(ostree refs --repo=/var/lib/flatpak/repo \
-        | grep '^deploy/' \
-        | grep -E '\.Locale/|\.openh264' \
-        | sed 's/^deploy\///' || true)
-    if ((${#prune_refs[@]})); then
-        flatpak uninstall --system --noninteractive --force-remove "${prune_refs[@]}"
-    fi
+  echo "Installing offline Flatpaks..."
+  grep -v '^\s*#' "${SCRIPT_DIR}/flatpaks.list" |
+    grep -v '^\s*$' |
+    xargs -r flatpak install -y --system --noninteractive
+  # Prune via ostree refs — authoritative view of what actually deployed
+  # (flatpak list is unreliable for related refs in build containers).
+  mapfile -t prune_refs < <(ostree refs --repo=/var/lib/flatpak/repo |
+    grep '^deploy/' |
+    grep -E '\.Locale/|\.openh264' |
+    sed 's/^deploy\///' || true)
+  if ((${#prune_refs[@]})); then
+    flatpak uninstall --system --noninteractive --force-remove "${prune_refs[@]}"
+  fi
 fi
 
 # --- Payload image (offline install source) ----------------------------------
@@ -58,23 +58,44 @@ rm -f /etc/containers/storage.conf
 
 # --- Installer environment ----------------------------------------------------
 dnf install -y \
-    dracut-live \
-    livesys-scripts \
-    anaconda-live \
-    anaconda-webui \
-    rsync \
-    desktop-file-utils \
-    libblockdev-btrfs \
-    libblockdev-lvm \
-    libblockdev-dm
+  dracut-live \
+  livesys-scripts \
+  anaconda-live \
+  anaconda-webui \
+  rsync \
+  desktop-file-utils \
+  libblockdev-btrfs \
+  libblockdev-lvm \
+  libblockdev-dm
+
+# Live boot kernel: swap the OGC kernel for the stock Fedora one so the ISO
+# boots under Secure Boot. The image's kernel is signed only with the ublue
+# MOK keys (akmods public_key.der), which shim does not trust — Secure Boot
+# machines fail at kernel load ("bad shim signature"). The stock Fedora
+# kernel carries Fedora CA + Microsoft signatures, so the shim → grub →
+# kernel chain verifies. The installed payload keeps the OGC kernel; only
+# the live environment's boot kernel is swapped. Credit to https://github.com/ublue-os/bazzite
+# for the titanoboa preinitramfs hook.
+kernel_pkgs=(
+  kernel kernel-core kernel-devel kernel-devel-matched
+  kernel-modules kernel-modules-core kernel-modules-extra
+  kernel-modules-akmods kernel-common kernel-tools kernel-tools-libs
+  kernel-rt kernel-rt-core kernel-rt-modules kernel-rt-modules-extra
+)
+dnf -y versionlock delete "${kernel_pkgs[@]}" || :
+dnf --setopt=protect_running_kernel=False -y remove "${kernel_pkgs[@]}" || :
+rm -rf /usr/lib/modules/*
+dnf -y --repo fedora,updates --setopt=tsflags=noscripts install kernel kernel-core
+kernel=$(find /usr/lib/modules -maxdepth 1 -type d -printf '%P\n' | grep . | head -1)
+depmod "$kernel"
 
 # Live initramfs: add dmsquash-live so the squashfs ISO rootfs boots,
 # replacing the ostree-only initramfs produced by the image build. The
 # bootc-isos contract consumes /usr/lib/modules/<kver>/initramfs.img.
 kernel=$(find /usr/lib/modules -maxdepth 1 -type d -printf '%P\n' | grep . | head -1)
 DRACUT_NO_XATTR=1 dracut -v --force --zstd --reproducible --no-hostonly \
-    --add "dmsquash-live dmsquash-live-autooverlay" \
-    "/usr/lib/modules/${kernel}/initramfs.img" "${kernel}"
+  --add "dmsquash-live dmsquash-live-autooverlay" \
+  "/usr/lib/modules/${kernel}/initramfs.img" "${kernel}"
 
 # Live session (kde for the Kinoite-based flavors, gnome for Silverblue)
 sed -i "s/^livesys_session=.*/livesys_session=${LIVESYS_SESSION:-kde}/" /etc/sysconfig/livesys
@@ -87,7 +108,7 @@ systemctl enable livesys.service livesys-late.service
 # in livesys-kde only touches commented lines and leaves this intact. When
 # the config file does not exist (sddm systems), livesys writes it itself.
 if [[ -f /etc/plasmalogin.conf ]]; then
-    cat >>/etc/plasmalogin.conf <<'EOF'
+  cat >>/etc/plasmalogin.conf <<'EOF'
 
 [Autologin]
 User=liveuser
@@ -105,9 +126,9 @@ bash "${SCRIPT_DIR}/configure_iso_anaconda.sh"
 # binary and grub modules.
 _arch=$(uname -m)
 if [[ $_arch == "x86_64" ]]; then
-    dnf install -y grub2-efi-x64-cdboot
+  dnf install -y grub2-efi-x64-cdboot
 elif [[ $_arch == "aarch64" ]]; then
-    dnf install -y grub2-efi-aa64-modules
+  dnf install -y grub2-efi-aa64-modules
 fi
 
 # The assembler expects shim/grub EFI binaries in /boot/efi/EFI/$VENDOR; the
@@ -117,9 +138,9 @@ cp -av /usr/lib/efi/*/*/EFI /boot/efi/
 
 # Fallback entry for firmware that only boots \EFI\BOOT\BOOTX64.EFI
 if [[ $_arch == "x86_64" ]]; then
-    cp -v /boot/efi/EFI/fedora/grubx64.efi /boot/efi/EFI/BOOT/fbx64.efi
+  cp -v /boot/efi/EFI/fedora/grubx64.efi /boot/efi/EFI/BOOT/fbx64.efi
 elif [[ $_arch == "aarch64" ]]; then
-    cp -v /boot/efi/EFI/fedora/grubaa64.efi /boot/efi/EFI/BOOT/fbaa64.efi
+  cp -v /boot/efi/EFI/fedora/grubaa64.efi /boot/efi/EFI/BOOT/fbaa64.efi
 fi
 
 # Deterministic live boot (no host timezone leak)
