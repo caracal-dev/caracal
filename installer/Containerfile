@@ -1,0 +1,40 @@
+# Caracal installer ISO live environment.
+#
+# Pattern: get-aurora-dev/iso (Aurora). The live environment IS a released
+# Caracal image plus Anaconda and a dmsquash-live initramfs; the image to be
+# installed is pulled into /usr/lib/containers/storage so the ISO installs
+# fully offline. The bootable ISO itself is assembled afterwards by
+# installer/iso_files/build_iso.sh (bootc-isos contract, vendored from
+# ublue-os/titanoboa), which reads the kernel/initramfs, the /boot/efi boot
+# chain, and /usr/lib/bootc-image-builder/iso.yaml from this rootfs.
+#
+# Build requirements (enforced by installer/build-iso.sh): --cap-add
+# sys_admin and --security-opt label=disable — dracut and the /proc/sys
+# remount in iso_files/build.sh need them inside the build sandbox.
+#
+# Build args:
+#   LIVE_ENV_IMAGE    image whose rootfs becomes the live environment
+#   BASE_IMAGE        image the ISO installs (baked into container storage)
+#   BUNDLE_FLATPAKS   "true" installs installer/iso-flatpaks offline refs
+#   LIVESYS_SESSION   live desktop session: kde | gnome (livesys-scripts)
+ARG LIVE_ENV_IMAGE
+ARG BASE_IMAGE
+ARG BUNDLE_FLATPAKS=true
+ARG LIVESYS_SESSION=kde
+
+FROM ${LIVE_ENV_IMAGE}
+
+# Re-declared inside the stage: global ARGs are only usable in FROM.
+ARG BASE_IMAGE
+ARG BUNDLE_FLATPAKS=true
+ARG LIVESYS_SESSION=kde
+
+ENV BASE_IMAGE=${BASE_IMAGE} \
+    BUNDLE_FLATPAKS=${BUNDLE_FLATPAKS} \
+    LIVESYS_SESSION=${LIVESYS_SESSION}
+
+COPY iso_files/ /src/iso_files/
+COPY iso-flatpaks /src/iso_files/flatpaks.list
+
+RUN --mount=type=cache,target=/var/tmp/libdnf5,id=libdnf5 \
+    bash /src/iso_files/build.sh

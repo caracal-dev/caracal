@@ -16,4 +16,13 @@ dracut \
     "/usr/lib/modules/${KVER}/initramfs.img" \
     "${KVER}"
 
+# === Bootupd update metadata ===
+# Regenerate bootupd's bootloader metadata AFTER the kernel swap above: the
+# metadata inherited from the Kinoite base was generated against the stock
+# Fedora kernel. Anaconda installs bootc payloads through bootupctl, and with
+# stale metadata the bootloader step fails on UEFI bare metal ("failed to
+# write boot loader configuration" — jasonn3/build-container-installer#127).
+# The package is already present; this only refreshes the metadata.
+bootupctl backend generate-update-metadata
+
 chmod 0600 "/usr/lib/modules/${KVER}/initramfs.img"
