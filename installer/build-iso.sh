@@ -77,7 +77,15 @@ sudo podman run --rm -i \
     quay.io/fedora/fedora:latest \
     /src/build_iso.sh
 
-sudo chown "$(id -u):$(id -g)" "${OUT_DIR}/${OUT_NAME}"
+# Hand the ISO (and its output directory, so callers can write the sibling
+# CHECKSUM) to the invoking user. Under sudo, $(id -u) is root and a plain
+# chown is a silent no-op; sudo injects SUDO_UID/SUDO_GID carrying the
+# original user, so use them when present.
+if [[ -n "${SUDO_UID:-}" && -n "${SUDO_GID:-}" ]]; then
+    chown "${SUDO_UID}:${SUDO_GID}" "${OUT_DIR}" "${OUT_DIR}/${OUT_NAME}"
+else
+    chown "$(id -u):$(id -g)" "${OUT_DIR}" "${OUT_DIR}/${OUT_NAME}"
+fi
 
 # Clean the throwaway live image before it fills the rootful store
 sudo podman rmi "${LIVE_TAG}" || true
