@@ -21,7 +21,7 @@ on:
     paths:
       - './disk_config/disk.toml'
       - './.github/workflows/build-disk.yml'
-      - './installer/build-iso-makefile-patch'
+      - './installer/**'
       - './Containerfile'
       - './build_files/build.sh'
       - './build_files/build-gnome-de.sh'
@@ -37,8 +37,6 @@ env:
   DEFAULT_TAG: "latest"
   FEDORA_VERSION: "44" # keep in sync with Containerfile
   BIB_IMAGE: "quay.io/centos-bootc/bootc-image-builder:latest"
-  ISO_BUILDER_IMAGE: "ghcr.io/jasonn3/build-container-installer:latest"
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
@@ -81,12 +79,18 @@ jobs:
           IMAGE_REGISTRY_LOWER=${IMAGE_REGISTRY,,}
           IMAGE_NAME_LOWER=${IMAGE_NAME,,}
           IMAGE_SUFFIX="${{ matrix.image-suffix }}"
-          # The installer variant must match the desktop flavor: Silverblue for
-          # GNOME images, Kinoite for the base KDE/Plasma ones.
+          # Installer ISO flavor wiring:
+          #   LIVESYS_SESSION — live desktop session (kde for Kinoite-based
+          #     flavors, gnome for the Silverblue-based GNOME ones)
+          #   LIVE_ENV_IMAGE — image the live desktop boots; the stage
+          #     flavors are minimal Wayfire rigs, so their live environment
+          #     uses the full KDE image (payload stays the stage image)
           if [ "${IMAGE_SUFFIX}" = "-gnome" ]; then
-            echo "INSTALLER_VARIANT=Silverblue" >> ${GITHUB_ENV}
+            echo "LIVESYS_SESSION=gnome" >> ${GITHUB_ENV}
+            echo "LIVE_ENV_IMAGE=${IMAGE_REGISTRY_LOWER}/${IMAGE_NAME_LOWER}${IMAGE_SUFFIX}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
           else
-            echo "INSTALLER_VARIANT=Kinoite" >> ${GITHUB_ENV}
+            echo "LIVESYS_SESSION=kde" >> ${GITHUB_ENV}
+            echo "LIVE_ENV_IMAGE=${IMAGE_REGISTRY_LOWER}/${IMAGE_NAME_LOWER}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
           fi
           # Concatenate the types with a hyphen
           DISK_TYPE=$(echo "${{ matrix.disk-type }}" | tr ' ' '-')
@@ -106,11 +110,6 @@ jobs:
               echo "BUNDLE_FLATPAKS=false" >> ${GITHUB_ENV}
             fi
             echo "OUTPUT_DIR=${GITHUB_WORKSPACE}/output/installer" >> ${GITHUB_ENV}
-            if [ "${{ matrix.platform }}" = "arm64" ]; then
-              echo "ISO_ARCH=aarch64" >> ${GITHUB_ENV}
-            else
-              echo "ISO_ARCH=x86_64" >> ${GITHUB_ENV}
-            fi
           fi
 
       - name: Install dependencies
@@ -139,7 +138,7 @@ jobs:
       - name: Build disk images
         id: build
         if: matrix.disk-type != 'installer-iso'
-        uses: osbuild/bootc-image-builder-action@cb4b3e9c112077ea96a191fad229d51d2a012885 # main, pinned 2026-05-18
+        uses: osbuild/bootc-image-builder-action@028e4d28330efe546229eb9cb52aee78174d2347 # main, pinned 2026-05-18
         with:
           builder-image: ${{ env.BIB_IMAGE }}
           config-file: ./disk_config/disk.toml
@@ -149,69 +148,35 @@ jobs:
           # Keep CI aligned with the local Justfile, which always builds Btrfs-backed images.
           additional-args: --use-librepo=True --rootfs=btrfs
 
-      - name: Generate offline flatpak ref list
-        if: env.BUNDLE_FLATPAKS == 'true'
-        run: |
-          set -euo pipefail
-          # Installs the offline flatpak set into a throwaway container of
-          # the image being released and dumps the full deployed-ref closure
-          # (apps + runtimes + locales) for jasonn3 to bundle into the ISO.
-          # Podman, not docker: the ostree-chunked kinoite base leaves the
-          # image above docker's 127-layer graphdriver cap ("max depth
-          # exceeded" at pull). Podman has no such limit.
-          mkdir -p "${GITHUB_WORKSPACE}/flatpak_refs"
-          podman run --rm --authfile "${HOME}/.docker/config.json" \
-            --volume "${GITHUB_WORKSPACE}/installer:/input/installer:ro" \
-            --volume "${GITHUB_WORKSPACE}/flatpak_refs:/input/output" \
-            "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}" \
-            /input/installer/generate-flatpak-refs.sh \
-              /input/installer/iso-flatpaks \
-              /input/output/flatpaks_with_deps
-          # Reclaim the image storage before the ISO build; jasonn3 pulls its
-          # own copy via skopeo, so keeping podman's would only pressure disk.
-          podman rmi "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}"
-
       - name: Build installer ISO
         if: matrix.disk-type == 'installer-iso'
         shell: bash
+        env:
+          AUTHFILE: ${{ github.workspace }}/.docker-config.json
         run: |
           set -euo pipefail
-          mkdir -p "${OUTPUT_DIR}"
-          AUTHFILE="${HOME}/.docker/config.json"
-          if [ ! -f "${AUTHFILE}" ]; then
-            echo "Docker auth file was not found at ${AUTHFILE}." >&2
-            exit 1
-          fi
-
-          # Adapted from ublue-os/bazzite just_scripts/build-iso.sh.
-          docker_volumes=()
-          make_args=()
-          if [ "${BUNDLE_FLATPAKS}" = "true" ]; then
-            docker_volumes+=(--volume "${GITHUB_WORKSPACE}/flatpak_refs:/build-container-installer/flatpak_refs")
-            make_args+=(
-              FLATPAK_REMOTE_REFS_DIR="/build-container-installer/flatpak_refs"
-              FLATPAK_REMOTE_NAME="flathub"
-            )
-          fi
-          docker run \
-            --rm \
-            --privileged \
-            --volume "${AUTHFILE}:/auth/config.json:ro" \
-            --volume "${GITHUB_WORKSPACE}/installer/build-iso-makefile-patch:/build-container-installer/container/Makefile:ro" \
-            --volume "${OUTPUT_DIR}:/build-container-installer/build" \
-            "${docker_volumes[@]}" \
-            "${ISO_BUILDER_IMAGE}" \
-            ARCH="${ISO_ARCH}" \
-            AUTHFILE="/auth/config.json" \
-            ENABLE_CACHE_DNF="false" \
-            ENABLE_CACHE_SKOPEO="false" \
-            IMAGE_NAME="${IMAGE_NAME}" \
-            IMAGE_REPO="${IMAGE_REGISTRY}" \
-            IMAGE_TAG="${DEFAULT_TAG}" \
-            ISO_NAME="build/${IMAGE_NAME}-${DEFAULT_TAG}-${{ matrix.platform }}.iso" \
-            "${make_args[@]}" \
-            VARIANT="${INSTALLER_VARIANT}" \
-            VERSION="${FEDORA_VERSION}"
+          # Caracal installer ISOs are live ISOs built with the aurora-iso
+          # pattern: the live environment is the released image itself plus
+          # Anaconda, and the ISO is assembled with the bootc-isos contract
+          # (installer/iso_files/build_iso.sh, vendored from
+          # ublue-os/titanoboa). installer/build-iso.sh does both steps via
+          # rootful podman.
+          #
+          # GHCR auth: the GHCR login wrote ~/.docker/config.json, but sudo
+          # podman resolves $HOME to root's; copy the auth file to a
+          # world-readable path and hand it to the script explicitly.
+          cp "${HOME}/.docker/config.json" "${AUTHFILE}"
+          chmod 644 "${AUTHFILE}"
+          sudo env AUTHFILE="${AUTHFILE}" LIVESYS_SESSION="${LIVESYS_SESSION}" \
+            ./installer/build-iso.sh \
+              "${OUTPUT_DIR}/${IMAGE_NAME}-${DEFAULT_TAG}-${{ matrix.platform }}.iso" \
+              "${IMAGE_REGISTRY}/${IMAGE_NAME}:${DEFAULT_TAG}" \
+              "${LIVE_ENV_IMAGE}" \
+              "${BUNDLE_FLATPAKS}"
+          rm -f "${AUTHFILE}"
+          ISO_PATH=$(find "${OUTPUT_DIR}" -maxdepth 1 -type f -name '*.iso' | head -n 1)
+          (cd "${OUTPUT_DIR}" && sha256sum "$(basename "${ISO_PATH}")" \
+            > "$(basename "${ISO_PATH}")-CHECKSUM")
 
       - name: Upload disk images and Checksum to Job Artifacts
         if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'

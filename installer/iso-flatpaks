@@ -1,11 +1,11 @@
 # Flatpak refs baked into the installer ISO for offline installs.
 #
-# Consumed by installer/generate-flatpak-refs.sh during the ISO build: the
-# dependency closure (runtimes, locales) is derived automatically, so only
-# app refs belong here. Keep in sync with the intent of
-# /usr/share/flatpak/preinstall.d — apps listed here are present right after
-# installation; everything else in preinstall.d installs in the background
-# on first boot via flatpak-preinstall.service.
+# Consumed by the live-environment build (installer/Containerfile →
+# installer/iso_files/build.sh): flatpak resolves the runtime dependency
+# closure during install, so only app refs belong here. Keep in sync with
+# the intent of /usr/share/flatpak/preinstall.d — apps listed here are
+# present right after installation; everything else in preinstall.d installs
+# in the background on first boot via flatpak-preinstall.service.
 #
 # Kept offline: the app store and the default browser — the two things a
 # fresh install needs immediately, before any network-dependent setup.
