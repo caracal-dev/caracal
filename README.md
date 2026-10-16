@@ -144,6 +144,10 @@ The GNOME ISO is produced by the same disk-build workflow (matrix `-gnome` suffi
 
 You will need a flash drive with at least 8GB of space. 16GB is best.
 
+Caracal installer ISOs boot **UEFI only** — like Aurora's installer media,
+they do not boot on legacy BIOS/CSM systems. Every UEFI-capable machine sold
+in the last decade works; on machines that still offer CSM, leave it disabled.
+
 ISO files can be downloaded from [our website](https://caracal-os.org/#install) for both AMD/Intel and NVIDIA images.
 
 If the download stalls or is too slow, you can use something like [motrix](https://motrix.app/).
@@ -252,7 +256,14 @@ signed with the [ublue-os/akmods](https://github.com/ublue-os/akmods) Machine
 Owner Key (MOK). If Secure Boot is enabled in your UEFI firmware, the modules
 will fail to load until you enroll the public key:
 
-On the first boot after installing or rebasing to Caracal, run:
+Installs from the Caracal ISO handle this for you: the installer queues the
+key enrollment during installation (skipped automatically on Steam Deck,
+which does not use Secure Boot). On the first reboot after installing, the
+MOK Manager EFI application appears — select **Enroll MOK**, then
+**Continue**, enter `universalblue` when prompted, and reboot again.
+
+If you installed without the ISO (or the prompt never appeared), enroll the
+key manually. On the first boot after installing or rebasing to Caracal, run:
 
 ```bash
 mokutil --import /etc/pki/akmods/certs/akmods-ublue.der
@@ -301,6 +312,14 @@ just build-qcow2
 
 # Run in a VM
 just run-vm-qcow2
+
+# Build the installer ISO from the published image (UEFI boot, live ISO)
+just build-iso
+
+# Build the installer ISO from a locally rebuilt image
+just rebuild-iso
+
+# The ISO lands at output/bootiso/install.iso
 ```
 
 See the [Justfile](./Justfile) for all available recipes.

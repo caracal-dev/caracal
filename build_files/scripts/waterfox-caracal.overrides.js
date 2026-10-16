@@ -9,5 +9,6 @@
  ***************************************************************************/
 
 /** START: CARACAL OVERRIDES ***/
-user_pref("browser.urlbar.doubleClickSelectsAll", true);
+user_pref("browser.urlbar.doubleClickSelectsAll", false);
+user_pref("browser.urlbar.clickSelectsAll", true);
 /** END: CARACAL OVERRIDES ***/

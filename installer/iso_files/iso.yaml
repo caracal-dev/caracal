@@ -1,0 +1,12 @@
+# bootc-isos contract (vendored from ublue-os/titanoboa): consumed by
+# installer/iso_files/build_iso.sh when assembling the ISO.
+label: "Caracal-Live"
+grub2:
+  timeout: 10
+  entries:
+    - name: "Caracal OS Live"
+      linux: "/images/pxeboot/vmlinuz quiet rhgb root=live:CDLABEL=Caracal-Live enforcing=0 rd.live.image"
+      initrd: "/images/pxeboot/initrd.img"
+    - name: "Caracal OS Live (Safe Graphics)"
+      linux: "/images/pxeboot/vmlinuz quiet rhgb root=live:CDLABEL=Caracal-Live enforcing=0 rd.live.image nomodeset"
+      initrd: "/images/pxeboot/initrd.img"
