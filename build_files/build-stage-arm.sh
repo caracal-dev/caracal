@@ -53,9 +53,9 @@ dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/ter
 bash /ctx/scripts/install-appimagelauncher.sh
 RELEASEVER="$(rpm -E %fedora)"
 curl -fL --retry 3 --retry-delay 2 -o /tmp/rpmfusion-nonfree-release.rpm \
-  "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${RELEASEVER}.noarch.rpm"
+  "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${RELEASEVER}.noarch.rpm"
 curl -fL --retry 3 --retry-delay 2 -o /tmp/rpmfusion-free-release.rpm \
-  "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${RELEASEVER}.noarch.rpm"
+  "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${RELEASEVER}.noarch.rpm"
 rpm -Uvh /tmp/rpmfusion-nonfree-release.rpm /tmp/rpmfusion-free-release.rpm
 rm -f /tmp/rpmfusion-nonfree-release.rpm /tmp/rpmfusion-free-release.rpm
 
