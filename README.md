@@ -389,11 +389,33 @@ If you want a new feature, improvement, or package added, open a [feature reques
 
 ## Image Verification
 
-All published images are signed with [cosign](https://github.com/sigstore/cosign). Verify with:
+All published images are signed with [cosign](https://github.com/sigstore/cosign); the verification key ships in each image (`/etc/pki/containers/caracal.pub`) and as `cosign.pub` in this repo. Verify with:
 
 ```bash
-cosign verify --key cosign.pub ghcr.io/caracal-dev/caracal:latest
+cosign verify --key cosign.pub ghcr.io/tumillanino/caracal:latest
 ```
+
+### Updating an existing Caracal install (pre-titanoboa installer)
+
+Systems installed before the titanoboa change deploy with the `ostree-image-signed` transport: bootc requires verified updates, but those images carried the stock Fedora `containers/policy.json`, whose `insecureAcceptAnything` default bootc refuses:
+
+```text
+error: Upgrading: Preparing import: Fetching manifest: containers-policy.json
+       specifies a default of `insecureAcceptAnything`; refusing usage
+```
+
+That refusal is bootc working as intended — an enforced deployment must not accept unsigned images. Current images ship the fix in `/usr/etc`, but a system that can't update can't receive it. Run the migration script once on the affected machine:
+
+```bash
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/tumillanino/caracal/main/build_files/signing/install-sigpolicy.sh)"
+sudo bootc upgrade
+```
+
+The script writes the cosign key, the verification policy (`default: reject`, scoped to `ghcr.io/tumillanino/*`), and the sigstore-attachment lookup config into `/etc` — the same files current images ship in `/usr/etc`. After that, updates verify against the published key.
+
+Installs since the titanoboa change pull with `--no-signature-verification`: routine updates need nothing extra. The shipped policy exists so enforcement can be re-enabled in the installer (`--enforce-container-sigpolicy`) whenever you want.
+
+Note: the default policy rejects anything outside `ghcr.io/tumillanino/*`. If you pull containers from other registries (e.g. `podman pull docker.io/…`), add allow rules to `/etc/containers/policy.json`.
 
 ---
 

@@ -487,3 +487,7 @@ rm -rf \
   /var/log/hawkey*
 
 rm -rf /usr/etc
+# Signature verification policy for bootc deployments (see build.sh).
+install -Dm0644 /ctx/cosign.pub /usr/etc/pki/containers/caracal.pub
+install -Dm0644 /ctx/build_files/signing/containers/policy.json /usr/etc/containers/policy.json
+install -Dm0644 /ctx/build_files/signing/containers/registries.d/caracal.yaml /usr/etc/containers/registries.d/caracal.yaml

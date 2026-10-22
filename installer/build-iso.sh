@@ -2,14 +2,14 @@
 # Builds a Caracal installer ISO (aurora-iso / bootc-isos pattern).
 #
 # usage: build-iso.sh <output.iso> <payload-image> [live-env-image] [bundle-flatpaks]
-#   payload-image      image the ISO installs — baked into the live
-#                      environment as an OCI layout, so installs are fully
-#                      offline
+#   payload-image      image the ISO installs — Anaconda pulls it from the
+#                      registry during installation (online install,
+#                      Bazzite-style); it is not baked into the ISO
 #   live-env-image     image whose rootfs becomes the live desktop
 #                      (defaults to the payload image; override for flavors
 #                      like caracal-stage so the live session has a desktop)
 #   bundle-flatpaks    on | off (default on) — bakes installer/iso-flatpaks
-#                      into the live environment for offline installs
+#                      into the live environment for offline first boot
 #
 # Env:
 #   LIVESYS_SESSION    kde (default) | gnome — live desktop session

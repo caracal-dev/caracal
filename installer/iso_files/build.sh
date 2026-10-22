@@ -39,15 +39,11 @@ if [[ "${BUNDLE_FLATPAKS:-true}" == "true" && -s "${SCRIPT_DIR}/flatpaks.list" ]
   fi
 fi
 
-# Bake the image the ISO installs as an OCI layout in /usr/lib/caracal so
-# installs are fully offline. An OCI layout (not containers-storage) is used
-# deliberately: ostree's containers-storage import first stages the whole
-# image — ~13 GB uncompressed for Caracal — into /var/tmp, which is RAM-sized
-# tmpfs in the booted live environment and runs out of space; the oci
-# transport streams the layer blobs straight from the squashfs into the
-# target disk, so the install is RAM-independent.
-mkdir -p /usr/lib/caracal
-skopeo copy --quiet "docker://${BASE_IMAGE:?BASE_IMAGE build-arg is required}" "oci:/usr/lib/caracal/install:latest"
+# The image the ISO installs is NOT baked into the live environment: a baked
+# copy of the ~11 GB Caracal image is what pushed the ISO past 10 GB. Anaconda
+# pulls the payload from the registry during installation instead (online
+# install, Bazzite-style), so the ISO carries only the live environment and
+# stays at ~6.5–7 GB. BASE_IMAGE is still passed through to Anaconda below.
 
 # --- Installer environment ----------------------------------------------------
 dnf install -y \

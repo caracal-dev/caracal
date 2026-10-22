@@ -659,3 +659,11 @@ rm -rf \
   /var/log/hawkey*
 
 rm -rf /usr/etc
+# Reinstall the signature verification policy after the /usr/etc wipe above;
+# without it, ostree-image-signed deployments (pre-titanoboa installer)
+# cannot update — bootc refuses an insecureAcceptAnything default. New
+# installs pull unverified and never read this; it also prepares re-enabling
+# --enforce-container-sigpolicy.
+install -Dm0644 /ctx/cosign.pub /usr/etc/pki/containers/caracal.pub
+install -Dm0644 /ctx/build_files/signing/containers/policy.json /usr/etc/containers/policy.json
+install -Dm0644 /ctx/build_files/signing/containers/registries.d/caracal.yaml /usr/etc/containers/registries.d/caracal.yaml

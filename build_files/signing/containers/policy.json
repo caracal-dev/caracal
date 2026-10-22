@@ -1,0 +1,83 @@
+{
+  "default": [
+    {
+      "type": "reject"
+    }
+  ],
+  "transports": {
+    "docker": {
+      "ghcr.io/tumillanino/caracal": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/tumillanino/caracal-gnome": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/tumillanino/caracal-dx": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/tumillanino/caracal-gnome-dx": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/tumillanino/caracal-stage": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/tumillanino/caracal-stage-arm": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/tumillanino/caracal-nvidia": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/tumillanino/caracal-dx-nvidia": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ]
+    }
+  }
+}

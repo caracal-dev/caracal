@@ -3,9 +3,12 @@
 #
 # Adapted from get-aurora-dev/iso (Aurora), Apache-2.0.
 #
-# The install is offline: the payload image was pulled into the live
-# environment as an OCI layout by build.sh, and Anaconda deploys it from
-# there via ostreecontainer.
+# The install is online: Anaconda pulls the payload image straight from the
+# registry during installation (Bazzite-style). The image is deliberately NOT
+# baked into the live environment — baking a second full copy of the ~11 GB
+# image pushed the ISO past 10 GB; online install keeps the ISO at the size
+# of the live environment alone (~6.5–7 GB) while the live desktop stays the
+# full product.
 set -eoux pipefail
 
 IMAGE_REF="${BASE_IMAGE%%:*}"
@@ -24,7 +27,10 @@ profile_id = caracal
 
 [Profile Detection]
 os_id = fedora
-os_variant_id = caracal-os
+# anaconda's key is `variant_id` (not `os_variant_id` — that parses as
+# empty, collides with the stock fedora profile, and loses the hidden-UI
+# pages below, so Anaconda asked for a username/password during install).
+variant_id = caracal-os
 
 [Network]
 default_on_boot = FIRST_WIRED_WITH_LINK
@@ -59,24 +65,18 @@ desktop-file-edit \
     --set-key=StartupWMClass --set-value=slitherer \
     /usr/share/applications/liveinst.desktop || true
 
-# Interactive Kickstart: deploy the baked OCI layout (offline)
+# No signature policy enforced: images are cosign-signed and ship the key +
+# policy in /usr/etc, but the installer stays simple. Flip
+# --no-signature-verification to --enforce-container-sigpolicy to verify
+# updates (the shipped policy supports it). Systems from the pre-titanoboa
+# installer force verification (ostree-image-signed) and need
+# build_files/signing/install-sigpolicy.sh run once first. ostreecontainer
+# with a registry transport points the installed system at the published tag,
+# so no post-install image switch is needed.
 tee -a /usr/share/anaconda/interactive-defaults.ks <<EOF
-ostreecontainer --url=/usr/lib/caracal/install:latest --transport=oci --no-signature-verification
-%include /usr/share/anaconda/post-scripts/install-configure-upgrade.ks
+ostreecontainer --url=${IMAGE_REF}:${IMAGE_TAG} --transport=registry --no-signature-verification
 %include /usr/share/anaconda/post-scripts/install-flatpaks.ks
 %include /usr/share/anaconda/post-scripts/secureboot-enroll-key.ks
-EOF
-
-# Post-install: move the installed system onto the published registry tag.
-# No signature policy is enforced here — Caracal images are cosign-signed
-# but the image does not ship a containers/policy.json to verify against
-# (Aurora does; re-add --enforce-container-sigpolicy when we do).
-# Best-effort: an offline install keeps the baked image and the update
-# happens on the first online boot instead.
-tee /usr/share/anaconda/post-scripts/install-configure-upgrade.ks <<EOF
-%post
-bootc switch --mutate-in-place --transport registry ${IMAGE_REF}:${IMAGE_TAG} || true
-%end
 EOF
 
 # Post-install: carry the preinstalled Flatpaks (apps + runtimes, minus the

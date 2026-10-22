@@ -1,0 +1,3 @@
+docker:
+  ghcr.io/tumillanino:
+    use-sigstore-attachments: true
