@@ -286,8 +286,8 @@ _pro-audio-copr:
     # rpmfusion-free is required for several multimedia codecs and ffmpeg.
     if ! rpm -q rpmfusion-free-release >/dev/null 2>&1; then
         sudo rpm-ostree install --idempotent \
-            "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${fedora_release}.noarch.rpm" \
-            "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${fedora_release}.noarch.rpm"
+            "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${fedora_release}.noarch.rpm" \
+            "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${fedora_release}.noarch.rpm"
     fi
 
 [private]
