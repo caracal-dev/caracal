@@ -665,5 +665,5 @@ rm -rf /usr/etc
 # installs pull unverified and never read this; it also prepares re-enabling
 # --enforce-container-sigpolicy.
 install -Dm0644 /ctx/cosign.pub /usr/etc/pki/containers/caracal.pub
-install -Dm0644 /ctx/build_files/signing/containers/policy.json /usr/etc/containers/policy.json
-install -Dm0644 /ctx/build_files/signing/containers/registries.d/caracal.yaml /usr/etc/containers/registries.d/caracal.yaml
+install -Dm0644 /ctx/signing/containers/policy.json /usr/etc/containers/policy.json
+install -Dm0644 /ctx/signing/containers/registries.d/caracal.yaml /usr/etc/containers/registries.d/caracal.yaml
