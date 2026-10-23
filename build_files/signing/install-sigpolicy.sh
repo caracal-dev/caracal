@@ -9,7 +9,7 @@
 #   error: Upgrading: Preparing import: Fetching manifest: containers-policy.json
 #          specifies a default of `insecureAcceptAnything`; refusing usage
 #
-# Newer Caracal images ship the policy+key in /usr/etc, but an already-installed
+# Newer Caracal images ship the policy+key in /etc, but an already-installed
 # system cannot update to receive it. This script writes the same setup to
 # /etc, which is what bootc reads on the running system.
 #
