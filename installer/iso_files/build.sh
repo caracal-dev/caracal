@@ -39,22 +39,11 @@ if [[ "${BUNDLE_FLATPAKS:-true}" == "true" && -s "${SCRIPT_DIR}/flatpaks.list" ]
   fi
 fi
 
-# --- Payload image (offline install source) ----------------------------------
-# Pull the image the ISO installs into /usr/lib/containers/storage so it is
-# captured by the squashfs and does not exhaust RAM in the booted live
-# environment. At runtime podman finds it again through the additional image
-# store configured in /usr/share/containers/storage.conf of the base image.
-mkdir -p /etc/containers
-cat >/etc/containers/storage.conf <<'EOF'
-[storage]
-driver = "overlay"
-runroot = "/run/containers/storage"
-graphroot = "/usr/lib/containers/storage"
-EOF
-
-podman pull "${BASE_IMAGE:?BASE_IMAGE build-arg is required}"
-
-rm -f /etc/containers/storage.conf
+# The image the ISO installs is NOT baked into the live environment: a baked
+# copy of the ~11 GB Caracal image is what pushed the ISO past 10 GB. Anaconda
+# pulls the payload from the registry during installation instead (online
+# install, Bazzite-style), so the ISO carries only the live environment and
+# stays at ~6.5–7 GB. BASE_IMAGE is still passed through to Anaconda below.
 
 # --- Installer environment ----------------------------------------------------
 dnf install -y \

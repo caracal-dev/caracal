@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Services that belong to the installed system, not the live environment:
 # they would mutate first-boot state in the live session or fight livesys.
-# Adapted from get-aurora-dev/iso undo-image.sh.
+# Adapted from get-aurora-dev/iso undo-image.sh. Credit github.com/get-aurora-dev
 set -eoux pipefail
 
 systemctl disable flatpak-preinstall.service flatpak-preinstall.timer || true

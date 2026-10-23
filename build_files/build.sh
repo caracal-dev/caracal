@@ -198,9 +198,9 @@ bash "${SCRIPTS_DIR}/install-appimagelauncher.sh"
 bash "${SCRIPTS_DIR}/install-appimagetool.sh"
 RELEASEVER="$(rpm -E %fedora)"
 curl -fL --retry 3 --retry-delay 2 -o /tmp/rpmfusion-nonfree-release.rpm \
-  "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${RELEASEVER}.noarch.rpm"
+  "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${RELEASEVER}.noarch.rpm"
 curl -fL --retry 3 --retry-delay 2 -o /tmp/rpmfusion-free-release.rpm \
-  "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${RELEASEVER}.noarch.rpm"
+  "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${RELEASEVER}.noarch.rpm"
 rpm -Uvh /tmp/rpmfusion-nonfree-release.rpm /tmp/rpmfusion-free-release.rpm
 rm -f /tmp/rpmfusion-nonfree-release.rpm /tmp/rpmfusion-free-release.rpm
 
@@ -659,3 +659,12 @@ rm -rf \
   /var/log/hawkey*
 
 rm -rf /usr/etc
+# Ship the signature verification policy to /etc: /usr/etc is a bootc
+# implementation detail (bootc container lint fails on it) and /etc lands on
+# the deployed system as-is. Without the policy, ostree-image-signed
+# deployments (pre-titanoboa installer) cannot update — bootc refuses an
+# insecureAcceptAnything default. New installs pull unverified and never read
+# this; it also prepares re-enabling --enforce-container-sigpolicy.
+install -Dm0644 /ctx/cosign.pub /etc/pki/containers/caracal.pub
+install -Dm0644 /ctx/signing/containers/policy.json /etc/containers/policy.json
+install -Dm0644 /ctx/signing/containers/registries.d/caracal.yaml /etc/containers/registries.d/caracal.yaml
