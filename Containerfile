@@ -17,6 +17,7 @@ FROM ghcr.io/ublue-os/brew:latest AS brew
 # system files in system_files/<flavor>/ (deployed via rsync in build.sh, same as Aurora)
 FROM scratch AS ctx
 COPY build_files /
+COPY cosign.pub /
 COPY assets/images /assets
 COPY system_files/shared /system_files/shared
 COPY system_files/kinoite /system_files/kinoite

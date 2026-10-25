@@ -659,3 +659,12 @@ rm -rf \
   /var/log/hawkey*
 
 rm -rf /usr/etc
+# Ship the signature verification policy to /etc: /usr/etc is a bootc
+# implementation detail (bootc container lint fails on it) and /etc lands on
+# the deployed system as-is. Without the policy, ostree-image-signed
+# deployments (pre-titanoboa installer) cannot update — bootc refuses an
+# insecureAcceptAnything default. New installs pull unverified and never read
+# this; it also prepares re-enabling --enforce-container-sigpolicy.
+install -Dm0644 /ctx/cosign.pub /etc/pki/containers/caracal.pub
+install -Dm0644 /ctx/signing/containers/policy.json /etc/containers/policy.json
+install -Dm0644 /ctx/signing/containers/registries.d/caracal.yaml /etc/containers/registries.d/caracal.yaml
