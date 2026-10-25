@@ -392,7 +392,7 @@ If you want a new feature, improvement, or package added, open a [feature reques
 All published images are signed with [cosign](https://github.com/sigstore/cosign); the verification key ships in each image (`/etc/pki/containers/caracal.pub`) and as `cosign.pub` in this repo. Verify with:
 
 ```bash
-cosign verify --key cosign.pub ghcr.io/tumillanino/caracal:latest
+cosign verify --key cosign.pub ghcr.io/caracal-dev/caracal:latest
 ```
 
 ### Updating an existing Caracal install (pre-titanoboa installer)
@@ -407,15 +407,15 @@ error: Upgrading: Preparing import: Fetching manifest: containers-policy.json
 That refusal is bootc working as intended — an enforced deployment must not accept unsigned images. Current images ship the fix in `/etc`, but a system that can't update can't receive it. Run the migration script once on the affected machine:
 
 ```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/tumillanino/caracal/main/build_files/signing/install-sigpolicy.sh)"
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/caracal-dev/caracal/main/build_files/signing/install-sigpolicy.sh)"
 sudo bootc upgrade
 ```
 
-The script writes the cosign key, the verification policy (`default: reject`, scoped to `ghcr.io/tumillanino/*`), and the sigstore-attachment lookup config into `/etc` — matching what current images ship in `/etc`. After that, updates verify against the published key.
+The script writes the cosign key, the verification policy (`default: reject`, scoped to `ghcr.io/caracal-dev/*`), and the sigstore-attachment lookup config into `/etc` — matching what current images ship in `/etc`. After that, updates verify against the published key.
 
 Installs since the titanoboa change pull with `--no-signature-verification`: routine updates need nothing extra. The shipped policy exists so enforcement can be re-enabled in the installer (`--enforce-container-sigpolicy`) whenever you want.
 
-Note: the default policy rejects anything outside `ghcr.io/tumillanino/*`. If you pull containers from other registries (e.g. `podman pull docker.io/…`), add allow rules to `/etc/containers/policy.json`.
+Note: the default policy rejects anything outside `ghcr.io/caracal-dev/*`. If you pull containers from other registries (e.g. `podman pull docker.io/…`), add allow rules to `/etc/containers/policy.json`.
 
 ---
 
