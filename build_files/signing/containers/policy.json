@@ -6,6 +6,78 @@
   ],
   "transports": {
     "docker": {
+      "ghcr.io/caracal-dev/caracal": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/caracal-dev/caracal-gnome": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/caracal-dev/caracal-dx": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/caracal-dev/caracal-gnome-dx": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/caracal-dev/caracal-stage": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/caracal-dev/caracal-stage-arm": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/caracal-dev/caracal-nvidia": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/caracal-dev/caracal-dx-nvidia": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
       "ghcr.io/tumillanino/caracal": [
         {
           "type": "sigstoreSigned",

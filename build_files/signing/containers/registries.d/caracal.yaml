@@ -1,3 +1,5 @@
 docker:
+  ghcr.io/caracal-dev:
+    use-sigstore-attachments: true
   ghcr.io/tumillanino:
     use-sigstore-attachments: true
