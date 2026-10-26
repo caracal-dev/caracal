@@ -1,0 +1,96 @@
+name: Bug report
+description: File a bug report. If you cannot update Caracal, do the "Known issue" checklist first — there is a one-command fix for old installs.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Known issue — updates refused on older installs
+
+        Systems installed with the **pre-titanoboa installer** (signed-image transport) refuse to update until the signature policy is installed once. `ujust upgrade` / `bootc upgrade` fails with one of:
+
+        - `containers-policy.json specifies a default of 'insecureAcceptAnything'; refusing usage`
+        - `Running image docker://ghcr.io/... is rejected by policy`
+        - `failed to invoke method OpenImage: None of the signatures were accepted`
+        - `failed to invoke method OpenImage: ... invalid signature ...`
+
+        If you see any of those, run this **once as root**, then upgrade again:
+
+        ```bash
+        sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/caracal-dev/caracal/main/build_files/signing/install-sigpolicy.sh)"
+        sudo bootc upgrade
+        ```
+
+        Newer images ship the same policy+key in `/etc`, so installs from the current installer never need this. Details: README → *Image Verification*.
+
+  - type: checkboxes
+    id: known
+    attributes:
+      label: Before filing
+      options:
+        - label: "I ran `sudo bootc upgrade --check` and read the output."
+          required: true
+        - label: "If it showed a policy/signature error, I ran the one-liner above and retried."
+        - label: "The problem still reproduces after the known fix."
+          required: true
+
+  - type: dropdown
+    id: image
+    attributes:
+      label: Caracal image
+      description: Which image variant are you running? (`bootc status` → `spec.image.image`)
+      options:
+        - caracal (default)
+        - caracal-dx
+        - caracal-gnome
+        - caracal-gnome-dx
+        - caracal-nvidia
+        - caracal-dx-nvidia
+        - caracal-stage / caracal-stage-arm
+        - Other / not sure
+      default: 0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation type
+      description: How was this system first installed/rebased? This is the key triage question for update issues.
+      options:
+        - Current installer (titanoboa era)
+        - Old installer (pre-titanoboa)
+        - Rebased from another image (bootc switch / rpm-ostree rebase)
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What did you expect, and what happened instead?
+      placeholder: "Steps to reproduce: 1. … 2. …"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Commands and output
+      description: Paste the output of the commands below. Do not truncate error lines.
+      placeholder: |
+        bootc status
+        sudo bootc upgrade --check
+        rpm-ostree status   # if you layer packages
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: hardware
+    attributes:
+      label: Hardware (optional)
+      description: GPU, CPU, and whether the machine is a VM.
+      placeholder: "e.g. AMD RX 580, Ryzen 5600, libvirt VM"
