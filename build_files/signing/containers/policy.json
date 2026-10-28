@@ -51,6 +51,15 @@
           }
         }
       ],
+      "ghcr.io/caracal-dev/caracal-niri": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
       "ghcr.io/caracal-dev/caracal-stage-arm": [
         {
           "type": "sigstoreSigned",
@@ -115,6 +124,15 @@
         }
       ],
       "ghcr.io/tumillanino/caracal-stage": [
+        {
+          "type": "sigstoreSigned",
+          "keyPath": "/etc/pki/containers/caracal.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "ghcr.io/tumillanino/caracal-niri": [
         {
           "type": "sigstoreSigned",
           "keyPath": "/etc/pki/containers/caracal.pub",
