@@ -45,6 +45,7 @@ body:
         - caracal-dx
         - caracal-gnome
         - caracal-gnome-dx
+        - caracal-niri
         - caracal-nvidia
         - caracal-dx-nvidia
         - caracal-stage / caracal-stage-arm

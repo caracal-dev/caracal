@@ -427,11 +427,11 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/caracal-dev/caracal
 sudo bootc upgrade
 ```
 
-The script writes the cosign key, the verification policy (`default: reject`, scoped to `ghcr.io/caracal-dev/*`), and the sigstore-attachment lookup config into `/etc` — matching what current images ship in `/etc`. After that, updates verify against the published key.
+The script writes the cosign key, the verification policy (`default: reject`, scoped to the published Caracal image repos), and the sigstore-attachment lookup config into `/etc` — matching what current images ship in `/etc`. After that, updates verify against the published key.
 
 Installs since the titanoboa change pull with `--no-signature-verification`: routine updates need nothing extra. The shipped policy exists so enforcement can be re-enabled in the installer (`--enforce-container-sigpolicy`) whenever you want.
 
-Note: the default policy rejects anything outside `ghcr.io/caracal-dev/*`. If you pull containers from other registries (e.g. `podman pull docker.io/…`), add allow rules to `/etc/containers/policy.json`.
+Note: the default policy is `reject`; only the image repos listed explicitly under `transports.docker` are accepted — every published variant has its own scope, so a new image variant must be added there for each registry it is pushed to. If you pull containers from other registries (e.g. `podman pull docker.io/…`), add allow rules to `/etc/containers/policy.json`.
 
 ---
 
