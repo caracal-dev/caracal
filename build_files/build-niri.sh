@@ -187,6 +187,32 @@ dconf update
 sed -i 's|^Exec=.*|Exec=bash -c "niri-session > /dev/null 2>\&1"|' \
   /usr/share/wayland-sessions/niri.desktop
 
+# ── SELinux: greeter state dirs must be writable by the xdm_t domain ────────
+# greetd runs its sessions confined as xdm_t. The dms-greeter package owns
+# /var/cache/dms-greeter and /var/lib/greeter, but Fedora's policy labels
+# /var/cache/* as var_t and /var/lib/* as var_lib_t, and xdm_t may create in
+# neither. The greeter then dies instantly on its first cache write (EACCES),
+# greetd exhausts its restart limit, and the boot stalls on the plymouth
+# splash. Map both trees onto xdm_var_lib_t -- the type xdm_t is allowed to
+# manage (it is what GDM's /var/lib/gdm uses) -- and relabel at boot, before
+# greetd starts. file_contexts.local makes matchpathcon return the right type
+# for freshly created paths (first boot); the tmpfiles Z rule relabels paths
+# that already exist on disk (upgrades of existing installs).
+mkdir -p /etc/selinux/targeted/contexts/files
+local_fc=/etc/selinux/targeted/contexts/files/file_contexts.local
+touch "${local_fc}"
+grep -q '/var/lib/greeter' "${local_fc}" || cat >>"${local_fc}" <<'EOF'
+/var/lib/greeter(/.*)?        system_u:object_r:xdm_var_lib_t:s0
+/var/cache/dms-greeter(/.*)?  system_u:object_r:xdm_var_lib_t:s0
+EOF
+cat >/etc/tmpfiles.d/caracal-niri-greeter.conf <<'EOF'
+# Relabel the DMS greeter state for xdm_t (see build-niri.sh SELinux note).
+# Modes mirror /usr/lib/tmpfiles.d/dms-greeter.conf; this file sorts before
+# it, so creation on first boot already lands on xdm_var_lib_t.
+Z /var/lib/greeter 0755 greeter greeter -
+Z /var/cache/dms-greeter 0750 greeter greeter -
+EOF
+
 # ── Flathub ──────────────────────────────────────────────────────────────────
 # System-wide Flathub so the Flatpak portal app catalogs are populated.
 curl --retry 3 -Lo /etc/flatpak/remotes.d/flathub.flatpakrepo \
