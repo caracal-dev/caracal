@@ -1,0 +1,3 @@
+[org/gnome/desktop/interface]
+icon-theme='Papirus'
+color-scheme='prefer-dark'

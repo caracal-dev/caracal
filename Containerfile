@@ -24,6 +24,7 @@ COPY system_files/kinoite /system_files/kinoite
 COPY system_files/gnome /system_files/gnome
 COPY system_files/stage /system_files/stage
 COPY system_files/nvidia /system_files/nvidia
+COPY system_files/niri /system_files/niri
 COPY --from=brew /system_files /system_files/shared
 
 # Base Image — Fedora Kinoite (KDE) with Universal Blue additions
@@ -219,7 +220,7 @@ RUN bootc container lint
 ## as caracal-dx (Docker, VSCodium, libvirt/QEMU tooling, Cockpit, Incus/LXC,
 ## tracing/profiling tools) layered on the Silverblue-based caracal-gnome.
 ## Container-only — no ISO or disk build is produced for this variant.
-FROM caracal-gnome AS caracal-gnome-dx
+FROM caracal AS caracal-gnome-dx
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache \
@@ -227,6 +228,46 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=tmpfs,dst=/run \
     IMAGE_NAME=caracal-gnome-dx /usr/bin/bash /ctx/build-dx.sh
+
+RUN bootc container lint
+
+### Niri image
+## Minimal Wayland desktop built on the generic fedora-bootc base (no KDE/GNOME
+## payload): the niri compositor with Dank Material Shell (DMS) as the session
+## shell and greetd + dms-greeter as the login screen. Ships the Caracal
+## branding (logo, wallpapers, Plymouth splash) with the Kanagawa Dragon color
+## theme preset for DMS, niri and the terminal. Same OGC/Bazzite kernel as the
+## other Caracal images.
+FROM quay.io/fedora/fedora-bootc:${FEDORA_VERSION} AS caracal-niri
+
+### Kernel swap
+## Same OGC/Bazzite kernel from ublue akmods as the KDE/GNOME builds.
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=bind,from=akmods,src=/kernel-rpms,dst=/rpms/kernel \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/install-kernel
+
+### Build
+## Standalone build script: the audio-workstation stack in build.sh is not
+## part of this image. Installs niri + DMS, applies Caracal branding and the
+## Kanagawa Dragon preset, and wires greetd/dms-greeter.
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    DESKTOP=niri IMAGE_NAME=caracal-niri /ctx/build-niri.sh
+
+### Initramfs
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/run \
+    /ctx/build-initramfs
 
 RUN bootc container lint
 

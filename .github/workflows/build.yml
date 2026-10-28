@@ -43,6 +43,8 @@ jobs:
             target: caracal-gnome-dx
           - image-suffix: "-stage"
             target: caracal-stage
+          - image-suffix: "-niri"
+            target: caracal-niri
           - image-suffix: "-nvidia"
             target: caracal-nvidia
           - image-suffix: "-dx-nvidia"

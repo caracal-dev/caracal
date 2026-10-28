@@ -1,0 +1,5 @@
+# Terminal follows the shell theme: DMS (Dux Shell) generates
+# ~/.config/ghostty/themes/dankcolors at session start from the active color
+# scheme — the Kanagawa Dragon preset on this image. Ghostty warns and falls
+# back to its default palette only in the brief window before DMS first runs.
+theme = dankcolors

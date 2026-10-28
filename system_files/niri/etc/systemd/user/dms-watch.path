@@ -1,0 +1,12 @@
+[Unit]
+Description=Watch DankMaterialShell (DMS) config files
+
+[Path]
+PathModified=%h/.config/dms/settings.json
+PathModified=%h/.local/state/dms/session.json
+PathModified=%h/.local/state/dms-colors.json
+
+Unit=dms-greeter-sync-trigger.service
+
+[Install]
+WantedBy=graphical-session.target

@@ -1,0 +1,33 @@
+// Baseline compositor configuration for the dms-greeter session.
+// The greeter runs niri with this config (DMS_RUN_GREETER=1); per-display
+// settings for the login screen can be added here.
+input {
+    keyboard {
+        numlock
+    }
+
+    touchpad {
+        tap
+        drag-lock
+        natural-scroll
+        scroll-method "two-finger"
+    }
+}
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+environment {
+    DMS_RUN_GREETER "1"
+}
+
+gestures {
+  hot-corners {
+    off
+  }
+}
+
+layout {
+  background-color "#000000"
+}

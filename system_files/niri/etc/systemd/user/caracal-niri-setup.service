@@ -1,0 +1,11 @@
+[Unit]
+Description=Ensure Caracal Niri works out of the box
+Before=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/caracal-niri-user-setup
+RemainAfterExit=true
+
+[Install]
+WantedBy=default.target
