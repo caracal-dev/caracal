@@ -8,13 +8,19 @@
 set -eoux pipefail
 
 # Disable kernel-install hooks to prevent dracut/rpm-ostree from triggering
-# inside the container build environment.
+# inside the container build environment. rpm-ostree hooks only exist on the
+# ostree-desktop bases (kinoite/silverblue); the generic fedora-bootc base has
+# no 05-rpmostree.install, so tolerate missing hooks and restore only what was
+# replaced (no-op stubs must not leak into the final image, where they would
+# disable real kernel-install work on the deployed system).
 pushd /usr/lib/kernel/install.d
-mv 05-rpmostree.install 05-rpmostree.install.bak
-mv 50-dracut.install 50-dracut.install.bak
-printf '%s\n' '#!/bin/sh' 'exit 0' > 05-rpmostree.install
-printf '%s\n' '#!/bin/sh' 'exit 0' > 50-dracut.install
-chmod +x 05-rpmostree.install 50-dracut.install
+for hook in 05-rpmostree.install 50-dracut.install; do
+    if [[ -f "${hook}" ]]; then
+        mv "${hook}" "${hook}.bak"
+        printf '%s\n' '#!/bin/sh' 'exit 0' > "${hook}"
+        chmod +x "${hook}"
+    fi
+done
 popd
 
 # Remove the stock Fedora kernel RPMs
@@ -66,13 +72,23 @@ for pkg in "${optional_pkgs[@]}"; do
 done
 shopt -u nullglob
 
+# versionlock comes from dnf5-plugins; the generic fedora-bootc base does not
+# ship it (the ostree-desktop bases do, where this install is a no-op).
+dnf5 -y install dnf5-plugins
+
 dnf5 -y install "${PKG_PAT[@]}"
 dnf5 versionlock add "${installed_pkgs[@]}"
 
-# Restore the original kernel-install hooks
+# Restore the original kernel-install hooks; hooks that did not exist on the
+# base (05-rpmostree.install on fedora-bootc) leave no stub behind.
 pushd /usr/lib/kernel/install.d
-mv -f 05-rpmostree.install.bak 05-rpmostree.install
-mv -f 50-dracut.install.bak 50-dracut.install
+for hook in 05-rpmostree.install 50-dracut.install; do
+    if [[ -f "${hook}.bak" ]]; then
+        mv -f "${hook}.bak" "${hook}"
+    else
+        rm -f "${hook}"
+    fi
+done
 popd
 
 # Clear any kernel files the RPM dropped in /boot — atomic images manage

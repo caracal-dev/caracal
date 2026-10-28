@@ -1,5 +1,5 @@
 ---
-name: Build disk images
+name: Build installer ISOs
 
 on:
   workflow_dispatch:
@@ -19,7 +19,6 @@ on:
     branches:
       - main
     paths:
-      - './disk_config/disk.toml'
       - './.github/workflows/build-disk.yml'
       - './installer/**'
       - './Containerfile'
@@ -35,8 +34,6 @@ env:
   IMAGE_NAME: ${{ github.event.repository.name }} # output of build.yml, keep in sync
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
   DEFAULT_TAG: "latest"
-  FEDORA_VERSION: "44" # keep in sync with Containerfile
-  BIB_IMAGE: "quay.io/centos-bootc/bootc-image-builder:latest"
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
@@ -51,7 +48,6 @@ jobs:
         platform:
           - ${{ inputs.platform || 'amd64' }}
         disk-type:
-          - qcow2
           - installer-iso
         image-suffix:
           - ""
@@ -60,8 +56,6 @@ jobs:
           - "-stage-arm"
           - "-nvidia"
         exclude:
-          - disk-type: qcow2
-            image-suffix: "-nvidia"
           - platform: arm64
             image-suffix: "-nvidia"
           - platform: amd64
@@ -80,9 +74,9 @@ jobs:
           IMAGE_NAME_LOWER=${IMAGE_NAME,,}
           IMAGE_SUFFIX="${{ matrix.image-suffix }}"
           # Installer ISO flavor wiring:
-          #   LIVESYS_SESSION — live desktop session (kde for Kinoite-based
+          #   LIVESYS_SESSION -- live desktop session (kde for Kinoite-based
           #     flavors, gnome for the Silverblue-based GNOME ones)
-          #   LIVE_ENV_IMAGE — image the live desktop boots; the stage
+          #   LIVE_ENV_IMAGE -- image the live desktop boots; the stage
           #     flavors are minimal Wayfire rigs, so their live environment
           #     uses the full KDE image (payload stays the stage image)
           if [ "${IMAGE_SUFFIX}" = "-gnome" ]; then
@@ -92,25 +86,20 @@ jobs:
             echo "LIVESYS_SESSION=kde" >> ${GITHUB_ENV}
             echo "LIVE_ENV_IMAGE=${IMAGE_REGISTRY_LOWER}/${IMAGE_NAME_LOWER}:${DEFAULT_TAG}" >> ${GITHUB_ENV}
           fi
-          # Concatenate the types with a hyphen
-          DISK_TYPE=$(echo "${{ matrix.disk-type }}" | tr ' ' '-')
           # Lowercase the image uri
           echo "IMAGE_REGISTRY=${IMAGE_REGISTRY_LOWER}" >> ${GITHUB_ENV}
           echo "IMAGE_NAME=${IMAGE_NAME_LOWER}${IMAGE_SUFFIX}" >> ${GITHUB_ENV}
-          echo "DISK_TYPE=${DISK_TYPE}" >> ${GITHUB_ENV}
           echo "USER_UID=${USER_UID}" >> ${GITHUB_ENV}
           echo "USER_GID=${USER_GID}" >> ${GITHUB_ENV}
-          if [ "${{ matrix.disk-type }}" = "installer-iso" ]; then
-            # Stage images ship no flatpak preinstall set, so their ISOs
-            # bundle nothing offline; desktop and NVIDIA legs bundle
-            # Bazaar + Waterfox (see installer/iso-flatpaks).
-            if [ "${IMAGE_SUFFIX}" != "-stage" ] && [ "${IMAGE_SUFFIX}" != "-stage-arm" ]; then
-              echo "BUNDLE_FLATPAKS=true" >> ${GITHUB_ENV}
-            else
-              echo "BUNDLE_FLATPAKS=false" >> ${GITHUB_ENV}
-            fi
-            echo "OUTPUT_DIR=${GITHUB_WORKSPACE}/output/installer" >> ${GITHUB_ENV}
+          # Stage images ship no flatpak preinstall set, so their ISOs
+          # bundle nothing offline; desktop and NVIDIA legs bundle
+          # Bazaar + Waterfox (see installer/iso-flatpaks).
+          if [ "${IMAGE_SUFFIX}" != "-stage" ] && [ "${IMAGE_SUFFIX}" != "-stage-arm" ]; then
+            echo "BUNDLE_FLATPAKS=true" >> ${GITHUB_ENV}
+          else
+            echo "BUNDLE_FLATPAKS=false" >> ${GITHUB_ENV}
           fi
+          echo "OUTPUT_DIR=${GITHUB_WORKSPACE}/output/installer" >> ${GITHUB_ENV}
 
       - name: Install dependencies
         run: |
@@ -135,21 +124,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build disk images
-        id: build
-        if: matrix.disk-type != 'installer-iso'
-        uses: osbuild/bootc-image-builder-action@028e4d28330efe546229eb9cb52aee78174d2347 # main, pinned 2026-05-18
-        with:
-          builder-image: ${{ env.BIB_IMAGE }}
-          config-file: ./disk_config/disk.toml
-          image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
-          chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
-          types: ${{ matrix.disk-type }}
-          # Keep CI aligned with the local Justfile, which always builds Btrfs-backed images.
-          additional-args: --use-librepo=True --rootfs=btrfs
-
       - name: Build installer ISO
-        if: matrix.disk-type == 'installer-iso'
         shell: bash
         env:
           AUTHFILE: ${{ github.workspace }}/.docker-config.json
@@ -178,12 +153,12 @@ jobs:
           (cd "${OUTPUT_DIR}" && sha256sum "$(basename "${ISO_PATH}")" \
             > "$(basename "${ISO_PATH}")-CHECKSUM")
 
-      - name: Upload disk images and Checksum to Job Artifacts
+      - name: Upload installer ISO and Checksum to Job Artifacts
         if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ env.IMAGE_NAME }}-${{ matrix.platform }}-${{ matrix.disk-type }}
-          path: ${{ matrix.disk-type == 'installer-iso' && './output/installer' || steps.build.outputs.output-directory }}
+          path: ./output/installer
           if-no-files-found: error
           retention-days: 0
           compression-level: 0
@@ -224,47 +199,3 @@ jobs:
           rclone copyto "${ISO_PATH}" "R2:${BUCKET_NAME}/$(basename "${ISO_PATH}")"
 
           rclone copyto "${CHECKSUM_PATH}" "R2:${BUCKET_NAME}/$(basename "${CHECKSUM_PATH}")"
-
-      - name: Upload disk image to Cloudflare R2
-        if: inputs.upload-to-s3 == true && github.event_name != 'pull_request' && matrix.disk-type != 'installer-iso'
-        shell: bash
-        env:
-          RCLONE_CONFIG_R2_TYPE: s3
-          RCLONE_CONFIG_R2_PROVIDER: Cloudflare
-          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY }}
-          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.SECRET_S3_ACCESS_KEY }}
-          RCLONE_CONFIG_R2_REGION: auto
-          RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.S3_ENDPOINT_DEFAULT }}
-          BUCKET_NAME: ${{ vars.R2_BUCKET_NAME || secrets.S3_BUCKET_NAME }}
-          DISK_OUTPUT_DIR: ${{ steps.build.outputs.output-directory }}
-        run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y rclone
-          if [ -z "${BUCKET_NAME}" ]; then
-            echo "Set repository variable R2_BUCKET_NAME or secret S3_BUCKET_NAME before enabling upload-to-s3." >&2
-            exit 1
-          fi
-
-          if [ -z "${DISK_OUTPUT_DIR}" ] || [ ! -d "${DISK_OUTPUT_DIR}" ]; then
-            echo "Disk output directory was not found: '${DISK_OUTPUT_DIR}'." >&2
-            exit 1
-          fi
-
-          DISK_PATH=$(find "${DISK_OUTPUT_DIR}" -type f -name '*.qcow2' | head -n 1)
-          if [ -z "${DISK_PATH}" ]; then
-            echo "No qcow2 disk image was found in ${DISK_OUTPUT_DIR}." >&2
-            find "${DISK_OUTPUT_DIR}" -maxdepth 4 -type f -print >&2 || true
-            exit 1
-          fi
-
-          STAGING_DIR="$(mktemp -d)"
-          QCOW_NAME="${IMAGE_NAME}-${DEFAULT_TAG}-${{ matrix.platform }}.qcow2"
-          cp "${DISK_PATH}" "${STAGING_DIR}/${QCOW_NAME}"
-          (
-            cd "${STAGING_DIR}"
-            sha256sum "${QCOW_NAME}" > "${QCOW_NAME}.sha256sum"
-          )
-
-          rclone copyto "${STAGING_DIR}/${QCOW_NAME}" "R2:${BUCKET_NAME}/${QCOW_NAME}"
-          rclone copyto "${STAGING_DIR}/${QCOW_NAME}.sha256sum" "R2:${BUCKET_NAME}/${QCOW_NAME}.sha256sum"

@@ -136,6 +136,25 @@ Caracal publishes a GNOME desktop variant (`caracal-gnome`, built on Fedora Silv
 
 The GNOME ISO is produced by the same disk-build workflow (matrix `-gnome` suffix) and is included in the S3/R2 artifact upload when `upload-to-s3` is enabled on `workflow_dispatch`.
 
+### Niri Image
+
+Caracal publishes a minimal Niri desktop variant (`caracal-niri`, built on the
+generic Fedora bootc base). It skips the audio-workstation payload entirely.
+You get Niri with [Dank Material Shell](https://github.com/duxlabs-dev/dux-shell) and not much else:
+
+- **niri** as the session: the scrollable-tiling Wayland compositor, with Dank Material Shell (DMS; renamed to Dux Shell in v2.0) on top for the panel, launcher, notifications, lock screen, and settings
+- **greetd + dms-greeter** login screen that mirrors the DMS lock screen and picks up your theme and wallpaper
+- **Kanagawa Dragon theme preset**: DMS ships with a custom Kanagawa Dragon color scheme, the Caracal Gruvbox wallpaper, dark GTK defaults, Papirus icons, and a Ghostty terminal that follows the shell theme
+- **DAW-friendly window rules**: windows of known DAWs (Ardour, REAPER, Renoise, Bitwig, Qtractor, Hydrogen, QjackCtl, Mixbus, Zrythm, Helio, Stargate) and Wine/Yabridge plugin windows open floating instead of tiling; Carla opens maximized. PipeWire realtime limits (rtprio 95, unlimited memlock) are preset for the `audio` group
+- **Caracal branding**: distributor logo, wallpapers, Plymouth boot splash, EFI boot icon
+- Same OGC/Bazzite kernel as the other Caracal images, plus flatpak + Flathub enabled system-wide
+
+There is no installer ISO for this variant. Install it from an existing bootc system instead:
+
+```bash
+bootc switch ghcr.io/caracal-dev/caracal-niri:latest
+```
+
 ---
 
 ## Installation
@@ -304,14 +323,11 @@ just build-dx
 # Build the GNOME Developer Experience image
 just build-gnome-dx
 
+# Build the Niri + Dank Material Shell image
+just build-niri
+
 # Build the NVIDIA Developer Experience image
 just build-dx-nvidia
-
-# Build a bootable QCOW2 (for testing in a VM)
-just build-qcow2
-
-# Run in a VM
-just run-vm-qcow2
 
 # Build the installer ISO from the published image (UEFI boot, live ISO)
 just build-iso
@@ -345,7 +361,7 @@ Helpful contribution areas include:
 Suggested contribution flow:
 
 1. Fork the repo and create a branch for your change.
-2. Build locally with `just build`, or use `just build-qcow2` if you want to test in a VM.
+2. Build locally with `just build`, or use `just build-iso` if you want to test in a VM.
 3. Make the smallest focused change you can.
 4. Include clear reproduction steps, hardware details, logs, or screenshots when reporting or fixing a bug.
 5. Open a pull request with a concise summary of what changed and how you tested it.

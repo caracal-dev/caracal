@@ -1,0 +1,16 @@
+#!/usr/bin/bash
+# First-login setup for Caracal Niri: copy skeleton configs (no clobber --
+# preserves existing user edits, e.g. for bootc switch users) and let Flatpak
+# apps read the DMS-managed GTK theming.
+set -e
+
+if [ "$(id -u)" -lt 1000 ]; then
+    exit 0
+fi
+
+cp -a -n /etc/skel/. "$HOME/" 2>/dev/null || true
+
+if command -v flatpak >/dev/null; then
+    flatpak override --user --filesystem=xdg-config/gtk-3.0:ro
+    flatpak override --user --filesystem=xdg-config/gtk-4.0:ro
+fi

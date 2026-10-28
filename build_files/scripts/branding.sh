@@ -4,14 +4,15 @@
 
 set -oue pipefail
 
-# Desktop flavor (kinoite|gnome); see build.sh. KDE pieces (SDDM, plasmalogin,
-# Plasma look-and-feel, kcm-about-distrorc) only run on kinoite; GNOME picks
-# up its own backgrounds, schemas, and GDM pixmaps.
+# Desktop flavor (kinoite|gnome|niri); see build.sh / build-niri.sh. KDE
+# pieces (SDDM, plasmalogin, Plasma look-and-feel, kcm-about-distrorc) only
+# run on kinoite; GNOME picks up its own backgrounds, schemas, and GDM
+# pixmaps; niri runs standalone on the fedora-bootc base.
 DESKTOP="${DESKTOP:-kinoite}"
 case "${DESKTOP}" in
-kinoite | gnome) ;;
+kinoite | gnome | niri) ;;
 *)
-  echo "ERROR: unknown DESKTOP value '${DESKTOP}' (expected kinoite or gnome)" >&2
+  echo "ERROR: unknown DESKTOP value '${DESKTOP}' (expected kinoite, gnome or niri)" >&2
   exit 1
   ;;
 esac
@@ -34,6 +35,18 @@ if grep -q '^VARIANT_ID=' /usr/lib/os-release; then
   sed -i 's|^VARIANT_ID=.*|VARIANT_ID=caracal-os|' /usr/lib/os-release
 else
   printf '%s\n' 'VARIANT_ID=caracal-os' >>/usr/lib/os-release
+fi
+
+# Niri flavor identification: distinguish the DMS/Niri desktop from the KDE
+# and GNOME variants in os-release, and brand the default hostname.
+if [[ "${DESKTOP}" == "niri" ]]; then
+  sed -i 's|^VARIANT=.*|VARIANT="Caracal OS Niri"|' /usr/lib/os-release
+  sed -i 's|^VARIANT_ID=.*|VARIANT_ID=caracal-os-niri|' /usr/lib/os-release
+  if grep -q '^DEFAULT_HOSTNAME=' /usr/lib/os-release; then
+    sed -i 's|^DEFAULT_HOSTNAME=.*|DEFAULT_HOSTNAME=caracal|' /usr/lib/os-release
+  else
+    printf '%s\n' 'DEFAULT_HOSTNAME=caracal' >>/usr/lib/os-release
+  fi
 fi
 sed -i 's|^LOGO=.*|LOGO=distributor-logo|' /usr/lib/os-release
 
