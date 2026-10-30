@@ -431,7 +431,7 @@ The script writes the cosign key, the verification policy (`default: reject`, sc
 
 Installs since the titanoboa change pull with `--no-signature-verification`: routine updates need nothing extra. The shipped policy exists so enforcement can be re-enabled in the installer (`--enforce-container-sigpolicy`) whenever you want.
 
-Note: the default policy is `reject`; only the image repos listed explicitly under `transports.docker` are accepted — every published variant has its own scope, so a new image variant must be added there for each registry it is pushed to. If you pull containers from other registries (e.g. `podman pull docker.io/…`), add allow rules to `/etc/containers/policy.json`.
+Note: the policy default is `reject`. Caracal repos scoped under `transports.docker` must verify against the shipped key; all other pulls are accepted as-is. So rebasing to other atomic images (Zirconium, Universal Blue, ...) or pulling from any registry works without touching the policy.
 
 ---
 
