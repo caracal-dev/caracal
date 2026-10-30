@@ -19,13 +19,14 @@
 #
 # Then update as normal:  sudo bootc upgrade
 #
-# Note: the policy default is `reject` scoped to ghcr.io/caracal-dev/* (and the
-# tumillanino dev fork, which shares the same signing key). Image updates (and
-# pulls of Caracal images) verify against the published cosign key; pulls of
-# unrelated registries must be allowed explicitly in /etc/containers/policy.json.
+# Note: Caracal images (ghcr.io/caracal-dev/* and the tumillanino dev fork,
+# which shares the same signing key) verify against the published cosign key;
+# everything else is accepted without signature checks, so rebasing to other
+# atomic images (Zirconium, Universal Blue, ...) and pulling from any registry
+# keeps working.
 #
 # If `bootc upgrade` still refuses after this script, the refusal is signature
-# verification, not the old insecureAcceptAnything policy — the image you are
+# verification, not the old insecureAcceptAnything policy. The image you are
 # updating to must have been signed with the current key (any release pushed
 # after this fix landed qualifies). Try again after the next release.
 set -euo pipefail
@@ -42,11 +43,12 @@ if [[ ${EUID} -ne 0 ]]; then
   exit 1
 fi
 
-# If the running image's configured upgrade ref is a Caracal repo not covered
-# by the fetched policy, refuse to proceed: the policy default is `reject`, so
-# a mismatched scope would silently brick updates. All known Caracal hosts are
-# covered; this only guards against a CARACAL_RAW_URL override pointing at an
-# unrelated fork. Override with CARACAL_POLICY_SCOPE=skip.
+# Only install on a system that is (or will be) running a Caracal image: this
+# script also installs the Caracal sigstore config under /etc/containers/
+# registries.d, which is meaningless elsewhere. Refuse when the deployed image
+# is unrelated; this only guards against running the script (or a
+# CARACAL_RAW_URL override) against a foreign fork. Override with
+# CARACAL_POLICY_SCOPE=skip.
 if [[ "${CARACAL_POLICY_SCOPE:-}" != "skip" ]]; then
   deployed_ref=$(command -v bootc >/dev/null 2>&1 \
     && bootc status --format json 2>/dev/null \
@@ -88,7 +90,7 @@ install -m 0644 "${tmp}/caracal.yaml" "${REGISTRIES_DIR}/caracal.yaml"
 
 echo "Installed Caracal image signature verification policy:"
 echo "  - key:      ${PKI_DIR}/caracal.pub"
-echo "  - policy:   ${POLICY_JSON} (default reject; scoped to ghcr.io/caracal-dev/*)"
+echo "  - policy:   ${POLICY_JSON} (default reject; Caracal images sigstore-verified, all other pulls accepted)"
 echo "  - sigstore: ${REGISTRIES_DIR}/caracal.yaml"
 echo
 echo "Next step: sudo bootc upgrade"
