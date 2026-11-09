@@ -18,6 +18,15 @@ esac
 
 SCRIPTS_DIR="/ctx/scripts"
 
+# The rpm database can come through the container layer commit in a
+# transiently unreadable state (seen on Fedora 45: "database disk image is
+# malformed" on the first dnf run). Verify and rebuild if needed.
+if ! rpm -q rpm &>/dev/null; then
+    echo "WARNING: rpm database unreadable after layer commit; rebuilding"
+    rpmdb --rebuilddb
+    rpm -q rpm
+fi
+
 # System files
 rsync -rvKlO \
   --exclude='/etc/hostname' \
@@ -199,7 +208,7 @@ done
 
 # SC2016: single-quote intentional — $releasever is a dnf URL template, expanded by dnf, not by bash
 # shellcheck disable=SC2016
-dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+dnf -y install --best --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 bash "${SCRIPTS_DIR}/install-appimagelauncher.sh"
 bash "${SCRIPTS_DIR}/install-appimagetool.sh"
 RELEASEVER="$(rpm -E %fedora)"

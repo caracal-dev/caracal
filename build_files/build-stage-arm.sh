@@ -49,7 +49,7 @@ done
 
 # SC2016: single-quote intentional — $releasever is a dnf URL template, expanded by dnf, not by bash
 # shellcheck disable=SC2016
-dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+dnf -y install --best --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 bash /ctx/scripts/install-appimagelauncher.sh
 RELEASEVER="$(rpm -E %fedora)"
 curl -fL --retry 3 --retry-delay 2 -o /tmp/rpmfusion-nonfree-release.rpm \
