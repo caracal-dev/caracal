@@ -208,7 +208,21 @@ done
 
 # SC2016: single-quote intentional — $releasever is a dnf URL template, expanded by dnf, not by bash
 # shellcheck disable=SC2016
-dnf -y install --best --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+# The rpm database intermittently reads back through the layer commit as
+# malformed on F45 ("SELECT hnum, blob FROM 'Packages': database disk image
+# is malformed"). Rebuild it and retry once before giving up.
+install_terra_release() {
+  if ! dnf -y install --best --nogpgcheck \
+      --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
+      terra-release; then
+    echo "WARNING: terra-release install failed; rebuilding rpm database and retrying"
+    rpmdb --rebuilddb
+    dnf -y install --best --nogpgcheck \
+      --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
+      terra-release
+  fi
+}
+install_terra_release
 bash "${SCRIPTS_DIR}/install-appimagelauncher.sh"
 bash "${SCRIPTS_DIR}/install-appimagetool.sh"
 RELEASEVER="$(rpm -E %fedora)"
