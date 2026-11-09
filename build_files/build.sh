@@ -176,8 +176,14 @@ if dnf5 -y copr enable patrickl/wine-staging-dev; then
 else
   echo "WARNING: failed to enable patrickl/wine-staging-dev; falling back to patrickl/wine-tkg-dev." >&2
 fi
-dnf5 -y copr enable patrickl/wine-tkg-dev
-set_copr_priority patrickl wine-tkg-dev 90
+# wine-tkg-dev lags current Fedora releases (no fedora-45 chroot at GA);
+# enable it best-effort since wine-staging-dev provides the full
+# wine/yabridge stack.
+if dnf5 -y copr enable patrickl/wine-tkg-dev; then
+  set_copr_priority patrickl wine-tkg-dev 90
+else
+  echo "WARNING: failed to enable patrickl/wine-tkg-dev; wine packages come from patrickl/wine-staging-dev." >&2
+fi
 
 # COPR repositories
 copr_repos=(
