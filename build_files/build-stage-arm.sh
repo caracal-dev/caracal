@@ -35,7 +35,7 @@ set_copr_priority() {
   fi
 }
 
-# No Wine COPR enablement — Wine/TKG is x86_64-only and not available on aarch64
+# No Wine COPR enablement — Patrickl's Wine builds are x86_64-only and not available on aarch64
 
 copr_repos=(
   ycollet/audinux

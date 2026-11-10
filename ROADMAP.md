@@ -11,7 +11,7 @@ The core infrastructure and baseline performance tuning.
 - [x] **Kernel Tuning:** Integration of the Bazzite kernel for superior scheduling and latency.
 - [x] **Audio Optimization:** Preconfigured `realtime` and `audio` groups, memlock limits, and CPU governor defaults.
 - [x] **Core DAW Suite:** Out-of-the-box inclusion of Ardour, Carla, and Qtractor.
-- [x] **Windows VST Support:** Preconfigured Wine-TKG and Yabridge environment.
+- [x] **Windows VST Support:** Preconfigured Wine and Yabridge environment.
 - [x] **Branding & Identity:** Custom splash screens, SDDM themes, and Plymouth integration.
 - [x] **Automated Builds:** CI/CD pipeline for container images and bootable ISO/QCOW2 disks.
 

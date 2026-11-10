@@ -16,7 +16,7 @@
 #     (limits.d for @audio and @realtime, systemd manager defaults).
 #   - Creates the audio and realtime groups, adds the invoking user to both.
 #   - Switches the CPU governor to performance for low-latency DAW work.
-#   - Stages a focused set of audio packages (yabridge + Wine TKG for Windows
+#   - Stages a focused set of audio packages (yabridge + Wine for Windows
 #     VSTs, JACK / PipeWire bridges, plugin scan paths, common firmware).
 #
 # Everything heavier — DAWs, large plugin packs, instrument libraries — is
@@ -111,7 +111,7 @@ pro-audio-info:
     It will:
       * Enable the ${bold}tumillanino/caracal-packages${normal} COPR
         (publisher of caracal-software-installer / caracal-audio-controller).
-      * Enable the ${bold}patrickl/wine-staging-dev${normal}, ${bold}patrickl/wine-tkg-dev${normal}, and ${bold}teervo/DISTRHO${normal} COPRs
+      * Enable the ${bold}patrickl/wine-staging-dev${normal} and ${bold}teervo/DISTRHO${normal} COPRs
       * Layer the Caracal Software Installer and Audio Controller, plus a
         focused audio package set (yabridge, JACK / PipeWire bridges,
         qjackctl, ffado, pavucontrol, helvum, easyeffects, lsp-plugins,
@@ -173,9 +173,7 @@ pro-audio-uninstall:
 
     sudo rm -f \
         /etc/yum.repos.d/_copr_tumillanino-caracal-packages.repo \
-        /etc/yum.repos.d/_copr_patrickl-wine-tkg.repo \
         /etc/yum.repos.d/_copr_patrickl-wine-staging-dev.repo \
-        /etc/yum.repos.d/_copr_patrickl-wine-tkg-dev.repo \
         /etc/yum.repos.d/_copr_teervo-DISTRHO.repo \
         /etc/security/limits.d/audio.conf \
         /etc/systemd/system.conf.d/90-caracal-audio.conf \
@@ -278,11 +276,9 @@ _pro-audio-copr:
     if add_copr patrickl wine-staging-dev; then
         set_copr_priority patrickl wine-staging-dev 80
     else
-        echo "WARNING: failed to enable patrickl/wine-staging-dev; falling back to patrickl/wine-tkg-dev." >&2
+        echo "WARNING: failed to enable patrickl/wine-staging-dev; continuing with distro wine packages." >&2
     fi
-    add_copr patrickl    wine-tkg-dev
     add_copr teervo      DISTRHO
-    set_copr_priority patrickl wine-tkg-dev 90
     # rpmfusion-free is required for several multimedia codecs and ffmpeg.
     if ! rpm -q rpmfusion-free-release >/dev/null 2>&1; then
         sudo rpm-ostree install --idempotent \
