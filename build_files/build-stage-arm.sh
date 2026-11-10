@@ -49,13 +49,29 @@ done
 
 # SC2016: single-quote intentional — $releasever is a dnf URL template, expanded by dnf, not by bash
 # shellcheck disable=SC2016
-dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+# Retry once with a rebuilt rpm database if the layer commit left the rpmdb
+# unreadable on F45 ("database disk image is malformed").
+if ! dnf -y install --best --nogpgcheck \
+    --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
+    terra-release; then
+  echo "WARNING: terra-release install failed; rebuilding rpm database and retrying"
+  rpmdb --rebuilddb
+  dnf -y install --best --nogpgcheck \
+    --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
+    terra-release
+fi
 bash /ctx/scripts/install-appimagelauncher.sh
 RELEASEVER="$(rpm -E %fedora)"
 curl -fL --retry 3 --retry-delay 2 -o /tmp/rpmfusion-nonfree-release.rpm \
   "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${RELEASEVER}.noarch.rpm"
 curl -fL --retry 3 --retry-delay 2 -o /tmp/rpmfusion-free-release.rpm \
   "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${RELEASEVER}.noarch.rpm"
+# RPM 6 (Fedora 45+) no longer keeps imported keys as rpmdb gpg-pubkey
+# entries, so a fresh base trusts nothing beyond its own keyring. Import the
+# rpmfusion signing keys so the release RPMs verify.
+rpmkeys --import \
+  "/usr/share/distribution-gpg-keys/rpmfusion/RPM-GPG-KEY-rpmfusion-free-fedora-${RELEASEVER}" \
+  "/usr/share/distribution-gpg-keys/rpmfusion/RPM-GPG-KEY-rpmfusion-nonfree-fedora-${RELEASEVER}"
 rpm -Uvh /tmp/rpmfusion-nonfree-release.rpm /tmp/rpmfusion-free-release.rpm
 rm -f /tmp/rpmfusion-nonfree-release.rpm /tmp/rpmfusion-free-release.rpm
 

@@ -18,6 +18,15 @@ esac
 
 SCRIPTS_DIR="/ctx/scripts"
 
+# The rpm database can come through the container layer commit in a
+# transiently unreadable state (seen on Fedora 45: "database disk image is
+# malformed" on the first dnf run). Verify and rebuild if needed.
+if ! rpm -q rpm &>/dev/null; then
+    echo "WARNING: rpm database unreadable after layer commit; rebuilding"
+    rpmdb --rebuilddb
+    rpm -q rpm
+fi
+
 # System files
 rsync -rvKlO \
   --exclude='/etc/hostname' \
@@ -176,8 +185,14 @@ if dnf5 -y copr enable patrickl/wine-staging-dev; then
 else
   echo "WARNING: failed to enable patrickl/wine-staging-dev; falling back to patrickl/wine-tkg-dev." >&2
 fi
-dnf5 -y copr enable patrickl/wine-tkg-dev
-set_copr_priority patrickl wine-tkg-dev 90
+# wine-tkg-dev lags current Fedora releases (no fedora-45 chroot at GA);
+# enable it best-effort since wine-staging-dev provides the full
+# wine/yabridge stack.
+if dnf5 -y copr enable patrickl/wine-tkg-dev; then
+  set_copr_priority patrickl wine-tkg-dev 90
+else
+  echo "WARNING: failed to enable patrickl/wine-tkg-dev; wine packages come from patrickl/wine-staging-dev." >&2
+fi
 
 # COPR repositories
 copr_repos=(
@@ -193,7 +208,21 @@ done
 
 # SC2016: single-quote intentional — $releasever is a dnf URL template, expanded by dnf, not by bash
 # shellcheck disable=SC2016
-dnf -y install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+# The rpm database intermittently reads back through the layer commit as
+# malformed on F45 ("SELECT hnum, blob FROM 'Packages': database disk image
+# is malformed"). Rebuild it and retry once before giving up.
+install_terra_release() {
+  if ! dnf -y install --best --nogpgcheck \
+      --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
+      terra-release; then
+    echo "WARNING: terra-release install failed; rebuilding rpm database and retrying"
+    rpmdb --rebuilddb
+    dnf -y install --best --nogpgcheck \
+      --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
+      terra-release
+  fi
+}
+install_terra_release
 bash "${SCRIPTS_DIR}/install-appimagelauncher.sh"
 bash "${SCRIPTS_DIR}/install-appimagetool.sh"
 RELEASEVER="$(rpm -E %fedora)"
@@ -201,6 +230,12 @@ curl -fL --retry 3 --retry-delay 2 -o /tmp/rpmfusion-nonfree-release.rpm \
   "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${RELEASEVER}.noarch.rpm"
 curl -fL --retry 3 --retry-delay 2 -o /tmp/rpmfusion-free-release.rpm \
   "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${RELEASEVER}.noarch.rpm"
+# RPM 6 (Fedora 45+) no longer keeps imported keys as rpmdb gpg-pubkey
+# entries, so a fresh base trusts nothing beyond its own keyring. Import the
+# rpmfusion signing keys so the release RPMs verify.
+rpmkeys --import \
+  "/usr/share/distribution-gpg-keys/rpmfusion/RPM-GPG-KEY-rpmfusion-free-fedora-${RELEASEVER}" \
+  "/usr/share/distribution-gpg-keys/rpmfusion/RPM-GPG-KEY-rpmfusion-nonfree-fedora-${RELEASEVER}"
 rpm -Uvh /tmp/rpmfusion-nonfree-release.rpm /tmp/rpmfusion-free-release.rpm
 rm -f /tmp/rpmfusion-nonfree-release.rpm /tmp/rpmfusion-free-release.rpm
 

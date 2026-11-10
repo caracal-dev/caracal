@@ -10,8 +10,6 @@ KVER="$(ls /usr/lib/modules | head -n1)"
 dracut \
     --reproducible \
     --no-hostonly \
-    --add "ostree" \
-    --zstd \
     --force \
     "/usr/lib/modules/${KVER}/initramfs.img" \
     "${KVER}"

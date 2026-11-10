@@ -1,5 +1,5 @@
 # Universal Blue akmods OCI images provide pre-built kernel and kmod RPMs.
-ARG FEDORA_VERSION=44
+ARG FEDORA_VERSION=45
 ARG ARCH=x86_64
 ARG KERNEL_FLAVOR=ogc
 ARG KERNEL_REF="ghcr.io/ublue-os/akmods:${KERNEL_FLAVOR}-${FEDORA_VERSION}"

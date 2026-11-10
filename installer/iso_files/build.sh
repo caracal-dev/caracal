@@ -82,7 +82,7 @@ depmod "$kernel"
 # replacing the ostree-only initramfs produced by the image build. The
 # bootc-isos contract consumes /usr/lib/modules/<kver>/initramfs.img.
 kernel=$(find /usr/lib/modules -maxdepth 1 -type d -printf '%P\n' | grep . | head -1)
-DRACUT_NO_XATTR=1 dracut -v --force --zstd --reproducible --no-hostonly \
+DRACUT_NO_XATTR=1 dracut -v --force --reproducible --no-hostonly \
   --add "dmsquash-live dmsquash-live-autooverlay" \
   "/usr/lib/modules/${kernel}/initramfs.img" "${kernel}"
 
