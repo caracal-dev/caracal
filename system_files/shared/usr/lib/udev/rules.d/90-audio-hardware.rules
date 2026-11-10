@@ -1,0 +1,9 @@
+# Native Instruments (Maschine Mk2, Mikro, etc.)
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="17cc", MODE="0660", TAG+="uaccess"
+KERNEL=="hidraw*", ATTRS{idVendor}=="17cc", MODE="0660", TAG+="uaccess"
+
+# Line 6 (HX Stomp, Helix, POD HD series)
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0e41", MODE="0660", TAG+="uaccess"
+
+# Arturia (KeyStep, BeatStep, etc.)
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="1c75", MODE="0660", TAG+="uaccess"
