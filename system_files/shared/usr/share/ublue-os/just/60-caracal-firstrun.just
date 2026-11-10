@@ -18,7 +18,7 @@ first-run:
 
     # Set up Wine-native VST bridge
     export WINELOADER=""
-    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
+    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64; do
         if command -v "$loader" &>/dev/null; then
             WINELOADER="$(command -v "$loader")"
             break
@@ -26,7 +26,7 @@ first-run:
     done
 
     WINEBOOT=""
-    for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
+    for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot; do
         if command -v "$boot" &>/dev/null; then
             WINEBOOT="$(command -v "$boot")"
             break
@@ -39,7 +39,7 @@ first-run:
         echo "WINEBOOT:   '${WINEBOOT:-not found}'" >&2
         echo "Searched PATH: $PATH" >&2
         echo "Checking common locations..." >&2
-        ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
+        ls -l /usr/bin/wine* /usr/sbin/wine* 2>/dev/null || true
         echo "Tip: Ensure wine-core and wine-common are installed. On Caracal, these should be in the base image." >&2
         echo "If you just updated, a reboot might be required to refresh the PATH and library links." >&2
         exit 1
@@ -299,14 +299,14 @@ setup-audio:
     ujust setup-audio-profiles apply || true
 
     export WINELOADER=""
-    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
+    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64; do
         if command -v "$loader" &>/dev/null; then
             WINELOADER="$(command -v "$loader")"
             break
         fi
     done
     WINEBOOT=""
-    for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
+    for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot; do
         if command -v "$boot" &>/dev/null; then
             WINEBOOT="$(command -v "$boot")"
             break
@@ -319,7 +319,7 @@ setup-audio:
         echo "WINEBOOT:   '${WINEBOOT:-not found}'" >&2
         echo "Searched PATH: $PATH" >&2
         echo "Checking common locations..." >&2
-        ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
+        ls -l /usr/bin/wine* /usr/sbin/wine* 2>/dev/null || true
         echo "Ensure wine-core and wine-common are installed. You may need to reboot after a system update." >&2
         exit 1
     fi

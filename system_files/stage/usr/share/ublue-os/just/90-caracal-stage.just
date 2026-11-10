@@ -58,7 +58,7 @@ yabridge-setup:
     set -euo pipefail
 
     wine_loader=""
-    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
+    for loader in wine wine64 /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64; do
         if command -v "$loader" &>/dev/null; then
             wine_loader="$(command -v "$loader")"
             break
@@ -69,7 +69,7 @@ yabridge-setup:
     done
 
     wine_boot=""
-    for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
+    for boot in wineboot /usr/bin/wineboot /usr/sbin/wineboot; do
         if command -v "$boot" &>/dev/null; then
             wine_boot="$(command -v "$boot")"
             break

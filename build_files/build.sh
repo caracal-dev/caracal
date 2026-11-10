@@ -62,7 +62,7 @@ validate_wine_stack() {
   local wine_found=0
   local wine_bin=""
   local bin
-  for bin in /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64 /opt/wine-tkg/bin/wine /opt/wine-tkg/bin/wine64; do
+  for bin in /usr/bin/wine /usr/bin/wine64 /usr/sbin/wine /usr/sbin/wine64; do
     if [[ -x "$bin" ]]; then
       wine_found=1
       wine_bin="$bin"
@@ -74,13 +74,13 @@ validate_wine_stack() {
   if [[ $wine_found -eq 0 ]]; then
     echo "CRITICAL ERROR: Wine loader not found in expected locations!" >&2
     dnf5 list installed "wine*" || true
-    ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
+    ls -l /usr/bin/wine* /usr/sbin/wine* 2>/dev/null || true
     exit 1
   fi
 
   local wineboot_found=0
   local wineboot_bin=""
-  for bin in /usr/bin/wineboot /usr/sbin/wineboot /opt/wine-tkg/bin/wineboot; do
+  for bin in /usr/bin/wineboot /usr/sbin/wineboot; do
     if [[ -x "$bin" ]]; then
       wineboot_found=1
       wineboot_bin="$bin"
@@ -92,7 +92,7 @@ validate_wine_stack() {
   if [[ $wineboot_found -eq 0 ]]; then
     echo "CRITICAL ERROR: wineboot not found!" >&2
     dnf5 list installed "wine*" || true
-    ls -l /usr/bin/wine* /usr/sbin/wine* /opt/wine-tkg/bin/wine* 2>/dev/null || true
+    ls -l /usr/bin/wine* /usr/sbin/wine* 2>/dev/null || true
     exit 1
   fi
 
@@ -174,10 +174,8 @@ install_wine_stack() {
 if dnf5 -y copr enable patrickl/wine-staging-dev; then
   set_copr_priority patrickl wine-staging-dev 80
 else
-  echo "WARNING: failed to enable patrickl/wine-staging-dev; falling back to patrickl/wine-tkg-dev." >&2
+  echo "WARNING: failed to enable patrickl/wine-staging-dev; continuing with distro wine packages." >&2
 fi
-dnf5 -y copr enable patrickl/wine-tkg-dev
-set_copr_priority patrickl wine-tkg-dev 90
 
 # COPR repositories
 copr_repos=(
@@ -403,7 +401,7 @@ for optional_package in "${optional_audio_workflow_packages[@]}"; do
 done
 
 # Post-install check for Wine (handles the "0KiB" metapackage case)
-if ! command -v wine &>/dev/null && ! command -v wine64 &>/dev/null && ! [[ -x /opt/wine-tkg/bin/wine ]]; then
+if ! command -v wine &>/dev/null && ! command -v wine64 &>/dev/null; then
   echo "CRITICAL: Wine binaries missing after installation. Reinstalling Patrickl Wine stack..."
   install_wine_stack
 fi

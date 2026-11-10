@@ -33,7 +33,7 @@ A GNOME desktop build (`caracal-gnome`) is also published from the same source f
 
 - Hydrogen
 - QjackCtl
-- Yabridge, Wine TKG, and Winetricks for Windows VST workflows
+- Yabridge, Wine, and Winetricks for Windows VST workflows
 
 **Optional DAWs** (install after first boot via `ujust`):
 
@@ -81,7 +81,7 @@ It can install and uninstall software across categories, queue multiple selectio
 
 **Windows VST support:**
 
-- Wine TKG + Yabridge — run Windows VST2/VST3 plugins natively inside Linux DAWs
+- Wine + Yabridge — run Windows VST2/VST3 plugins natively inside Linux DAWs
 
 ### Getting More Plugins
 
