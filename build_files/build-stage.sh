@@ -442,6 +442,7 @@ getent group audio || groupadd -r audio
 systemctl enable cpupower.service
 systemctl enable caracal-cpu-performance.service
 systemctl enable caracal-wine-execmod.service
+systemctl enable caracal-stale-copr-cleanup.service
 
 # Boot straight into the Wayfire/Carla session via greetd autologin. Disable the
 # heavier desktop display managers first so they do not fight greetd over a VT.
@@ -483,6 +484,7 @@ systemctl set-default graphical.target
 chmod +x /usr/libexec/caracal-user-setup
 chmod +x /usr/libexec/caracal-cpu-performance
 chmod +x /usr/libexec/caracal-wine-execmod
+chmod +x /usr/libexec/caracal-stale-copr-cleanup
 chmod +x /usr/libexec/caracal-stage-autologin
 chmod +x /usr/libexec/caracal-stage-firstboot
 chmod +x /usr/libexec/caracal-stage-first-run

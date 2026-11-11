@@ -626,6 +626,7 @@ getent group audio || groupadd -r audio
 systemctl enable cpupower.service
 systemctl enable caracal-cpu-performance.service
 systemctl enable caracal-wine-execmod.service
+systemctl enable caracal-stale-copr-cleanup.service
 systemctl enable podman.socket
 systemctl enable brew-setup.service
 systemctl enable --now libvirtd
@@ -665,6 +666,7 @@ systemctl enable caracal-autologin.service
 chmod +x /usr/libexec/caracal-user-setup
 chmod +x /usr/libexec/caracal-cpu-performance
 chmod +x /usr/libexec/caracal-wine-execmod
+chmod +x /usr/libexec/caracal-stale-copr-cleanup
 chmod +x /usr/libexec/caracal-setup-launch
 chmod +x /usr/libexec/caracal-autologin
 chmod +x /usr/libexec/caracal-waterfox-config

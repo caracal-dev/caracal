@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Caracal OS: remove COPR repo files for sources dropped from the image.
+# rpm-ostree upgrades fail hard when an enabled repo has no metadata for the
+# running Fedora release, so stale repo files must not linger in /etc.
+
+set -euo pipefail
+shopt -s nullglob
+
+stale_patterns=(
+  '/etc/yum.repos.d/_copr*:patrickl:wine-tkg*.repo'
+  '/etc/yum.repos.d/_copr_patrickl-wine-tkg*.repo'
+)
+
+removed=0
+for pattern in "${stale_patterns[@]}"; do
+  for repo_file in ${pattern}; do
+    echo "caracal-stale-copr-cleanup: removing stale repo file ${repo_file}"
+    rm -f -- "${repo_file}"
+    removed=$((removed + 1))
+  done
+done
+
+if [[ "${removed}" -eq 0 ]]; then
+  echo "caracal-stale-copr-cleanup: no stale COPR repo files found."
+fi

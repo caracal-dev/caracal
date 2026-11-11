@@ -1,0 +1,11 @@
+[Unit]
+Description=Remove COPR repo files for sources dropped from Caracal
+Documentation=https://github.com/caracal-dev/caracal
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/caracal-stale-copr-cleanup
+
+[Install]
+WantedBy=multi-user.target
